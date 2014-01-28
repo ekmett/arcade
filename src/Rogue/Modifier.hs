@@ -9,8 +9,8 @@ module Rogue.Modifier
   ) where
 
 import Control.Lens
-import Data.Monoid
 import Data.Hashable
+import Data.Semigroup
 import Data.Typeable
 import GHC.Generics
 
@@ -21,9 +21,12 @@ instance Hashable Modifier
 
 makeClassy ''Modifier
 
+instance Semigroup Modifier where
+  (<>) = (+)
+
 instance Monoid Modifier where
-  Modifier a b c `mappend` Modifier d e f = Modifier (a + d) (b + e) (c + f)
-  mempty = Modifier 0 0 0
+  mappend = (+)
+  mempty = 0
 
 instance Num Modifier where
   Modifier a b c + Modifier d e f = Modifier (a + d) (b + e) (c + f)
