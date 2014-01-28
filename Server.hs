@@ -15,13 +15,11 @@ import Network.Wai.Application.Static
 import Network.WebSockets as WS
 import qualified Network.Wai.Handler.WebSockets as WaiWS
 import qualified Network.Wai.Handler.Warp as Warp
-
--- main :: IO ()
--- main = runServer "0.0.0.0" 8080 app
+import System.Process
 
 main :: IO ()
 main = do
-  putStrLn "http://localhost:8080/index.html"
+  _ <- system "/usr/bin/open http://localhost:8080/index.html"
   Warp.runSettings Warp.defaultSettings
     { Warp.settingsPort = 8080
     , Warp.settingsIntercept = WaiWS.intercept app
@@ -31,6 +29,7 @@ app :: ServerApp
 app pending = do
   conn <- WS.acceptRequest pending
   WS.sendTextData conn ("alert('test');" :: Text)
-  -- msg <- WS.receiveData conn
+  msg <- WS.receiveData conn
+  print (msg :: Text)
   finally ?? disconnect $ return ()
  where disconnect = return ()

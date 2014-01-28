@@ -9,7 +9,7 @@ function createWebSocket(path) {
 $(document).ready(function () {
   var ws = createWebSocket('/');
   ws.onopen = function() {
-    ws.send('hi');
+    ws.send('hi\n');
   };
 
   ws.onmessage = function(event) {
