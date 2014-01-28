@@ -1,14 +1,22 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Rogue.Expr
   ( Expr(..)
   , eval
+  , Env(..)
+  , HasEnv(..)
   ) where
 
+import Control.Lens
 import Data.Int
 import Rogue.Stat
 
+data Env = Env { _envCurrent, _envCapacity :: Stat -> Int64 }
+
+makeClassy ''Env
+
 data Expr
   = Sqrt Expr
-  | Fixed Int64
+  | Given Int64
   | Min   Expr Expr
   | Max   Expr Expr
   | Plus  Expr Expr
@@ -34,12 +42,12 @@ instance Num Expr where
   negate = Negate
   abs = Abs
   signum = Signum
-  fromInteger = Fixed . fromInteger
+  fromInteger = Given . fromInteger
 
-eval :: (Stat -> Int64) -> (Stat -> Int64) -> Expr -> Int64
-eval current capacity = go where
+eval :: Env -> Expr -> Int64
+eval (Env current capacity) = go where
   go (Sqrt x)     = round $ sqrt (fromIntegral (go x) :: Double)
-  go (Fixed n)    = n
+  go (Given n)    = n
   go (Negate x)   = negate $ go x
   go (Min x y)    = go x `min` go y
   go (Max x y)    = go x `max` go y

@@ -11,7 +11,6 @@ module Rogue.Bucket
 import Control.Lens
 import Data.Int
 import Data.Typeable
-import Rogue.Stat
 import Rogue.Expr
 
 data Bucket = Bucket
@@ -21,9 +20,8 @@ data Bucket = Bucket
 
 makeClassy ''Bucket
 
-update :: (Stat -> Int64) -> (Stat -> Int64) -> Bucket -> Bucket
-update cur cap (Bucket l d n) =
-  Bucket l d $ max 0 $ min (n + eval cur cap d) (eval cur cap l)
+update :: Env -> Bucket -> Bucket
+update e (Bucket l d n) = Bucket l d $ max 0 $ min (n + eval e d) (eval e l)
 
 leak :: Lens' t Bucket -> Lens' t Bucket -> Expr -> t -> t
 leak hither yon rate t =
