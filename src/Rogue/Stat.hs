@@ -21,22 +21,22 @@ import Data.Typeable
 import GHC.Generics
 
 data Stat
-  = MaxHealth
-  | MaxEndurance
-  | MaxStun
+  = Health
+  | Endurance
+  | Stun
   | Stat !Text deriving (Eq,Ord,Show,Read,Typeable,Generic)
 
 instance Hashable Stat
 
 data Stats a = Stats
-  { _maxHealth, _maxEndurance, _maxStun :: a
+  { _health, _endurance, _stun :: a
   , _otherStats :: Map Text a
   } deriving (Functor,Typeable)
 
 makeClassy ''Stats
 
 stat :: (Num a, Eq a) => Stat -> Lens' (Stats a) a
-stat MaxHealth    = maxHealth
-stat MaxEndurance = maxEndurance
-stat MaxStun      = maxStun
-stat (Stat n)     = otherStats. at n . non 0
+stat Health    = health
+stat Endurance = endurance
+stat Stun      = stun
+stat (Stat n)  = otherStats. at n . non 0
