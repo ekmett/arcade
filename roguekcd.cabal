@@ -1,0 +1,45 @@
+name:                roguekcd
+version:             0.1.0.0
+synopsis:            A rogue-like of hats and stacks and style.
+description:         A rogue-like of hats and stacks and style.
+homepage:            http://rogue.xkcd.com/
+license:             BSD3
+license-file:        LICENSE
+author:              davean, edwardk, ReinH, chromakode, Eldrad
+maintainer:          davean@xkcd.com
+copyright:           (C) 2014 xkcd
+category:            Game
+build-type:          Simple
+cabal-version:       >= 1.10
+extra-source-files:  .gitignore
+
+source-repository head
+  type: git
+  location: git@git.xkrd.net:roguekcd.git
+
+flag build-exe
+  default: True
+  manual: True
+
+library
+  build-depends: base >= 4.6 && < 4.7
+  hs-source-dirs: src
+  exposed-modules:
+    Rogue.Hat
+  ghc-options: -Wall
+  default-language: Haskell2010
+
+--executable roguekcd
+--  if flag(build-exe)
+--    buildable: True
+--    -- main-is:             
+--    -- other-modules:       
+--    -- other-extensions:    
+--    build-depends: 
+--      base >=4.6 && <4.7,
+--      rogue-xkcd
+--    hs-source-dirs:      src
+--    default-language:    Haskell2010
+--  else
+--    buildable: False
+--
