@@ -3,7 +3,9 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE GADTs #-}
 module Rogue.Mob
   ( MobId
   , Mob(..)
@@ -18,6 +20,7 @@ import Data.Aeson
 import Data.Default
 import Data.Foldable
 import Data.Function (on)
+import Data.Table
 import Rogue.Body
 import Rogue.Location
 import Rogue.Stat
@@ -25,7 +28,7 @@ import Rogue.Stat
 type MobId = Int
 
 data Mob a = Mob
-  { _mobId :: {-# UNPACK #-} !Int
+  { _mobId :: {-# UNPACK #-} !MobId
   , _mobBody :: !Body
   , _mind :: a
   } deriving (Show,Read)
@@ -72,3 +75,26 @@ instance HasBody (Mob a) where
 
 instance Default a => Default (Mob a) where
   def = Mob def def def
+
+instance Tabular (Mob a) where
+  type PKT (Mob a) = MobId
+
+  data Key k (Mob a) b where
+    MobId :: Key Primary (Mob a) MobId
+    MobLocation :: Key Supplemental (Mob a) Location
+
+  data Tab (Mob a) i = MobTab (i Primary MobId) (i Supplemental Location)
+
+  fetch MobId = _mobId
+  fetch MobLocation = _bodyLocation._mobBody
+
+  primary = MobId
+  primarily MobId r = r
+
+  mkTab f = MobTab <$> f MobId <*> f MobLocation
+  forTab (MobTab x y) f = MobTab <$> f MobId x <*> f MobLocation y
+  ixTab (MobTab x _) MobId = x
+  ixTab (MobTab _ x) MobLocation = x
+
+  autoTab = autoIncrement mobId
+
