@@ -41,6 +41,7 @@ library
   hs-source-dirs: src
   exposed-modules:
     Rogue.Act
+    Rogue.ASCII
     Rogue.Bucket
     Rogue.Expr
     Rogue.Hat
