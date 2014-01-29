@@ -23,11 +23,15 @@ import Data.Default
 import Data.Foldable
 import Data.Function (on)
 import Data.Table
+import qualified Data.Text as T
+import Data.UUID (UUID)
+import qualified Data.UUID as UUID
+
 import Rogue.Body
 import Rogue.Location
 import Rogue.Stat
 
-type MobId = Int
+type MobId = UUID
 
 data Mob a = Mob
   { _mobId :: {-# UNPACK #-} !MobId
@@ -69,19 +73,19 @@ instance HasStats (Mob a) where
 
 instance FromJSON a => FromJSON (Mob a) where
   parseJSON (Object v) = Mob <$>
-    v .: "id" <*>
+    (v .: "id" >>= withText "id" (maybe mzero return . UUID.fromString . T.unpack)) <*>
     v .: "body" <*>
     v .: "mind"
   parseJSON _ = mzero
 
 instance ToJSON a => ToJSON (Mob a) where
-  toJSON (Mob i b m) = object ["id" .= i, "body" .= b, "mind" .= m]
+  toJSON (Mob i b m) = object ["id" .= (T.pack $ UUID.toString i), "body" .= b, "mind" .= m]
 
 instance HasBody (Mob a) where
   body = mobBody
 
 instance Default a => Default (Mob a) where
-  def = Mob def def def
+  def = Mob UUID.nil def def
 
 instance Tabular (Mob a) where
   type PKT (Mob a) = MobId
@@ -102,6 +106,3 @@ instance Tabular (Mob a) where
   forTab (MobTab x y) f = MobTab <$> f MobId x <*> f MobLocation y
   ixTab (MobTab x _) MobId = x
   ixTab (MobTab _ x) MobLocation = x
-
-  autoTab = autoIncrement mobId
-
