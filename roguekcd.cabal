@@ -74,6 +74,7 @@ library
     Rogue.Stat
     Rogue.Time
     Rogue.World
+    Rogue.World.DemoLevels
 
   ghc-options: -Wall
   default-language: Haskell2010
