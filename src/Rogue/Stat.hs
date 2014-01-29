@@ -14,8 +14,10 @@ module Rogue.Stat
   ) where
 
 import Control.Lens
+import Data.Default
 import Data.Hashable
 import Data.Map
+import Data.Monoid
 import Data.Text
 import Data.Typeable
 import GHC.Generics
@@ -33,10 +35,13 @@ data Stats a = Stats
   , _otherStats :: Map Text a
   } deriving (Functor,Typeable)
 
+instance Default a => Default (Stats a) where
+  def = Stats def def def mempty
+
 makeClassy ''Stats
 
-stat :: (Num a, Eq a) => Stat -> Lens' (Stats a) a
+stat :: (HasStats s a, Default a) => Stat -> Lens' s a
 stat Health    = health
 stat Endurance = endurance
 stat Stun      = stun
-stat (Stat n)  = otherStats. at n . non 0
+stat (Stat n)  = otherStats.at n.anon def (const False)

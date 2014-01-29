@@ -1,24 +1,31 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes #-}
 module Rogue.Bucket
   ( Bucket(..)
   , HasBucket(..)
   , update
   , leak
+  , context
   ) where
 
 import Control.Lens
+import Data.Default
 import Data.Int
 import Data.Typeable
 import Rogue.Expr
+import Rogue.Stat
 
 -- Has some crazy behavior, see IRC 2014-01-28 19:00 EST5EDT
 
 data Bucket = Bucket
-  { _limit, _delta :: Expr
-  , _current       :: Int64
+  { _capacity, _delta :: Expr
+  , _current          :: Int64
   } deriving (Read,Show,Typeable)
+
+instance Default Bucket where
+  def = Bucket 0 0 0
 
 makeClassy ''Bucket
 
@@ -29,3 +36,9 @@ leak :: Lens' t Bucket -> Lens' t Bucket -> Expr -> t -> t
 leak hither yon rate t =
   t & hither.delta -~ rate
     & yon.delta +~ rate
+
+-- mutually recursive definitions
+context :: (HasStats t b, HasBucket b, Default b) => t -> Env
+context t = e where
+  e = Env (\s -> t^.stat s.current)
+          (\s -> eval e $ t^.stat s.capacity)
