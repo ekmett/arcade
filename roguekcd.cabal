@@ -44,9 +44,10 @@ library
     Rogue.Bucket
     Rogue.Expr
     Rogue.Hat
+    Rogue.Location
+    Rogue.Mob
     Rogue.Modifier
     Rogue.Stat
-    Rogue.Mob
   ghc-options: -Wall
   default-language: Haskell2010
 
