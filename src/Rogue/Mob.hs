@@ -71,7 +71,7 @@ startsFull e s l d = Bucket l d (eval e (Capacity s))
 
 rollPlayer :: Mob
 rollPlayer =
-    p -- leak (stat Endurance) (stat Stun) (10*Sqrt (Current Health)) p 
+    leak (stat Endurance) (stat Stun) (10*Sqrt (Current Health)) p 
   where
     p = Player (Ch Map.empty Map.empty b Set.empty 0 Set.empty)
     -- Healthier players recover faster

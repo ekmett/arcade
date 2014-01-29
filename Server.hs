@@ -34,7 +34,7 @@ app :: ServerApp
 app pending = do
   let p = rollPlayer
   conn <- WS.acceptRequest pending
-  WS.sendTextData conn $ T.concat ["alert('", TE.decodeUtf8 . BSL.toStrict $ JS.encode p, "');"]
+  WS.sendTextData conn $ T.concat ["alert('", T.pack $ show p, "');"]
   msg <- WS.receiveData conn
   print (msg :: Text)
   finally ?? disconnect $ return ()
