@@ -10,6 +10,7 @@ module Rogue.Monitor
   -- * The Monitor
   , Monitor(..)
   , HasMonitor(..)
+  , monitorUri
   -- * Gauges
   , Gauge(..)
   , gauge
@@ -30,12 +31,14 @@ module Rogue.Monitor
 
 import Control.Exception
 import Control.Lens hiding (Setting)
+import Control.Monad (when)
 import Control.Monad.Trans
 import Control.Monad.Reader.Class
 import Data.ByteString.Lens
 import Data.Data
 import Data.Text
 import Options.Applicative
+import System.Process
 import System.Remote.Monitoring
 import qualified System.Remote.Gauge as G
 import qualified System.Remote.Counter as C
@@ -46,16 +49,21 @@ data MonitorOptions = MonitorOptions
   { _monitorHost    :: String
   , _monitorPort    :: Int
   , _monitorEnabled :: Bool
+  , _monitorOpen    :: Bool
   } deriving (Eq,Ord,Show,Read,Data,Typeable)
+
+makeClassy ''MonitorOptions
+
+monitorUri :: HasMonitorOptions t => t -> String
+monitorUri t = "http://" ++ t^.monitorHost ++ ":" ++ show (t^.monitorPort) ++ "/"
 
 -- | Parse EKG configuration
 parseMonitorOptions :: Parser MonitorOptions
 parseMonitorOptions = MonitorOptions
-  <$> strOption (long "ekg-host" <> short 'h' <> help "host for the EKG server" <> metavar "HOST" <> action "hostname" <> value "localhost")
-  <*> option (long "ekg-port" <> short 'p' <> help "port for the EKG server" <> metavar "PORT" <> value 5616)
-  <*> (not <$> switch (long "no-ekg" <> help "do not start the EKG server" <> value False))
-
-makeClassy ''MonitorOptions
+  <$> strOption (long "ekg-host" <> short 'H' <> help "host for the EKG server" <> metavar "HOST" <> action "hostname" <> value "localhost")
+  <*> option (long "ekg-port" <> short 'P' <> help "port for the EKG server" <> metavar "PORT" <> value 5616)
+  <*> (not <$> switch (long "no-ekg" <> short 'Q' <> help "do NOT start the EKG server" <> value False))
+  <*> switch (long "ekg-open" <> short 'M' <> help "open EKG on launch")
 
 data ShutdownMonitor = ShutdownMonitor deriving (Typeable, Show)
 
@@ -126,7 +134,10 @@ withMonitor :: HasMonitorOptions t => t -> (Monitor -> IO a) -> IO a
 withMonitor t k
   | t^.monitorEnabled = do
     server <- forkServer (t^.monitorHost.packedChars) (t^.monitorPort)
-    let uri = "http://" ++ t^.monitorHost ++ ":" ++ show (t^.monitorPort) ++ "/"
+    let uri = monitorUri t
     putStrLn $ "Monitoring enabled at " ++ uri
+    when (t^.monitorOpen) $ do
+      _ <- system $ "/usr/bin/open " ++ uri
+      return ()
     k (Monitor (t^.monitorOptions) $ Just server) `finally` throwTo (serverThreadId server) ShutdownMonitor
   | otherwise = k $ Monitor (t^.monitorOptions) Nothing

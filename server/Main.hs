@@ -27,9 +27,11 @@ import qualified Data.Aeson as JS
 -- import qualified Data.ByteString.Lazy as BSL
 import Options.Applicative
 import qualified Control.Exception as E
+import System.Process
 
 import Rogue.Mob
 import Rogue.Monitor
+import Rogue.Server.Options
 
 import Control.Monad.Reader
 
@@ -44,10 +46,14 @@ main = do
     <> header "A game server"
 
   withMonitor options $ \mon -> do
-    
-    putStrLn "Serving http://localhost:8080/index.html"
+    let uri = serverUri options
+    putStrLn $ "Serving " ++ uri
+    when (options^.serverOpen) $ do
+      _ <- system $ "/usr/bin/open " ++ uri
+      return ()
     Warp.runSettings Warp.defaultSettings
-      { Warp.settingsPort = 8080
+      { Warp.settingsPort = options^.serverPort
+      , Warp.settingsTimeout = options^.serverTimeout
       , Warp.settingsIntercept = WaiWS.intercept (app mon)
       } $ staticApp $ embeddedSettings $(embedDir "static")
 
