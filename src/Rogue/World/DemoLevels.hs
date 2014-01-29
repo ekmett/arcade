@@ -18,7 +18,7 @@ readTile '>' = Floor
 readTile _   = Wall
 
 buildLevel :: [String] -> Level
-buildLevel chars = Level nil "A test letel" stairs' tiles'
+buildLevel chars = Level nil "A test level" stairs' tiles'
   where
     chars'  = A.listArray ((0,0), (xBound, yBound)) (concat chars)
     tiles' = fmap readTile chars'
