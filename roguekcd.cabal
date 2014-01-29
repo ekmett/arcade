@@ -130,4 +130,5 @@ executable rogue.console
       lens,
       optparse-applicative,
       roguekcd,
-      text
+      text,
+      websockets
