@@ -21,6 +21,10 @@ flag server
   default: True
   manual: True
 
+flag console
+  default: True
+  manual: True
+
 -- You can disable the doctests test suite with -f-test-doctests
 flag test-doctests
   default: True
@@ -28,19 +32,23 @@ flag test-doctests
 
 library
   build-depends:
-    aeson            >= 0.7    && < 0.8,
-    base             >= 4.6    && < 4.7,
-    comonad          >= 4      && < 5,
-    containers       >= 0.5    && < 0.6,
-    data-default     >= 0.5    && < 0.6,
-    hashable         >= 1.2    && < 1.3,
-    lens             >= 4      && < 5,
-    mtl              >= 2.1.2  && < 2.2,
-    semigroups       >= 0.12   && < 1,
-    tables           >= 0.3.1  && < 0.4,
-    transformers     >= 0.3    && < 0.4,
-    text             >= 1.0    && < 1.2,
-    vector           >= 0.10   && < 0.11
+    aeson                >= 0.7     && < 0.8,
+    base                 >= 4.6     && < 4.7,
+    comonad              >= 4       && < 5,
+    containers           >= 0.5     && < 0.6,
+    data-default         >= 0.5     && < 0.6,
+    ekg,
+    hashable             >= 1.2     && < 1.3,
+    lens                 >= 4       && < 5,
+    process,
+    mtl                  >= 2.1.2   && < 2.2,
+    optparse-applicative >= 0.5.2.1 && < 0.6,
+    semigroups           >= 0.12    && < 1,
+    tables               >= 0.3.1   && < 0.4,
+    transformers         >= 0.3     && < 0.4,
+    text                 >= 1.0     && < 1.2,
+    vector               >= 0.10    && < 0.11
+
   hs-source-dirs: src
   exposed-modules:
     Rogue.Act
@@ -49,6 +57,7 @@ library
     Rogue.Hat
     Rogue.Location
     Rogue.Mob
+    Rogue.Monitor
     Rogue.Modifier
     Rogue.Stat
 
@@ -81,8 +90,8 @@ test-suite doctests
 
 executable rogue.server
   default-language: Haskell2010
-  hs-source-dirs: .
-  main-is: Server.hs
+  hs-source-dirs: server
+  main-is: Main.hs
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   if !flag(server)
     buildable: False
@@ -94,6 +103,7 @@ executable rogue.server
       data-default,
       file-embed,
       lens,
+      optparse-applicative,
       process >= 1.1 && < 1.2,
       roguekcd,
       text,
@@ -102,3 +112,22 @@ executable rogue.server
       wai-websockets,
       warp,
       websockets
+
+executable rogue.console
+  default-language: Haskell2010
+  hs-source-dirs: console
+  main-is: Main.hs
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  if !flag(console)
+    buildable: False
+  else
+    build-depends:
+      base,
+      bytestring,
+      data-default,
+      file-embed,
+      hscurses,
+      lens,
+      optparse-applicative,
+      roguekcd,
+      text
