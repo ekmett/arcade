@@ -35,8 +35,9 @@ library
     lens             >= 3.10.1 && < 4,
     mtl              >= 2.1.2  && < 2.2,
     semigroups       >= 0.12   && < 1,
-    transformers     >= 0.3 && < 0.4,
-    text             >= 1.0    && < 1.2
+    transformers     >= 0.3    && < 0.4,
+    text             >= 1.0    && < 1.2,
+    aeson            >= 0.7    && < 0.8
   hs-source-dirs: src
   exposed-modules:
     Rogue.Act
@@ -89,9 +90,11 @@ executable rogue.server
       lens,
       process >= 1.1 && < 1.2,
       roguekcd,
+      bytestring,
       text,
       transformers,
       wai-app-static,
       wai-websockets,
       warp,
-      websockets
+      websockets,
+      aeson

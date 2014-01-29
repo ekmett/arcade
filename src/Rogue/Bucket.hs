@@ -2,6 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Rogue.Bucket
   ( Bucket(..)
   , HasBucket(..)
@@ -14,6 +15,9 @@ import Control.Lens
 import Data.Default
 import Data.Int
 import Data.Typeable
+import GHC.Generics
+import Data.Aeson
+
 import Rogue.Expr
 import Rogue.Stat
 
@@ -22,7 +26,10 @@ import Rogue.Stat
 data Bucket = Bucket
   { _capacity, _delta :: Expr
   , _current          :: Int64
-  } deriving (Read,Show,Typeable)
+  } deriving (Read,Show,Typeable,Generic)
+
+instance FromJSON Bucket
+instance ToJSON Bucket
 
 instance Default Bucket where
   def = Bucket 0 0 0
