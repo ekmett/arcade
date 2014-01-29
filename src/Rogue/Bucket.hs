@@ -38,7 +38,7 @@ leak hither yon rate t =
     & yon.delta +~ rate
 
 -- mutually recursive definitions
-context :: (HasStats t b, HasBucket b, Default b) => t -> Env
+context :: (HasStats t Bucket) => t -> Env
 context t = e where
   e = Env (\s -> t^.stat s.current)
           (\s -> eval e $ t^.stat s.capacity)

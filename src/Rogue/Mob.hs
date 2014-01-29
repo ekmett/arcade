@@ -55,22 +55,17 @@ instance HasCharacter Mob where
 instance HasStats Mob Bucket where
   stats = char.stats
 
-mobEnv :: Mob -> Env
-mobEnv m =
-    e
-  where
-    e = Env (\s -> m ^. buckets.stat s.current) (\s -> eval e (m ^. buckets.stat s.capacity))
-
 startsFull :: Env -> Stat -> Expr -> Expr -> Bucket
 startsFull e s l d = Bucket l d (eval e (Capacity s))
 
 rollPlayer :: Mob
 rollPlayer =
-    p
+    leak (stat Endurance) (stat Stun) (10*Sqrt (Current Health)) p 
   where
     p = Player (Ch Map.empty Map.empty b Set.empty 0 Set.empty)
-    hB = startsFull e Health (Given 10) (Sqrt (Given 10))
+    -- Healthier players recover faster
+    hB = startsFull e Health (Given 10) (1+Sqrt (Current Health))
     eB = startsFull e Endurance (20 * Current Health) (Sqrt (Current Health))
     sB = startsFull e Stun (Current Health) (Given 0)
     b = Stats hB eB sB Map.empty
-    e = mobEnv p
+    e = context p
