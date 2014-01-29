@@ -9,6 +9,7 @@ module Rogue.Modifier
   ) where
 
 import Control.Lens
+import Data.Default
 import Data.Hashable
 import Data.Semigroup
 import Data.Typeable
@@ -20,6 +21,9 @@ data Modifier = Modifier { _modDelta, _modBonus, _modPenalty :: {-# UNPACK #-} !
 instance Hashable Modifier
 
 makeClassy ''Modifier
+
+instance Default Modifier where
+  def = 0
 
 instance Semigroup Modifier where
   (<>) = (+)

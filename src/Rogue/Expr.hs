@@ -7,6 +7,7 @@ module Rogue.Expr
   ) where
 
 import Control.Lens
+import Data.Default
 import Data.Int
 import Rogue.Stat
 
@@ -27,6 +28,9 @@ data Expr
   | Abs Expr
   | Signum Expr
   deriving (Show, Read)
+
+instance Default Expr where
+  def = Given 0
 
 instance Eq Expr where
   (==) = error "Expr.=="
