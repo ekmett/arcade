@@ -12,7 +12,6 @@ import Control.Monad
 import Control.Exception (finally)
 import Control.Concurrent
 import Control.Lens
-import Data.Default
 import Data.FileEmbed
 import Data.Monoid
 import Data.Text (Text)
@@ -28,8 +27,12 @@ import qualified Data.Aeson as JS
 import System.Process
 import Options.Applicative
 import qualified Control.Exception as E
+import Control.Time
+import Data.Random
 
+import Rogue.Classes
 import Rogue.Mob
+import Rogue.Mob.Player
 import Rogue.Monitor
 import Rogue.Server.Options
 
@@ -59,14 +62,14 @@ main = do
 
 app :: Monitor -> ServerApp
 app _mon pending = isThread _mon "websocket" $ do
-  let p = def :: Mob ()
+  p <- sample (roll::RVarT IO Player) >>= return . mobify
   conn <- WS.acceptRequest pending
   void . forkR _mon "reciever" . forever $ do 
       msg <- WS.receiveData conn
       print (msg :: Text)
   void . forever $ do
-    WS.sendTextData conn $ JS.encode p
-    threadDelay (10^(6::Int))
+    WS.sendTextData conn . T.pack . show $ p
+    delayTime 1
   finally ?? disconnect $ return ()
  where disconnect = return ()
 

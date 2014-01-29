@@ -7,97 +7,69 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
-module Rogue.Mob
-  ( MobId
-  , Mob(..)
-  , HasMob(..)
-  , mobbed
+module Rogue.Mob (
+    Mob(..)
+  , Mobify(..)
   ) where
 
 import Control.Applicative
-import Control.Comonad
-import Control.Monad
-import Control.Lens hiding ((.=))
-import Data.Aeson
-import Data.Default
-import Data.Foldable
+import Control.Lens
 import Data.Function (on)
 import Data.Table
-import qualified Data.Text as T
-import Data.UUID (UUID)
-import qualified Data.UUID as UUID
 
-import Rogue.Body
 import Rogue.Location
 import Rogue.Stat
+import Rogue.Identifiers
 
-type MobId = UUID
+import Rogue.Mob.Player
 
-data Mob a = Mob
-  { _mobId :: {-# UNPACK #-} !MobId
-  , _mobBody :: !Body
-  , _mind :: a
-  } deriving (Show,Read)
+data Mob = 
+    MobPlayer { _player :: Player }
+  deriving (Show,Read)
+  
+makeLenses ''Mob
 
-mobbed :: APrism s t a b -> Prism (Mob s) (Mob t) (Mob a) (Mob b)
-mobbed p = prism (fmap (clonePrism p #)) $ \(Mob i b s) -> case clonePrism p Left s of
-  Right t -> Left (Mob i b t)
-  Left a -> Right (Mob i b a)
+class Mobify a where  
+  mobify :: a -> Mob
 
-makeClassy ''Mob
+instance Mobify Player where
+  mobify = MobPlayer
 
-instance Eq (Mob a) where
-  (==) = (==) `on` _mobId
+getMobId :: Mob -> MobId
+getMobId (MobPlayer p) = view mobId p
 
-instance Ord (Mob a) where
-  compare = compare `on` _mobId
+setMobId :: Mob -> MobId -> Mob
+setMobId (MobPlayer p) i = MobPlayer $ set mobId i p
 
-instance Comonad Mob where
-  extract (Mob _ _ a) = a
-  extend f w@(Mob i b _) = Mob i b (f w)
+getMobLocation :: Mob -> Location
+getMobLocation (MobPlayer p) = view location p
 
-instance Functor Mob where
-  fmap f (Mob i b a) = Mob i b (f a)
+setMobLocation :: Mob -> Location -> Mob
+setMobLocation (MobPlayer p) i = MobPlayer $ set location i p
 
-instance Foldable Mob where
-  foldMap f (Mob _ _ a) = f a
+instance HasMobId Mob where
+  mobId = lens getMobId setMobId
 
-instance Traversable Mob where
-  traverse f (Mob i b a) = Mob i b <$> f a
+instance HasLocation Mob where
+  location = lens getMobLocation setMobLocation
 
-instance HasLocation (Mob a) where
-  location = body.location
+instance Eq Mob where
+  (==) = (==) `on` (view mobId)
 
-instance HasStats (Mob a) where
-  stats = body.stats
+instance Ord Mob where
+  compare = compare `on` (view mobId)
 
-instance FromJSON a => FromJSON (Mob a) where
-  parseJSON (Object v) = Mob <$>
-    (v .: "id" >>= withText "id" (maybe mzero return . UUID.fromString . T.unpack)) <*>
-    v .: "body" <*>
-    v .: "mind"
-  parseJSON _ = mzero
+instance Tabular Mob where
+  type PKT Mob = MobId
 
-instance ToJSON a => ToJSON (Mob a) where
-  toJSON (Mob i b m) = object ["id" .= (T.pack $ UUID.toString i), "body" .= b, "mind" .= m]
+  data Key k Mob b where
+    MobId :: Key Primary Mob MobId
+    MobLocation :: Key Supplemental Mob Location
 
-instance HasBody (Mob a) where
-  body = mobBody
+  data Tab Mob i = MobTab (i Primary MobId) (i Supplemental Location)
 
-instance Default a => Default (Mob a) where
-  def = Mob UUID.nil def def
-
-instance Tabular (Mob a) where
-  type PKT (Mob a) = MobId
-
-  data Key k (Mob a) b where
-    MobId :: Key Primary (Mob a) MobId
-    MobLocation :: Key Supplemental (Mob a) Location
-
-  data Tab (Mob a) i = MobTab (i Primary MobId) (i Supplemental Location)
-
-  fetch MobId = _mobId
-  fetch MobLocation = _bodyLocation._mobBody
+  fetch MobId = view mobId
+  fetch MobLocation = view location
 
   primary = MobId
   primarily MobId r = r
