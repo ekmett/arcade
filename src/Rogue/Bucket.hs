@@ -7,7 +7,7 @@ module Rogue.Bucket
   , HasBucket(..)
   , update
   , leak
-  -- , context
+  , context
   ) where
 
 import Control.Lens
@@ -37,10 +37,8 @@ leak hither yon rate t =
   t & hither.delta -~ rate
     & yon.delta +~ rate
 
-{-
 -- mutually recursive definitions
 context :: (HasStats t b, HasBucket b, Default b) => t -> Env
 context t = e where
   e = Env (\s -> t^.stat s.current)
           (\s -> eval e $ t^.stat s.capacity)
--}
