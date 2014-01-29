@@ -3,6 +3,7 @@ module Rogue.Engine (
   , startGame
   ) where
 
+import Control.Monad
 import Control.Applicative
 import Control.Concurrent
 import Data.Time
@@ -47,9 +48,10 @@ joinPlayer p ge = do
 mobTick :: GameEngine -> IO UTCTime
 mobTick ge = do
   now <- getCurrentTime
-  
+  undefined
 
 gameLoop :: GameEngine -> IO ()
 gameLoop ge = do
   forever $ do
-    n <- mobTick
+    n <- mobTick ge
+    undefined
