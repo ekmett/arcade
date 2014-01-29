@@ -52,7 +52,7 @@ mobEnv :: Mob -> Env
 mobEnv m =
     e
   where
-    e = Env (\s -> m ^. charStats.stat s) (\s -> m ^. buckets.stat s.current) (\s -> eval e (m ^. buckets.stat s.limit))
+    e = Env (\s -> m ^. charStats.stat s) (\s -> m ^. buckets.stat s.current) (\s -> eval e (m ^. buckets.stat s.capacity))
 
 startsFull :: Env -> Stat -> Expr -> Expr -> Bucket
 startsFull e s l d = Bucket l d (eval e (Capacity s))
@@ -61,10 +61,10 @@ rollPlayer :: Mob
 rollPlayer =
     p
   where
-    p = Player (Ch Map.empty Map.empty stats buckets Set.empty 0 Set.empty)
-    stats = Stats 10 10 10 Map.empty
+    p = Player (Ch Map.empty Map.empty s b Set.empty 0 Set.empty)
+    s = Stats 10 10 10 Map.empty
     hB = startsFull e Health (StatVal Health) (Sqrt (StatVal Health))
     eB = startsFull e Endurance (20 * Current Health) (Sqrt (Current Health))
     sB = startsFull e Stun (Current Health) (Given 0)
-    buckets = Stats hB eB sB Map.empty
+    b = Stats hB eB sB Map.empty
     e = mobEnv p
