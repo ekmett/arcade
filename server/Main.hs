@@ -25,6 +25,7 @@ import qualified Network.Wai.Handler.Warp as Warp
 import Options.Applicative
 import Rogue.Mob
 import Rogue.Monitor
+import Rogue.Server.Options
 
 main :: IO ()
 main = do
@@ -34,9 +35,14 @@ main = do
     <> header "A game server"
 
   withMonitor options $ \mon -> do
-    putStrLn "Serving http://localhost:8080/index.html"
+    let uri = serverUri options
+    putStrLn $ "Serving " ++ uri
+    when (options^.serverOpen) $ do
+      _ <- system $ "/usr/bin/open " ++ uri
+      return ()
     Warp.runSettings Warp.defaultSettings
-      { Warp.settingsPort = 8080
+      { Warp.settingsPort = serverPort options
+      , Warp.settingsTimeout = serverTimeout options
       , Warp.settingsIntercept = WaiWS.intercept (app mon)
       } $ staticApp $ embeddedSettings $(embedDir "static")
 
@@ -44,9 +50,9 @@ app :: Monitor -> ServerApp
 app _mon pending = do
   let p = def :: Mob ()
   conn <- WS.acceptRequest pending
-  void . forkIO . forever $ do 
-      msg <- WS.receiveData conn
-      print (msg :: Text)
+  void . forkIO . forever $ do
+    msg <- WS.receiveData conn
+    print (msg :: Text)
   void . forever $ do
     WS.sendTextData conn $ T.concat ["alert('", T.replace "'" "\\'" . T.pack $ show p, "');"]
     threadDelay (10^6)
