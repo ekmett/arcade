@@ -35,11 +35,14 @@ data Character =
       _stackSlots    :: Map Slot ItemStack
     , _worn          :: Map ClothingSlot Item
     , _buckets       :: Stats Bucket
+    , _buckets       :: Buckets Bucket
+      -- Storage for AIs and Verbs.
     , _facts         :: Set Fact
       -- Buckets are updated in this order, with any unamed buckets being updated in undefined order afterwards.
     , _practice      :: Int64
       -- The mob's inherant verbs
     , _charVerbs     :: Set Verb
+    , _charAffects   :: Set Affect
     }
   deriving (Read,Show,Generic)
 
