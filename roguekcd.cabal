@@ -46,7 +46,6 @@ library
     Rogue.Act
     Rogue.ASCII
     Rogue.Body
-    Rogue.Expr
     Rogue.Hat
     Rogue.Location
     Rogue.Mob
