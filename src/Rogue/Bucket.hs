@@ -13,6 +13,8 @@ import Data.Int
 import Data.Typeable
 import Rogue.Expr
 
+-- Has some crazy behavior, see IRC 2014-01-28 19:00 EST5EDT
+
 data Bucket = Bucket
   { _limit, _delta :: Expr
   , _current       :: Int64

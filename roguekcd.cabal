@@ -41,6 +41,7 @@ library
     Rogue.Hat
     Rogue.Modifier
     Rogue.Stat
+    Rogue.Mob
   ghc-options: -Wall
   default-language: Haskell2010
 
