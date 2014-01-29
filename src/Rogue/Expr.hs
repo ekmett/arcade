@@ -11,7 +11,7 @@ import Data.Default
 import Data.Int
 import Rogue.Stat
 
-data Env = Env { _statsVals, _envCurrent, _envCapacity :: Stat -> Int64 }
+data Env = Env { _envCurrent, _envCapacity :: Stat -> Int64 }
 
 makeClassy ''Env
 
@@ -24,7 +24,6 @@ data Expr
   | Times Expr Expr
   | Capacity Stat
   | Current  Stat
-  | StatVal Stat
   | Negate Expr
   | Abs Expr
   | Signum Expr
@@ -50,7 +49,7 @@ instance Num Expr where
   fromInteger = Given . fromInteger
 
 eval :: Env -> Expr -> Int64
-eval (Env sv current capacity) = go where
+eval (Env current capacity) = go where
   go (Sqrt x)     = round $ sqrt (fromIntegral (go x) :: Double)
   go (Given n)    = n
   go (Negate x)   = negate $ go x
@@ -62,4 +61,3 @@ eval (Env sv current capacity) = go where
   go (Signum x)   = signum $ go x
   go (Capacity x) = capacity x
   go (Current x)  = current x
-  go (StatVal x)     = sv x
