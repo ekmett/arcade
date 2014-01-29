@@ -1,82 +1,74 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Rogue.Mob
-  where
+  ( MobId
+  , Mob(..)
+  , HasMob(..)
+  ) where
 
-import Control.Lens
-import Data.Int
-import Data.Map (Map)
-import qualified Data.Map as Map
-import Data.Set (Set)
-import qualified Data.Set as Set
-import Data.Text (Text)
-import GHC.Generics
+import Control.Applicative
+import Control.Comonad
+import Control.Monad
+import Control.Lens hiding ((.=))
 import Data.Aeson
-
+import Data.Default
+import Data.Foldable
+import Data.Function (on)
+import Rogue.Body
+import Rogue.Location
 import Rogue.Stat
-import Rogue.Expr
-import Rogue.Bucket
-import Rogue.Hat
 
-type Slot = Text
-type ClothingSlot = Text
+type MobId = Int
 
-type Item = ()
-type ItemStack = (Item, [Hat])
+data Mob a = Mob
+  { _mobId :: {-# UNPACK #-} !Int
+  , _mobBody :: !Body
+  , _mind :: a
+  } deriving (Show,Read)
 
-type Fact = ()
-type Verb = ()
+makeClassy ''Mob
 
-data Character =
-  Ch {
-      -- What slots you have is fairly fixed. We shouldn't use them by name if we can help it.
-      _stackSlots    :: Map Slot ItemStack
-    , _worn          :: Map ClothingSlot Item
-    , _buckets       :: Stats Bucket
-    , _facts         :: Set Fact
-      -- Buckets are updated in this order, with any unamed buckets being updated in undefined order afterwards.
-    , _practice      :: Int64
-      -- The mob's inherant verbs
-    , _charVerbs     :: Set Verb
-    }
-  deriving (Read,Show,Generic)
+instance Eq (Mob a) where
+  (==) = (==) `on` _mobId
 
-instance FromJSON Character
-instance ToJSON Character
+instance Ord (Mob a) where
+  compare = compare `on` _mobId
 
-makeClassy ''Character
+instance Comonad Mob where
+  extract (Mob _ _ a) = a
+  extend f w@(Mob i b _) = Mob i b (f w)
 
-instance HasStats Character Bucket where
-  stats = buckets
+instance Functor Mob where
+  fmap f (Mob i b a) = Mob i b (f a)
 
-data Mob =
-    Player { _char :: Character }
-  deriving (Show,Read,Generic)
+instance Foldable Mob where
+  foldMap f (Mob _ _ a) = f a
 
-instance FromJSON Mob
-instance ToJSON Mob
+instance Traversable Mob where
+  traverse f (Mob i b a) = Mob i b <$> f a
 
-makeLenses ''Mob
+instance HasLocation (Mob a) where
+  location = body.location
 
-instance HasCharacter Mob where
-  character = char
+instance HasStats (Mob a) where
+  stats = body.stats
 
-instance HasStats Mob Bucket where
-  stats = char.stats
+instance FromJSON a => FromJSON (Mob a) where
+  parseJSON (Object v) = Mob <$>
+    v .: "id" <*>
+    v .: "body" <*>
+    v .: "mind"
+  parseJSON _ = mzero
 
-startsFull :: Env -> Stat -> Expr -> Expr -> Bucket
-startsFull e s l d = Bucket l d (eval e (Capacity s))
+instance ToJSON a => ToJSON (Mob a) where
+  toJSON (Mob i b m) = object ["id" .= i, "body" .= b, "mind" .= m]
 
-rollPlayer :: Mob
-rollPlayer =
-    p -- leak (stat Endurance) (stat Stun) (10*Sqrt (Current Health)) p 
-  where
-    p = Player (Ch Map.empty Map.empty b Set.empty 0 Set.empty)
-    -- Healthier players recover faster
-    hB = startsFull e Health (Given 10) (1+Sqrt (Current Health))
-    eB = startsFull e Endurance (20 * Current Health) (Sqrt (Current Health))
-    sB = startsFull e Stun (Current Health) (Given 0)
-    b = Stats hB eB sB Map.empty
-    e = context p
+instance HasBody (Mob a) where
+  body = mobBody
+
+instance Default a => Default (Mob a) where
+  def = Mob def def def

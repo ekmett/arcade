@@ -76,7 +76,7 @@ roots f = Act $ \l s t -> do
   return (f s', s', t)
 
 here :: Monad m => Act s t m (ReifiedLens' s t)
-here = Act $ \ l s t -> return (ReifyLens l, s, t)
+here = Act $ \ l s t -> return (Lens l, s, t)
 
 globally :: Monad m => ALens' s t -> Act s t m a -> Act s u m a
 globally l2 (Act m) = Act $ \l1 s1 t1 -> do
@@ -87,5 +87,5 @@ globally l2 (Act m) = Act $ \l1 s1 t1 -> do
 
 locally :: Monad m => ALens' t u -> Act s u m a -> Act s t m a
 locally l' m = do
-  ReifyLens l <- here
+  Lens l <- here
   globally (l.cloneLens l') m

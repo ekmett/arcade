@@ -17,6 +17,7 @@ module Rogue.Stat
 import Control.Lens
 import Data.Default
 import Data.Hashable
+import Data.Int
 import Data.Map
 import Data.Monoid
 import Data.Text
@@ -26,8 +27,11 @@ import Data.Aeson
 
 data Stat
   = Health
+  | MaxHealth
   | Endurance
+  | MaxEndurance
   | Stun
+  | MaxStun
   | Stat !Text
   deriving (Eq,Ord,Show,Read,Typeable,Generic)
 
@@ -35,23 +39,29 @@ instance Hashable Stat
 instance FromJSON Stat
 instance ToJSON Stat
 
-data Stats a = Stats
-  { _health, _endurance, _stun :: a
-  , _otherStats :: Map Text a
-  } deriving (Functor,Typeable,Generic)
+data Stats = Stats
+  { _health,    _maxHealth
+  , _endurance, _maxEndurance
+  , _stun,      _maxStun :: Int64
+  , _otherStats :: Map Text Int64
+  } deriving (Eq,Ord,Read,Show,Typeable,Generic)
 
-deriving instance Show a => Show (Stats a)
-deriving instance Read a => Read (Stats a)
-instance FromJSON a => FromJSON (Stats a)
-instance ToJSON a => ToJSON (Stats a)
+instance FromJSON Stats
+instance ToJSON Stats
 
-instance Default a => Default (Stats a) where
-  def = Stats def def def mempty
+instance Default Stats where
+  def = Stats def def
+              def def
+              def def
+              mempty
 
 makeClassy ''Stats
 
-stat :: (HasStats s a, Default a) => Stat -> Lens' s a
-stat Health    = health
-stat Endurance = endurance
-stat Stun      = stun
-stat (Stat n)  = otherStats.at n.anon def (const False)
+stat :: HasStats s => Stat -> Lens' s Int64
+stat Health       = health
+stat Endurance    = endurance
+stat Stun         = stun
+stat MaxHealth    = maxHealth
+stat MaxEndurance = maxEndurance
+stat MaxStun      = maxStun
+stat (Stat n)     = otherStats.at n.non 0
