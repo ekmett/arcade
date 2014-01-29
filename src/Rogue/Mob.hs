@@ -29,13 +29,13 @@ data Character =
       -- What slots you have is fairly fixed. We shouldn't use them by name if we can help it.
       _stackSlots    :: Map Slot ItemStack
     , _worn          :: Map ClothingSlot Item
-    , _charStats         :: Stats Int64
+    , _charStats     :: Stats Int64
     , _buckets       :: Stats Bucket
     , _facts         :: Set Fact
       -- Buckets are updated in this order, with any unamed buckets being updated in undefined order afterwards.
     , _practice      :: Int64
       -- The mob's inherant verbs
-    , _charVerbs      :: Set Verb
+    , _charVerbs     :: Set Verb
     }
 
 makeClassy ''Character
