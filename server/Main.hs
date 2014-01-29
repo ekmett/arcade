@@ -23,7 +23,6 @@ import qualified Network.Wai.Handler.Warp as Warp
 import Options.Applicative
 import Rogue.Mob
 import Rogue.Monitor
-import System.Process
 
 main :: IO ()
 main = do
@@ -34,7 +33,6 @@ main = do
 
   withMonitor options $ \mon -> do
     putStrLn "Serving http://localhost:8080/index.html"
-    _ <- system "/usr/bin/open http://localhost:8080/index.html"
     Warp.runSettings Warp.defaultSettings
       { Warp.settingsPort = 8080
       , Warp.settingsIntercept = WaiWS.intercept (app mon)
@@ -44,7 +42,7 @@ app :: Monitor -> ServerApp
 app _mon pending = do
   let p = def :: Mob ()
   conn <- WS.acceptRequest pending
-  WS.sendTextData conn $ T.concat ["alert('", T.pack $ show p, "');"]
+  WS.sendTextData conn $ T.concat ["alert('", T.replace "'" "\\'" . T.pack $ show p, "');"]
   msg <- WS.receiveData conn
   print (msg :: Text)
   finally ?? disconnect $ return ()

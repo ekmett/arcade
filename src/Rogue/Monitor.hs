@@ -36,7 +36,6 @@ import Data.ByteString.Lens
 import Data.Data
 import Data.Text
 import Options.Applicative
-import System.Process
 import System.Remote.Monitoring
 import qualified System.Remote.Gauge as G
 import qualified System.Remote.Counter as C
@@ -129,6 +128,5 @@ withMonitor t k
     server <- forkServer (t^.monitorHost.packedChars) (t^.monitorPort)
     let uri = "http://" ++ t^.monitorHost ++ ":" ++ show (t^.monitorPort) ++ "/"
     putStrLn $ "Monitoring enabled at " ++ uri
-    _ <- system $ "/usr/bin/open " ++ uri
     k (Monitor (t^.monitorOptions) $ Just server) `finally` throwTo (serverThreadId server) ShutdownMonitor
   | otherwise = k $ Monitor (t^.monitorOptions) Nothing
