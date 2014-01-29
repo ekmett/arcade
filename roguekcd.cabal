@@ -93,9 +93,10 @@ executable rogue.server
   default-language: Haskell2010
   hs-source-dirs: server
   main-is: Main.hs
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   other-modules:
     Rogue.Server.Options
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+
   if !flag(server)
     buildable: False
   else
@@ -122,6 +123,9 @@ executable rogue.client
   hs-source-dirs: client
   main-is: Main.hs
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  other-modules:
+    Rogue.Curses
+
   if !flag(console)
     buildable: False
   else
@@ -129,9 +133,11 @@ executable rogue.client
       base,
       bytestring,
       data-default,
+      exceptions,
       file-embed,
       hscurses,
       lens,
+      mtl,
       optparse-applicative,
       roguekcd,
       text,
