@@ -6,6 +6,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE StandaloneDeriving #-}
 module Rogue.Stat
   ( Stat(..)
   , Stats(..)
@@ -21,19 +22,28 @@ import Data.Monoid
 import Data.Text
 import Data.Typeable
 import GHC.Generics
+import Data.Aeson
 
 data Stat
   = Health
   | Endurance
   | Stun
-  | Stat !Text deriving (Eq,Ord,Show,Read,Typeable,Generic)
+  | Stat !Text
+  deriving (Eq,Ord,Show,Read,Typeable,Generic)
 
 instance Hashable Stat
+instance FromJSON Stat
+instance ToJSON Stat
 
 data Stats a = Stats
   { _health, _endurance, _stun :: a
   , _otherStats :: Map Text a
-  } deriving (Functor,Typeable)
+  } deriving (Functor,Typeable,Generic)
+
+deriving instance Show a => Show (Stats a)
+deriving instance Read a => Read (Stats a)
+instance FromJSON a => FromJSON (Stats a)
+instance ToJSON a => ToJSON (Stats a)
 
 instance Default a => Default (Stats a) where
   def = Stats def def def mempty

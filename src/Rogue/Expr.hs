@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Rogue.Expr
   ( Expr(..)
   , eval
@@ -9,6 +10,9 @@ module Rogue.Expr
 import Control.Lens
 import Data.Default
 import Data.Int
+import GHC.Generics
+import Data.Aeson
+
 import Rogue.Stat
 
 data Env = Env { _envCurrent, _envCapacity :: Stat -> Int64 }
@@ -27,7 +31,10 @@ data Expr
   | Negate Expr
   | Abs Expr
   | Signum Expr
-  deriving (Show, Read)
+  deriving (Show, Read, Generic)
+
+instance FromJSON Expr
+instance ToJSON Expr
 
 instance Default Expr where
   def = Given 0

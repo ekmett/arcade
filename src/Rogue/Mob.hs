@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Rogue.Mob
   where
 
@@ -11,6 +12,8 @@ import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Text (Text)
+import GHC.Generics
+import Data.Aeson
 
 import Rogue.Stat
 import Rogue.Expr
@@ -38,6 +41,10 @@ data Character =
       -- The mob's inherant verbs
     , _charVerbs     :: Set Verb
     }
+  deriving (Read,Show,Generic)
+
+instance FromJSON Character
+instance ToJSON Character
 
 makeClassy ''Character
 
@@ -45,7 +52,11 @@ instance HasStats Character Bucket where
   stats = buckets
 
 data Mob =
-  Player { _char :: Character }
+    Player { _char :: Character }
+  deriving (Show,Read,Generic)
+
+instance FromJSON Mob
+instance ToJSON Mob
 
 makeLenses ''Mob
 
@@ -60,7 +71,7 @@ startsFull e s l d = Bucket l d (eval e (Capacity s))
 
 rollPlayer :: Mob
 rollPlayer =
-    leak (stat Endurance) (stat Stun) (10*Sqrt (Current Health)) p 
+    p -- leak (stat Endurance) (stat Stun) (10*Sqrt (Current Health)) p 
   where
     p = Player (Ch Map.empty Map.empty b Set.empty 0 Set.empty)
     -- Healthier players recover faster
