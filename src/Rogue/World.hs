@@ -5,6 +5,8 @@ module Rogue.World
     X, Y
   , Point
   , Grid
+  , showGrid
+  , printGrid
 
   , Stair(..)
   , up
@@ -24,18 +26,31 @@ module Rogue.World
 import           Rogue.ASCII
 
 import           Control.Lens   hiding (Level, levels)
-import           Data.Array     (Array, listArray)
+import           Data.Array     (Array, listArray, bounds, elems)
 import           Data.Default
 import           Data.Function  (on)
 import           Data.Text      (Text)
 import           Data.Text.Lens
 import           Data.UUID      (UUID)
 import qualified Data.UUID      as UUID
+import Data.List.Split (chunksOf)
 
 type X = Int
 type Y = Int
 type Point = (X,Y)
+
+_x, _y :: Lens' Point Int
+_x = _1
+_y = _2
+
 type Grid a = Array Point a
+
+showGrid :: ASCII a => Grid a -> String
+showGrid g = (unlines . chunksOf width . map ascii . elems) g
+  where width = bounds g ^. _2 . _x + 1
+
+printGrid :: ASCII a => Grid a -> IO ()
+printGrid = putStrLn . showGrid
 
 type WorldId = UUID
 type LevelId = UUID
