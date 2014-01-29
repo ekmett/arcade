@@ -27,6 +27,7 @@ import qualified Data.Aeson as JS
 import System.Process
 import Options.Applicative
 import qualified Control.Exception as E
+import Control.Time
 import Data.Random
 
 import Rogue.Classes
@@ -68,7 +69,7 @@ app _mon pending = isThread _mon "websocket" $ do
       print (msg :: Text)
   void . forever $ do
     WS.sendTextData conn . T.pack . show $ p
-    threadDelay (10^(6::Int))
+    delayTime 1
   finally ?? disconnect $ return ()
  where disconnect = return ()
 

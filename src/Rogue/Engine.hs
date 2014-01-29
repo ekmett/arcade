@@ -1,8 +1,10 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Rogue.Engine (
     GameEngine
   , startGame
   ) where
 
+import Control.Lens
 import Control.Monad
 import Control.Applicative
 import Control.Concurrent
@@ -25,10 +27,14 @@ data GameState =
     , _randSrc     :: PureMT
     }
 
+makeLenses ''GameState
+
 data GameEngine =
   Engine {
       _gameState :: IORef GameState
     }
+
+makeLenses ''GameEngine
 
 startGame :: IO GameEngine
 startGame = do
@@ -48,7 +54,9 @@ joinPlayer p ge = do
 mobTick :: GameEngine -> IO UTCTime
 mobTick ge = do
   now <- getCurrentTime
-  undefined
+  atomicModifyIORef' (ge ^. gameState) $ \gs ->
+    case PQ.minView (gs ^. updateQueue) of
+      Nothing -> (gs, 1 `addUTCTime` now)
 
 gameLoop :: GameEngine -> IO ()
 gameLoop ge = do
