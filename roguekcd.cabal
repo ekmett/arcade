@@ -47,6 +47,7 @@ library
     tables               >= 0.3.1   && < 0.4,
     transformers         >= 0.3     && < 0.4,
     text                 >= 1.0     && < 1.2,
+    uuid                 >= 1.3     && < 1.4,
     vector               >= 0.10    && < 0.11
 
   hs-source-dirs: src
