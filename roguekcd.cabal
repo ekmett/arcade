@@ -72,6 +72,7 @@ library
     Rogue.Monitor
     Rogue.Stat
     Rogue.World
+    Rogue.World.DemoLevels
     Rogue.Engine
 
   ghc-options: -Wall
