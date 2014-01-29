@@ -43,8 +43,9 @@ library
     process,
     mtl                  >= 2.1.2   && < 2.2,
     optparse-applicative >= 0.5.2.1 && < 0.6,
+    random-fu            >= 0.2     && < 0.3,
     semigroups           >= 0.12    && < 1,
-    tables               >= 0.3.1   && < 0.4,
+    tables               >= 0.3.1   && < 0.5,
     transformers         >= 0.3     && < 0.4,
     text                 >= 1.0     && < 1.2,
     uuid                 >= 1.3     && < 1.4,
@@ -57,7 +58,10 @@ library
     Rogue.Body
     Rogue.Hat
     Rogue.Location
+    Rogue.Identifiers
+    Rogue.Classes
     Rogue.Mob
+    Rogue.Mob.Player
     Rogue.Modifier
     Rogue.Monitor
     Rogue.Stat

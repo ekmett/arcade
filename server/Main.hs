@@ -59,7 +59,7 @@ main = do
 
 app :: Monitor -> ServerApp
 app _mon pending = isThread _mon "websocket" $ do
-  let p = def :: Mob ()
+  let p = def :: Mob
   conn <- WS.acceptRequest pending
   void . forkR _mon "reciever" . forever $ do 
       msg <- WS.receiveData conn
