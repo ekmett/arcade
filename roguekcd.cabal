@@ -28,14 +28,18 @@ flag test-doctests
 
 library
   build-depends:
-    base       >= 4.6    && < 4.7,
-    containers >= 0.5    && < 0.6,
-    hashable   >= 1.2    && < 1.3,
-    lens       >= 3.10.1 && < 5,
-    semigroups >= 0.12   && < 1,
-    text       >= 1.0    && < 1.2
+    base             >= 4.6    && < 4.7,
+    containers       >= 0.5    && < 0.6,
+    data-default     >= 0.5    && < 0.6,
+    hashable         >= 1.2    && < 1.3,
+    lens             >= 3.10.1 && < 4,
+    mtl              >= 2.1.2  && < 2.2,
+    semigroups       >= 0.12   && < 1,
+    transformers     >= 0.3 && < 0.4,
+    text             >= 1.0    && < 1.2
   hs-source-dirs: src
   exposed-modules:
+    Rogue.Act
     Rogue.Bucket
     Rogue.Expr
     Rogue.Hat
@@ -79,10 +83,11 @@ executable rogue.server
     build-depends:
       base,
       file-embed,
-      lens >= 3.10.1 && < 5,
+      lens,
+      process >= 1.1 && < 1.2,
       roguekcd,
-      text >= 1.0 && < 1.2,
-      transformers >= 0.3 && < 0.4,
+      text,
+      transformers,
       wai-app-static,
       wai-websockets,
       warp,
