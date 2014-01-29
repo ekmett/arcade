@@ -9,6 +9,7 @@ module Main where
 
 import Control.Monad
 import Control.Exception (finally)
+import Control.Concurrent
 import Control.Lens
 import Data.Default
 import Data.FileEmbed
@@ -43,9 +44,11 @@ app :: Monitor -> ServerApp
 app _mon pending = do
   let p = def :: Mob ()
   conn <- WS.acceptRequest pending
+  void . forkIO . forever $ do 
+      msg <- WS.receiveData conn
+      print (msg :: Text)
   void . forever $ do
     WS.sendTextData conn $ T.concat ["alert('", T.replace "'" "\\'" . T.pack $ show p, "');"]
-    msg <- WS.receiveData conn
-    print (msg :: Text)
+    threadDelay (10^6)
   finally ?? disconnect $ return ()
  where disconnect = return ()
