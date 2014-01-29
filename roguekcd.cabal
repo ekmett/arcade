@@ -57,8 +57,8 @@ library
     Rogue.Hat
     Rogue.Location
     Rogue.Mob
-    Rogue.Monitor
     Rogue.Modifier
+    Rogue.Monitor
     Rogue.Stat
 
   ghc-options: -Wall
