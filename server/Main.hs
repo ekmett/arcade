@@ -19,9 +19,7 @@ import Network.Wai.Application.Static
 import Network.WebSockets as WS
 import qualified Network.Wai.Handler.WebSockets as WaiWS
 import qualified Network.Wai.Handler.Warp as Warp
--- import qualified Data.Aeson as JS
--- import qualified Data.Text.Encoding as TE
--- import qualified Data.ByteString.Lazy as BSL
+import System.Process
 import Options.Applicative
 import Rogue.Mob
 import Rogue.Monitor
@@ -29,7 +27,7 @@ import Rogue.Server.Options
 
 main :: IO ()
 main = do
-  options <- execParser $ info parseMonitorOptions $
+  options <- execParser $ info parseServerOptions $
     fullDesc
     <> progDesc "rogue.server"
     <> header "A game server"
@@ -41,8 +39,8 @@ main = do
       _ <- system $ "/usr/bin/open " ++ uri
       return ()
     Warp.runSettings Warp.defaultSettings
-      { Warp.settingsPort = serverPort options
-      , Warp.settingsTimeout = serverTimeout options
+      { Warp.settingsPort = options^.serverPort
+      , Warp.settingsTimeout = options^.serverTimeout
       , Warp.settingsIntercept = WaiWS.intercept (app mon)
       } $ staticApp $ embeddedSettings $(embedDir "static")
 
@@ -55,6 +53,6 @@ app _mon pending = do
     print (msg :: Text)
   void . forever $ do
     WS.sendTextData conn $ T.concat ["alert('", T.replace "'" "\\'" . T.pack $ show p, "');"]
-    threadDelay (10^6)
+    threadDelay $ 10^(6::Int)
   finally ?? disconnect $ return ()
  where disconnect = return ()
