@@ -11,29 +11,37 @@ import Control.Exception (finally)
 import Control.Lens
 import Data.Default
 import Data.FileEmbed
-import Data.Text
+import Data.Monoid
+import Data.Text as T
 import Network.Wai.Application.Static
 import Network.WebSockets as WS
 import qualified Network.Wai.Handler.WebSockets as WaiWS
 import qualified Network.Wai.Handler.Warp as Warp
 -- import qualified Data.Aeson as JS
 -- import qualified Data.Text.Encoding as TE
-import qualified Data.Text as T
 -- import qualified Data.ByteString.Lazy as BSL
+import Options.Applicative
 import Rogue.Mob
+import Rogue.Monitor
 import System.Process
-
 
 main :: IO ()
 main = do
-  _ <- system "/usr/bin/open http://localhost:8080/index.html"
-  Warp.runSettings Warp.defaultSettings
-    { Warp.settingsPort = 8080
-    , Warp.settingsIntercept = WaiWS.intercept app
-    } $ staticApp $ embeddedSettings $(embedDir "static")
+  options <- execParser $ info parseMonitorOptions $
+    fullDesc
+    <> progDesc "rogue.server"
+    <> header "A game server"
 
-app :: ServerApp
-app pending = do
+  withMonitor options $ \mon -> do
+    putStrLn "Serving http://localhost:8080/index.html"
+    _ <- system "/usr/bin/open http://localhost:8080/index.html"
+    Warp.runSettings Warp.defaultSettings
+      { Warp.settingsPort = 8080
+      , Warp.settingsIntercept = WaiWS.intercept (app mon)
+      } $ staticApp $ embeddedSettings $(embedDir "static")
+
+app :: Monitor -> ServerApp
+app _mon pending = do
   let p = def :: Mob ()
   conn <- WS.acceptRequest pending
   WS.sendTextData conn $ T.concat ["alert('", T.pack $ show p, "');"]
