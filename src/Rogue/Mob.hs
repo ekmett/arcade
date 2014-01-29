@@ -7,14 +7,13 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
-module Rogue.Mob
-  ( MobId
-  , Mob(..)
+module Rogue.Mob (
+    Mob(..)
+  , Mobify(..)
   ) where
 
 import Control.Applicative
 import Control.Lens
-import Data.Default
 import Data.Function (on)
 import Data.Table
 
