@@ -4,12 +4,14 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
 module Rogue.Mob
   ( MobId
   , Mob(..)
   , HasMob(..)
+  , mobbed
   ) where
 
 import Control.Applicative
@@ -32,6 +34,11 @@ data Mob a = Mob
   , _mobBody :: !Body
   , _mind :: a
   } deriving (Show,Read)
+
+mobbed :: APrism s t a b -> Prism (Mob s) (Mob t) (Mob a) (Mob b)
+mobbed p = prism (fmap (clonePrism p #)) $ \(Mob i b s) -> case clonePrism p Left s of
+  Right t -> Left (Mob i b t)
+  Left a -> Right (Mob i b a)
 
 makeClassy ''Mob
 
