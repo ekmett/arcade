@@ -25,9 +25,9 @@ import qualified Network.Wai.Handler.Warp as Warp
 import qualified Data.Aeson as JS
 -- import qualified Data.Text.Encoding as TE
 -- import qualified Data.ByteString.Lazy as BSL
+import System.Process
 import Options.Applicative
 import qualified Control.Exception as E
-import System.Process
 
 import Rogue.Mob
 import Rogue.Monitor
@@ -40,7 +40,7 @@ threadCountG = "thread count"
 
 main :: IO ()
 main = do
-  options <- execParser $ info parseMonitorOptions $
+  options <- execParser $ info parseServerOptions $
     fullDesc
     <> progDesc "rogue.server"
     <> header "A game server"
@@ -66,9 +66,9 @@ app _mon pending = isThread _mon "websocket" $ do
       print (msg :: Text)
   void . forever $ do
     WS.sendTextData conn $ JS.encode p
-    threadDelay (10^6)
+    threadDelay (10^(6::Int))
   finally ?? disconnect $ return ()
- where disconnect = putStrLn "disconnect"
+ where disconnect = return ()
 
 isThread :: Monitor -> Text -> IO a -> IO a
 isThread _mon nm a = do
