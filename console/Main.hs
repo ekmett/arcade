@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 import qualified Data.Text.IO as TIO
@@ -25,4 +26,5 @@ main = do
       void . forever $ do
         f <- WS.receiveData conn
         TIO.putStrLn f
+        TIO.putStrLn ""
     return ()

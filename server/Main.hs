@@ -4,6 +4,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
 module Main where
 
@@ -14,17 +15,26 @@ import Control.Lens
 import Data.Default
 import Data.FileEmbed
 import Data.Monoid
-import Data.Text as T
+import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 import Network.Wai.Application.Static
 import Network.WebSockets as WS
 import qualified Network.Wai.Handler.WebSockets as WaiWS
 import qualified Network.Wai.Handler.Warp as Warp
--- import qualified Data.Aeson as JS
+import qualified Data.Aeson as JS
 -- import qualified Data.Text.Encoding as TE
 -- import qualified Data.ByteString.Lazy as BSL
 import Options.Applicative
+import qualified Control.Exception as E
+
 import Rogue.Mob
 import Rogue.Monitor
+
+import Control.Monad.Reader
+
+threadCountG :: Text
+threadCountG = "thread count"
 
 main :: IO ()
 main = do
@@ -34,6 +44,7 @@ main = do
     <> header "A game server"
 
   withMonitor options $ \mon -> do
+    
     putStrLn "Serving http://localhost:8080/index.html"
     Warp.runSettings Warp.defaultSettings
       { Warp.settingsPort = 8080
@@ -41,14 +52,28 @@ main = do
       } $ staticApp $ embeddedSettings $(embedDir "static")
 
 app :: Monitor -> ServerApp
-app _mon pending = do
+app _mon pending = isThread _mon "websocket" $ do
   let p = def :: Mob ()
   conn <- WS.acceptRequest pending
-  void . forkIO . forever $ do 
+  void . forkR _mon "reciever" . forever $ do 
       msg <- WS.receiveData conn
       print (msg :: Text)
   void . forever $ do
-    WS.sendTextData conn $ T.concat ["alert('", T.replace "'" "\\'" . T.pack $ show p, "');"]
+    WS.sendTextData conn $ JS.encode p
     threadDelay (10^6)
   finally ?? disconnect $ return ()
- where disconnect = return ()
+ where disconnect = putStrLn "disconnect"
+
+isThread :: Monitor -> Text -> IO a -> IO a
+isThread _mon nm a = do
+  tG <- runReaderT (gauge threadCountG) _mon
+  whereException nm . E.bracket_ (inc tG) (dec tG) $ a
+
+forkR :: Monitor -> Text -> IO () -> IO ThreadId
+forkR _mon nm a = do
+  tG <- runReaderT (gauge threadCountG) _mon
+  forkIO . whereException nm . E.bracket_ (inc tG) (dec tG) $ a
+
+whereException :: Text -> IO a -> IO a
+whereException w = 
+  E.handle (\(e::E.SomeException) -> TIO.putStrLn (T.concat ["Exception in ", w, ": ", T.pack $ show e]) >> E.throw e)

@@ -103,6 +103,7 @@ executable rogue.server
       data-default,
       file-embed,
       lens,
+      mtl,
       optparse-applicative,
       process >= 1.1 && < 1.2,
       roguekcd,
