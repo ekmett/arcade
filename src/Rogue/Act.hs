@@ -10,16 +10,25 @@ module Rogue.Act
   , locally
   , root
   , roots
+  , focus
   ) where
 
 import Control.Applicative
 import Control.Lens
+import Control.Lens.Internal.Zoom
 import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.Reader.Class
-import Control.Monad.State.Class
+import Control.Monad.State
+import Data.Profunctor.Unsafe
 
 newtype Act s t m a = Act { enact :: Lens' s t -> s -> t -> m (a, s, t) }
+
+-- | A limited, but legal form of `zoom`
+focus :: Monad m => LensLike' (Focusing m a) t u -> StateT u m a -> Act s t m a
+focus l (StateT m) = Act $ \_ s t -> do
+  (c, t') <- unfocusing $ l (Focusing #. m) t
+  return (c, s, t')
 
 runAct :: Monad m => Act s s m a -> s -> m (a, s)
 runAct (Act m) s = do
