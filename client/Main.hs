@@ -10,6 +10,7 @@ import Data.Text
 import Data.Text.Strict.Lens
 import Network.WebSockets as WS
 import Options.Applicative
+import Rogue.Client.Options
 import Rogue.Curses
 import Rogue.Monitor
 import UI.HSCurses.Curses
@@ -17,14 +18,14 @@ import UI.HSCurses.CursesHelper as Helper
 
 main :: IO ()
 main = do
-  options <- execParser $ info parseMonitorOptions $
+  options <- execParser $ info parseClientOptions $
     fullDesc
-    <> progDesc "rogue.console"
-    <> header "A game console"
+    <> progDesc "rogue.client"
+    <> header "A game client"
 
-  withMonitor options $ \_mon -> do
+  withMonitor options $ \ _mon -> do
    withCurses $ \ ui -> do
-    _ <- WS.runClient "127.0.0.1" 8080 "/" $ \conn -> do
+    _ <- WS.runClient (options^.clientHost) (options^.clientPort) "/" $ \conn -> do
       msgs <- newChan
       (_h,w) <- scrSize
       _scrollback <- newWin 5 (w-2) 1 1

@@ -66,6 +66,7 @@ library
     Rogue.ASCII
     Rogue.Bucket
     Rogue.Classes
+    Rogue.Client.Options
     Rogue.Curses
     Rogue.Description
     Rogue.Engine
