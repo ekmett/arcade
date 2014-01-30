@@ -23,13 +23,13 @@ import Rogue.Description
 import Rogue.Mob.Id
 import Rogue.Mob.Player
 
-data Mob = 
-    MobPlayer { _player :: Player }
-  deriving (Show,Read)
-  
+data Mob = MobPlayer
+  { _mobPlayer :: Player
+  } deriving (Show,Read)
+
 makeLenses ''Mob
 
-class Mobify a where  
+class Mobify a where
   mobify :: a -> Mob
 
 instance Mobify Player where
