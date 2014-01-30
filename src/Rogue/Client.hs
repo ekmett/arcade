@@ -7,7 +7,6 @@ module Rogue.Client
 import Control.Lens
 import Control.Monad
 import Control.Concurrent
-import Data.Monoid
 import Data.Text
 import Data.Text.Strict.Lens
 import Network.WebSockets as WS
@@ -18,7 +17,7 @@ import UI.HSCurses.Curses
 import UI.HSCurses.CursesHelper as Helper
 
 clientMain :: ClientOptions -> Monitor -> IO ()
-clientMain options mon = do
+clientMain options _mon = do
   withCurses $ \ ui -> do
     _ <- WS.runClient (options^.clientHost) (options^.clientPort) "/" $ \conn -> do
       msgs <- newChan

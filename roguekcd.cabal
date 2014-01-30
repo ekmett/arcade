@@ -73,6 +73,7 @@ library
     Rogue.Bucket
     Rogue.Classes
     Rogue.Client
+    Rogue.Client.Model
     Rogue.Client.Options
     Rogue.Curses
     Rogue.Description

@@ -25,8 +25,8 @@ instance HasMonitorOptions Command where
 
 parseOptions :: Parser Command
 parseOptions = subparser
-  ( command "server"  (info (Server <$> parseServerOptions) $ progDesc "start a game server")
- <> command "client"  (info (Client <$> parseClientOptions) $ progDesc "start a game client")
+  ( command "server"  (info (Server <$> parseServerOptions) $ fullDesc <> progDesc "start a game server")
+ <> command "client"  (info (Client <$> parseClientOptions) $ fullDesc <> progDesc "start a game client")
   )
 
 main :: IO ()

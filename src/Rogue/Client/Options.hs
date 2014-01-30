@@ -15,8 +15,9 @@ import Rogue.Monitor
 data ClientOptions = ClientOptions
   { _clientMonitorOptions :: MonitorOptions
   , _clientHost           :: String
-  , _clientPort           :: Int
-  , _clientTimeout        :: Int
+  , _clientPort           :: {-# UNPACK #-} !Int
+  , _clientTimeout        :: {-# UNPACK #-} !Int
+  , _clientScrollback     :: {-# UNPACK #-} !Int
   } deriving (Eq,Ord,Show,Read,Data,Typeable)
 
 makeClassy ''ClientOptions
@@ -30,6 +31,7 @@ parseClientOptions = ClientOptions
   <*> strOption (long "host" <> short 'h' <> help "hostname for the server" <> metavar "HOST" <> action "hostname" <> value "localhost")
   <*> option (long "port" <> short 'p' <> help "port for the server" <> metavar "PORT" <> value 8080)
   <*> option (long "timeout" <> short 't' <> help "server timeout" <> metavar "SECONDS" <> value 30)
+  <*> option (long "scrollback-limit" <> help "scrollback limit" <> metavar "LINES" <> value 9999)
 
 instance HasMonitorOptions ClientOptions where
   monitorOptions = clientMonitorOptions
