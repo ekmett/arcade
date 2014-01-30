@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Main where
+module Rogue.Client
+  ( clientMain
+  ) where
 
 -- import qualified Data.Text.IO as TIO
 import Control.Lens
@@ -9,22 +11,15 @@ import Data.Monoid
 import Data.Text
 import Data.Text.Strict.Lens
 import Network.WebSockets as WS
-import Options.Applicative
 import Rogue.Client.Options
 import Rogue.Curses
 import Rogue.Monitor
 import UI.HSCurses.Curses
 import UI.HSCurses.CursesHelper as Helper
 
-main :: IO ()
-main = do
-  options <- execParser $ info (helper <*> parseClientOptions) $
-    fullDesc
-    <> progDesc "rogue.client"
-    <> header "A game client"
-
-  withMonitor options $ \ _mon -> do
-   withCurses $ \ ui -> do
+clientMain :: ClientOptions -> Monitor -> IO ()
+clientMain options mon = do
+  withCurses $ \ ui -> do
     _ <- WS.runClient (options^.clientHost) (options^.clientPort) "/" $ \conn -> do
       msgs <- newChan
       (_h,w) <- scrSize

@@ -6,7 +6,9 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
-module Main where
+module Rogue.Server
+  ( serverMain
+  ) where
 
 import Control.Monad
 import Control.Exception as E
@@ -14,7 +16,6 @@ import Control.Exception.Lens
 import Control.Concurrent
 import Control.Lens
 import Data.FileEmbed
-import Data.Monoid
 import Data.Random
 import Data.Text as T
 import qualified Data.Text.IO as TIO
@@ -26,7 +27,6 @@ import qualified Data.Aeson as JS
 import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Lazy as BSL
 import System.Process
-import Options.Applicative
 
 import Rogue.Classes
 import Rogue.Description
@@ -39,24 +39,18 @@ import Rogue.Time
 threadCountG :: Text
 threadCountG = "thread count"
 
-main :: IO ()
-main = do
-  options <- execParser $ info (helper <*> parseServerOptions) $
-    fullDesc
-    <> progDesc "rogue.server"
-    <> header "A game server"
-
-  withMonitor options $ \mon -> do
-    let uri = serverUri options
-    putStrLn $ "Serving " ++ uri
-    when (options^.serverOpen) $ do
-      _ <- system $ "/usr/bin/open " ++ uri
-      return ()
-    Warp.runSettings Warp.defaultSettings
-      { Warp.settingsPort = options^.serverPort
-      , Warp.settingsTimeout = options^.serverTimeout
-      , Warp.settingsIntercept = WaiWS.intercept (app mon)
-      } $ staticApp $ embeddedSettings $(embedDir "static")
+serverMain :: ServerOptions -> Monitor -> IO ()
+serverMain options mon = do
+  let uri = serverUri options
+  putStrLn $ "Serving " ++ uri
+  when (options^.serverOpen) $ do
+    _ <- system $ "/usr/bin/open " ++ uri
+    return ()
+  Warp.runSettings Warp.defaultSettings
+    { Warp.settingsPort = options^.serverPort
+    , Warp.settingsTimeout = options^.serverTimeout
+    , Warp.settingsIntercept = WaiWS.intercept (app mon)
+    } $ staticApp $ embeddedSettings $(embedDir "static")
 
 app :: Monitor -> ServerApp
 app _mon pending = isThread _mon "websocket" $ do
