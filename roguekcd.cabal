@@ -81,9 +81,9 @@ library
     Rogue.Description
     Rogue.Engine
     Rogue.Hat
-    Rogue.Identifiers
     Rogue.Location
     Rogue.Mob
+    Rogue.Mob.Id
     Rogue.Mob.Player
     Rogue.Modifier
     Rogue.Monitor

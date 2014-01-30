@@ -12,7 +12,7 @@ import qualified Data.Text as T
 import qualified Data.Map as Map
 
 import Rogue.Classes
-import Rogue.Identifiers
+import Rogue.Mob.Id
 import Rogue.Location
 import Rogue.Description
 
@@ -37,7 +37,7 @@ instance OnTick Player where
   onTick = id
 
 instance HasDescription Player where
-  description p = 
+  description p =
     Description
     (T.concat ["Player ", T.pack . show $ p ^. mobId, " is a common adventurer and not long for this world."])
     Map.empty

@@ -17,10 +17,10 @@ import Data.Table (Table)
 import Data.Table as Table
 import Control.Monad.Identity
 
-import Rogue.Identifiers
 import Rogue.Act
 import Rogue.Time
 import Rogue.Mob
+import Rogue.Mob.Id
 import Rogue.Mob.Player
 
 data GameState =

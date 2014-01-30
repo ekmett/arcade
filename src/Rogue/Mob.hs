@@ -20,8 +20,7 @@ import Data.Table
 import Rogue.Location
 import Rogue.Classes
 import Rogue.Description
-import Rogue.Identifiers
-
+import Rogue.Mob.Id
 import Rogue.Mob.Player
 
 data Mob = 
