@@ -17,6 +17,7 @@ import Control.Lens
 import Data.Function (on)
 import Data.Table
 
+import Rogue.Act
 import Rogue.Location
 import Rogue.Classes
 import Rogue.Description
@@ -35,8 +36,9 @@ class Mobify a where
 instance Mobify Player where
   mobify = MobPlayer
 
-instance OnTick Mob where
-  onTick (MobPlayer p) = MobPlayer . onTick $ p
+instance MobLike Mob where
+  onTick = locally player onTick 
+  applyEvent e = locally player (applyEvent e)
 
 instance HasDescription Mob where
   description (MobPlayer p) = description p

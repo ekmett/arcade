@@ -1,7 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Rogue.Engine
   ( GameEngine
-  , HasGameEngine(gameEngine)
   , startGame
   ) where
 
@@ -17,9 +16,14 @@ import System.Random.Mersenne.Pure64 (PureMT, newPureMT)
 import Data.Table (Table)
 import Data.Table as Table
 import Control.Monad.Identity
+import Data.Map (Map)
+import qualified Data.Map as Map
+import Data.Set (Set)
+import qualified Data.Set as Set
 
 import Rogue.Act
 import Rogue.Time
+import Rogue.Events
 import Rogue.Mob
 import Rogue.Mob.Id
 import Rogue.Mob.Player
@@ -28,20 +32,21 @@ data GameState = GameState
   { _mobs        :: Table Mob
   , _updateQueue :: MinPQueue UTCTime MobId
   , _randSrc     :: PureMT
+  , _mobQueue    :: Map MobId (Set MobEvent)
   }
 
-makeClassy ''GameState
+makeLenses ''GameState
 
 data GameEngine = GameEngine
   { _gameState :: IORef GameState
   }
 
-makeClassy ''GameEngine
+makeLenses ''GameEngine
 
 startGame :: IO GameEngine
 startGame = do
   mt <- newPureMT
-  ge <- GameEngine <$> newIORef (GameState Table.empty PQ.empty mt)
+  ge <- GameEngine <$> newIORef (GameState Table.empty PQ.empty mt Map.empty)
   forkIO $ gameLoop ge
   return ge
 
@@ -68,10 +73,12 @@ mobTick ge = do
       -- Just right (or late ... fashionably so ...)
       -- We ignore t because even if we're late, we don't want to schedule them earlier again
       -- since if we're lagged and catch up we don't want a flurry of actions.
-      Just ((_, mid), qr) ->
-        let ugs = runIdentity $ execAct ?? gs $ do
-              updateQueue .= PQ.insert (delayTillTick gs mid `addUTCTime` now) mid qr
-        in (ugs, maybe (1 `addUTCTime` now) (^. _1) $ PQ.getMin (gs ^. updateQueue))
+      Just ((_, mid), qr) -> 
+          (ugs, maybe (1 `addUTCTime` now) (^. _1) $ PQ.getMin (gs ^. updateQueue))
+        where ugs = runIdentity $ execAct ?? gs $ do
+                
+                -- Reschedule this Mob
+                updateQueue .= PQ.insert (delayTillTick gs mid `addUTCTime` now) mid qr
 
 gameLoop :: GameEngine -> IO ()
 gameLoop ge = forever $ do

@@ -2,25 +2,39 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Rogue.Mob.Player
   ( Player(..)
-  , HasPlayer(..)
   ) where
 
 import Control.Monad.Trans
 import Control.Lens
 import Data.Default
+import Control.Monad.State
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import qualified Data.UUID.V1 as V1
+
+import Rogue.Utils
+import Rogue.Act
 import Rogue.Classes
 import Rogue.Description
 import Rogue.Location
+import Rogue.Stat
+import Rogue.Bucket
+import Rogue.Events
 import Rogue.Mob.Id
 
 data Player =
-    Player { _playerId :: MobId, _playerLocation :: Location }
+    Player { _playerId :: MobId, _playerLocation :: Location, _playerStats :: Stats, _playerBuckets :: Buckets }
   deriving (Read,Show)
 
-makeClassy ''Player
+makeLenses ''Player
+
+constitution :: Stat
+constitution = "constitution"
+
+health, stamina, actionPoints :: BucketName
+health = "hp"
+stamina = "stamina"
+actionPoints = "ap"
 
 instance HasMobId Player where
   mobId = playerId
@@ -28,17 +42,56 @@ instance HasMobId Player where
 instance HasLocation Player where
   location = playerLocation
 
+instance HasStats Player where
+  stats = playerStats
+
+instance HasBuckets Player where
+  buckets = playerBuckets
+
 instance Rollable Player where
   roll = do
-    Just u <- liftIO V1.nextUUID
-    return $ Player u def
+      Just u <- liftIO V1.nextUUID
+      return $ (withBuckets sizeBuckets fillBuckets $ Player u def s Map.empty)
+    where
+      s = Map.fromList [(constitution, 10)]
 
-instance OnTick Player where
-  onTick = id
+sizeBuckets :: Player -> Player
+sizeBuckets p = 
+  setBucketMax actionPoints (isqrt (10 * p ^. stat constitution)) .
+  setBucketMax stamina (10 * (p ^. stat constitution)) .
+  setBucketMax health (p ^. stat constitution) $
+  p
 
 instance HasDescription Player where
   description p =
     Description
     (T.concat ["Player ", T.pack . show $ p ^. mobId, " is a common adventurer and not long for this world."])
-    Map.empty
-    Map.empty
+    (p ^. stats)
+    (p ^. buckets)
+
+checkDeath :: Monad m => Act s Player m [Occurence]
+checkDeath = do
+  h <- use (bucket health.current)
+  if h <= 0
+    then error "dead!"
+    else return []
+
+instance MobLike Player where
+  onTick = do
+    modify . withBuckets sizeBuckets $ \p ->
+      addBucket (bucket health) (isqrt (p ^. stat constitution)) .
+      -- Based on our old health
+      addBucket (bucket stamina) (sqrt (p ^. bucket health.current)) .
+      pour (bucket stamina) (bucket actionPoints) (isqrt (p ^. stat constitution)) $
+      p
+  applyEvent (MEDamage Smash d) = do
+    -- Smashing damage hurts AP and then health
+    bucket actionPoints.current -= realToFrac d
+    o <- use $ bucket actionPoints.current
+    bucket actionPoints.current .= max 0 o
+    bucket health.current -= abs (min 0 o)
+    checkDeath
+  applyEvent (MEDamage Slash d) = do
+    -- Slashing just hurts AP
+    bucket health.current -= realToFrac d
+    checkDeath

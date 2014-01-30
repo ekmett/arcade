@@ -13,10 +13,16 @@ import Rogue.Stat
 import Rogue.Bucket
 
 data Description =
-    Description { _desc :: Text, _stats :: Stats, _buckets :: Buckets }
+    Description { _desc :: Text, _descriptionStats :: Stats, _descriptionBuckets :: Buckets }
   deriving (Read,Show)
 
 makeLenses ''Description
+
+instance HasStats Description where
+  stats = descriptionStats
+
+instance HasBuckets Description where
+  buckets = descriptionBuckets
 
 instance JS.ToJSON Description where
   toJSON (Description d s b) =

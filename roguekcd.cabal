@@ -80,6 +80,7 @@ library
     Rogue.Curses
     Rogue.Description
     Rogue.Engine
+    Rogue.Events
     Rogue.Hat
     Rogue.Location
     Rogue.Mob
@@ -92,6 +93,7 @@ library
     Rogue.Server.Options
     Rogue.Stat
     Rogue.Time
+    Rogue.Utils
     Rogue.World
     Rogue.World.DemoLevels
 
