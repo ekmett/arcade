@@ -22,6 +22,8 @@ import Network.WebSockets as WS
 import qualified Network.Wai.Handler.WebSockets as WaiWS
 import qualified Network.Wai.Handler.Warp as Warp
 import qualified Data.Aeson as JS
+import qualified Data.Text.Encoding as TE
+import qualified Data.ByteString.Lazy as BSL
 import System.Process
 import Options.Applicative
 import qualified Control.Exception as E
@@ -67,7 +69,7 @@ app _mon pending = isThread _mon "websocket" $ do
       msg <- WS.receiveData conn
       print (msg :: Text)
   void . forever $ do
-    WS.sendBinaryData conn . JS.encode . description $ p
+    WS.sendTextData conn . TE.decodeUtf8 . BSL.toStrict . JS.encode . description $ p
     delayTime 1
   finally ?? disconnect $ return ()
  where disconnect = return ()
