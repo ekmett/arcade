@@ -38,7 +38,7 @@ data GameState = GameState
 makeLenses ''GameState
 
 data GameEngine = GameEngine
-  { _gameState :: IORef GameState
+  { _gameRef :: IORef GameState
   }
 
 makeLenses ''GameEngine
@@ -64,7 +64,7 @@ delayTillTick _ _ = 1
 mobTick :: GameEngine -> IO UTCTime
 mobTick ge = do
   now <- getCurrentTime
-  atomicModifyIORef' (ge ^. gameState) $ \gs ->
+  atomicModifyIORef' (ge ^. gameRef) $ \gs ->
     case PQ.minViewWithKey (gs ^. updateQueue) of
       -- we never want to more then a second without checking.
       Nothing -> (gs, 1 `addUTCTime` now)
