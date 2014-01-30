@@ -41,7 +41,7 @@ threadCountG = "thread count"
 
 main :: IO ()
 main = do
-  options <- execParser $ info parseServerOptions $
+  options <- execParser $ info (helper <*> parseServerOptions) $
     fullDesc
     <> progDesc "rogue.server"
     <> header "A game server"

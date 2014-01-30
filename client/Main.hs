@@ -18,7 +18,7 @@ import UI.HSCurses.CursesHelper as Helper
 
 main :: IO ()
 main = do
-  options <- execParser $ info parseClientOptions $
+  options <- execParser $ info (helper <*> parseClientOptions) $
     fullDesc
     <> progDesc "rogue.client"
     <> header "A game client"
