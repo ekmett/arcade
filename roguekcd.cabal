@@ -62,8 +62,9 @@ library
   exposed-modules:
     Rogue.Act
     Rogue.ASCII
-    Rogue.Body
+    Rogue.Bucket
     Rogue.Classes
+    Rogue.Description
     Rogue.Engine
     Rogue.Hat
     Rogue.Identifiers

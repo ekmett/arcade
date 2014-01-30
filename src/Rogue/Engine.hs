@@ -50,13 +50,25 @@ joinPlayer p ge = do
   -- We don't want connections hanging though.
   error "We don't want no sticking players"
 
+delayTillTick :: GameState -> MobId -> NominalDiffTime
+delayTillTick _ _ = 1
+
 -- Tick a single Mob
 mobTick :: GameEngine -> IO UTCTime
 mobTick ge = do
   now <- getCurrentTime
   atomicModifyIORef' (ge ^. gameState) $ \gs ->
-    case PQ.minView (gs ^. updateQueue) of
+    case PQ.minViewWithKey (gs ^. updateQueue) of
+      -- we never want to more then a second without checking.
       Nothing -> (gs, 1 `addUTCTime` now)
+      -- Not time yet! To soon! To soon!
+      Just ((t, _), _) | t > now -> (gs, t)
+      -- Just right (or late ... fashionably so ...)
+      -- We ignore t because even if we're late, we don't want to schedule them earlier again
+      -- since if we're lagged and catch up we don't want a flurry of actions.
+      Just ((_, mid), qr) ->
+        undefined
+        --runAt (mobs.at mid) gs
 
 gameLoop :: GameEngine -> IO ()
 gameLoop ge = do

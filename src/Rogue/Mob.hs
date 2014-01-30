@@ -18,7 +18,8 @@ import Data.Function (on)
 import Data.Table
 
 import Rogue.Location
-import Rogue.Stat
+import Rogue.Classes
+import Rogue.Description
 import Rogue.Identifiers
 
 import Rogue.Mob.Player
@@ -34,6 +35,12 @@ class Mobify a where
 
 instance Mobify Player where
   mobify = MobPlayer
+
+instance OnTick Mob where
+  onTick (MobPlayer p) = MobPlayer . onTick $ p
+
+instance HasDescription Mob where
+  description (MobPlayer p) = description p
 
 getMobId :: Mob -> MobId
 getMobId (MobPlayer p) = view mobId p
