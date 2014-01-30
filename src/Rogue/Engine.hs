@@ -15,8 +15,11 @@ import qualified Data.PQueue.Prio.Min as PQ
 import System.Random.Mersenne.Pure64 (PureMT, newPureMT)
 import Data.Table (Table)
 import Data.Table as Table
+import Control.Monad.Identity
 
 import Rogue.Identifiers
+import Rogue.Act
+import Rogue.Time
 import Rogue.Mob
 import Rogue.Mob.Player
 
@@ -67,11 +70,11 @@ mobTick ge = do
       -- We ignore t because even if we're late, we don't want to schedule them earlier again
       -- since if we're lagged and catch up we don't want a flurry of actions.
       Just ((_, mid), qr) ->
-        undefined
-        --runAt (mobs.at mid) gs
+        let ugs = runIdentity $ execAct ?? gs $ do
+              updateQueue .= (PQ.insert (delayTillTick gs mid `addUTCTime` now) mid qr)
+        in (ugs, maybe (1 `addUTCTime` now) (^. _1) $ PQ.getMin (gs ^. updateQueue))
 
 gameLoop :: GameEngine -> IO ()
 gameLoop ge = do
   forever $ do
-    n <- mobTick ge
-    undefined
+    mobTick ge >>= delayTill
