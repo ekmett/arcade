@@ -13,13 +13,13 @@ module Rogue.Monitor
   , monitorUri
   -- * Gauges
   , Gauge(..)
-  , gauge
+  , gauge, gaugeM
   -- * Counters
   , Counter(..)
-  , counter
+  , counter, counterM
   -- * Labels
   , Label(..)
-  , label
+  , label, labelM
   -- * Modifiers
   , Setting(..)
   , Incremental(..)
@@ -31,9 +31,8 @@ module Rogue.Monitor
 
 import Control.Exception
 import Control.Lens hiding (Setting)
-import Control.Monad (when)
 import Control.Monad.Trans
-import Control.Monad.Reader.Class
+import Control.Monad.Reader
 import Data.ByteString.Lens
 import Data.Data
 import Data.Text
@@ -115,17 +114,27 @@ instance Incremental Counter where
   inc (Counter t)   = liftIO $ maybe (return ()) C.inc t
   add (Counter t) i = liftIO $ maybe (return ()) (C.add ?? i) t
 
+gauge :: (MonadIO m, HasMonitor t) => Text -> t -> m Gauge
+gauge = runReaderT . gaugeM
+
 -- | create a gauge
-gauge :: (MonadIO m, MonadReader t m, HasMonitor t) => Text -> m Gauge
-gauge t = view monitorServer >>= maybe (return $ Gauge Nothing) (liftIO . fmap (Gauge . Just) . getGauge t)
+gaugeM :: (MonadIO m, MonadReader t m, HasMonitor t) => Text -> m Gauge
+gaugeM l = view monitorServer >>= maybe (return $ Gauge Nothing) (liftIO . fmap (Gauge . Just) . getGauge l)
+
+counter :: (MonadIO m, HasMonitor t) => Text -> t -> m Counter
+counter = runReaderT . counterM
 
 -- | create a counter
-counter :: (MonadIO m, MonadReader t m, HasMonitor t) => Text -> m Counter
-counter t = view monitorServer >>= maybe (return $ Counter Nothing) (liftIO . fmap (Counter . Just) . getCounter t)
+counterM :: (MonadIO m, MonadReader t m, HasMonitor t) => Text -> m Counter
+counterM l = view monitorServer >>= maybe (return $ Counter Nothing) (liftIO . fmap (Counter . Just) . getCounter l)
+
+
+label :: (MonadIO m, HasMonitor t) => Text -> t -> m Label
+label = runReaderT . labelM
 
 -- | create a label
-label :: (MonadIO m, MonadReader t m, HasMonitor t) => Text -> m Label
-label t = view monitorServer >>= maybe (return $ Label Nothing) (liftIO . fmap (Label . Just) . getLabel t)
+labelM :: (MonadIO m, MonadReader t m, HasMonitor t) => Text -> m Label
+labelM t = view monitorServer >>= maybe (return $ Label Nothing) (liftIO . fmap (Label . Just) . getLabel t)
 
 instance HasMonitorOptions Monitor where
   monitorOptions = _monitorOptions

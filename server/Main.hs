@@ -9,13 +9,14 @@
 module Main where
 
 import Control.Monad
-import Control.Exception (finally)
+import Control.Exception as E
+import Control.Exception.Lens
 import Control.Concurrent
 import Control.Lens
 import Data.FileEmbed
 import Data.Monoid
-import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Random
+import Data.Text as T
 import qualified Data.Text.IO as TIO
 import Network.Wai.Application.Static
 import Network.WebSockets as WS
@@ -26,8 +27,6 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Lazy as BSL
 import System.Process
 import Options.Applicative
-import qualified Control.Exception as E
-import Data.Random
 
 import Rogue.Classes
 import Rogue.Description
@@ -36,8 +35,6 @@ import Rogue.Mob.Player
 import Rogue.Monitor
 import Rogue.Server.Options
 import Rogue.Time
-
-import Control.Monad.Reader
 
 threadCountG :: Text
 threadCountG = "thread count"
@@ -75,15 +72,16 @@ app _mon pending = isThread _mon "websocket" $ do
  where disconnect = return ()
 
 isThread :: Monitor -> Text -> IO a -> IO a
-isThread _mon nm a = do
-  tG <- runReaderT (gauge threadCountG) _mon
+isThread mon nm a = do
+  tG <- gauge threadCountG mon
   whereException nm . E.bracket_ (inc tG) (dec tG) $ a
 
 forkR :: Monitor -> Text -> IO () -> IO ThreadId
-forkR _mon nm a = do
-  tG <- runReaderT (gauge threadCountG) _mon
+forkR mon nm a = do
+  tG <- gauge threadCountG mon
   forkIO . whereException nm . E.bracket_ (inc tG) (dec tG) $ a
 
 whereException :: Text -> IO a -> IO a
-whereException w = 
-  E.handle (\(e::E.SomeException) -> TIO.putStrLn (T.concat ["Exception in ", w, ": ", T.pack $ show e]) >> E.throw e)
+whereException w = handling id $ \e -> do
+  TIO.putStrLn (T.concat ["Exception in ", w, ": ", T.pack $ show e])
+  E.throw e
