@@ -1,9 +1,12 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Rogue.Bucket
   ( BucketName
   , Bucket
   , Buckets
+  , capacity
+  , current
   , HasBuckets(..)
   , bucket
   ) where
@@ -24,9 +27,11 @@ type Buckets = Map BucketName Bucket
 data Bucket =
     Bucket {
        _capacity :: Int64
-     , _contense :: Int64
+     , _current :: Int64
      }
-  deriving (Read,Show,Eq)
+  deriving (Eq,Ord,Read,Show)
+
+makeLenses ''Bucket
 
 class HasBuckets t where
   buckets :: Simple Lens t Buckets
@@ -35,12 +40,12 @@ bucket :: HasBuckets s => BucketName -> Lens' s Bucket
 bucket n = buckets.at n.non (Bucket 0 0)
 
 instance JS.ToJSON Bucket where
-  toJSON (Bucket cap con) =
-    JS.object ["capacity" .= cap, "contense" .= con]
+  toJSON (Bucket cap cur) =
+    JS.object ["capacity" .= cap, "current" .= cur]
 
 instance JS.FromJSON Bucket where
   parseJSON (JS.Object v) =
     Bucket
     <$> v .: "capacity"
-    <*> v .: "contense"
+    <*> v .: "current"
   parseJSON _ = mzero
