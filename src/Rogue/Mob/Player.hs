@@ -1,36 +1,36 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Rogue.Mob.Player (
-    Player
+module Rogue.Mob.Player
+  ( Player(..)
+  , HasPlayer(..)
   ) where
 
 import Control.Monad.Trans
 import Control.Lens
-import qualified Data.UUID.V1 as V1
 import Data.Default
-import qualified Data.Text as T
 import qualified Data.Map as Map
-
+import qualified Data.Text as T
+import qualified Data.UUID.V1 as V1
 import Rogue.Classes
-import Rogue.Mob.Id
-import Rogue.Location
 import Rogue.Description
+import Rogue.Location
+import Rogue.Mob.Id
 
 data Player =
-    Player { _pId :: MobId, _pLocation :: Location }
+    Player { _playerId :: MobId, _playerLocation :: Location }
   deriving (Read,Show)
 
-makeLenses ''Player
+makeClassy ''Player
 
 instance HasMobId Player where
-  mobId = pId
+  mobId = playerId
 
 instance HasLocation Player where
-  location = pLocation
+  location = playerLocation
 
 instance Rollable Player where
   roll = do
-    Just u <- liftIO $ V1.nextUUID
+    Just u <- liftIO V1.nextUUID
     return $ Player u def
 
 instance OnTick Player where
