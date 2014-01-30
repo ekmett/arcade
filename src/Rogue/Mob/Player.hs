@@ -13,7 +13,6 @@ import qualified Data.Text as T
 import qualified Data.UUID.V1 as V1
 
 import Rogue.Utils
-import Rogue.Act
 import Rogue.Classes
 import Rogue.Description
 import Rogue.Location
@@ -69,7 +68,7 @@ instance HasDescription Player where
     (p ^. stats)
     (p ^. buckets)
 
-checkDeath :: Monad m => Act s Player m [Occurence]
+checkDeath :: Monad m => StateT Player m [Occurence]
 checkDeath = do
   h <- use (bucket health.current)
   if h <= 0

@@ -31,7 +31,9 @@ import System.Process
 import Rogue.Classes
 import Rogue.Description
 import Rogue.Mob
+import Rogue.Mob.Id
 import Rogue.Mob.Player
+import Rogue.Engine
 import Rogue.Monitor
 import Rogue.Server.Options
 import Rogue.Time
@@ -54,13 +56,20 @@ serverMain options mon = do
 
 app :: Monitor -> ServerApp
 app _mon pending = isThread _mon "websocket" $ do
-  p <- sample (roll::RVarT IO Player) >>= return . mobify
+  e <- startGame
+  pid <- do
+    p <- sample (roll::RVarT IO Player)
+    joinPlayer p e
+    return (p ^. mobId)
   conn <- WS.acceptRequest pending
   void . forkR _mon "reciever" . forever $ do 
       msg <- WS.receiveData conn
       print (msg :: Text)
   void . forever $ do
-    WS.sendTextData conn . TE.decodeUtf8 . BSL.toStrict . JS.encode . description $ p
+    mp <- describeMob e pid
+    case mp of 
+      Nothing -> return ()
+      Just p -> WS.sendTextData conn . TE.decodeUtf8 . BSL.toStrict . JS.encode $ p
     delayTime 1
   finally ?? disconnect $ return ()
  where disconnect = return ()

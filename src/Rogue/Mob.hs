@@ -16,17 +16,17 @@ import Control.Applicative
 import Control.Lens
 import Data.Function (on)
 import Data.Table
+import Control.Monad.State
 
-import Rogue.Act
 import Rogue.Location
 import Rogue.Classes
 import Rogue.Description
 import Rogue.Mob.Id
 import Rogue.Mob.Player
 
-data Mob = MobPlayer
-  { _mobPlayer :: Player
-  } deriving (Show,Read)
+data Mob =
+    MobPlayer { _mobPlayer :: Player }
+  deriving (Show,Read)
 
 makeLenses ''Mob
 
@@ -37,8 +37,16 @@ instance Mobify Player where
   mobify = MobPlayer
 
 instance MobLike Mob where
-  onTick = locally player onTick 
-  applyEvent e = locally player (applyEvent e)
+  onTick = do
+    m <- get
+    (r, p) <- runStateT onTick (m ^. mobPlayer)
+    put $ MobPlayer p
+    return r
+  applyEvent e = do
+    m <- get
+    (r, p) <- runStateT (applyEvent e) (m ^. mobPlayer)
+    put $ MobPlayer p
+    return r
 
 instance HasDescription Mob where
   description (MobPlayer p) = description p
