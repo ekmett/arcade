@@ -21,15 +21,14 @@ import Network.Wai.Application.Static
 import Network.WebSockets as WS
 import qualified Network.Wai.Handler.WebSockets as WaiWS
 import qualified Network.Wai.Handler.Warp as Warp
--- import qualified Data.Aeson as JS
--- import qualified Data.Text.Encoding as TE
--- import qualified Data.ByteString.Lazy as BSL
+import qualified Data.Aeson as JS
 import System.Process
 import Options.Applicative
 import qualified Control.Exception as E
 import Data.Random
 
 import Rogue.Classes
+import Rogue.Description
 import Rogue.Mob
 import Rogue.Mob.Player
 import Rogue.Monitor
@@ -68,7 +67,7 @@ app _mon pending = isThread _mon "websocket" $ do
       msg <- WS.receiveData conn
       print (msg :: Text)
   void . forever $ do
-    WS.sendTextData conn . T.pack . show $ p
+    WS.sendBinaryData conn . JS.encode . description $ p
     delayTime 1
   finally ?? disconnect $ return ()
  where disconnect = return ()
