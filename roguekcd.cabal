@@ -68,6 +68,7 @@ library
     split                  >= 0.2     && < 0.3
 
   hs-source-dirs: src
+
   exposed-modules:
     Rogue.Act
     Rogue.ASCII
@@ -86,12 +87,16 @@ library
     Rogue.Mob.Player
     Rogue.Modifier
     Rogue.Monitor
+    Rogue.Paths
     Rogue.Server
     Rogue.Server.Options
     Rogue.Stat
     Rogue.Time
     Rogue.World
     Rogue.World.DemoLevels
+
+  other-modules:
+    Paths_roguekcd
 
   ghc-options: -Wall
   default-language: Haskell2010
