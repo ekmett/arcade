@@ -40,7 +40,7 @@ type X = Int
 type Y = Int
 type Point = (X,Y)
 
-_x, _y :: Simple Lens Point Int
+_x, _y :: Lens' Point Int
 _x = _1
 _y = _2
 
