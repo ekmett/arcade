@@ -37,6 +37,7 @@ library
     base                   >= 4.6     && < 4.7,
     bytestring,
     comonad                >= 4       && < 5,
+    configurator,
     containers             >= 0.5     && < 0.6,
     data-default           >= 0.5     && < 0.6,
     ekg,
@@ -130,16 +131,5 @@ executable roguish
   else
     build-depends:
       base,
-      bytestring,
-      data-default,
-      exceptions,
-      file-embed,
-      hscurses,
-      lens,
-      mtl,
       optparse-applicative,
-      process >= 1.1 && < 1.2,
-      random-fu,
-      roguekcd,
-      text,
-      transformers
+      roguekcd
