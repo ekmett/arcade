@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Rogue.Engine (
-    GameEngine
+module Rogue.Engine
+  ( GameEngine
+  , HasGameEngine(gameEngine)
   , startGame
   ) where
 
@@ -23,33 +24,31 @@ import Rogue.Mob
 import Rogue.Mob.Id
 import Rogue.Mob.Player
 
-data GameState =
-    GS {
-      _mobs        :: Table Mob
-    , _updateQueue :: MinPQueue UTCTime MobId
-    , _randSrc     :: PureMT
-    }
+data GameState = GameState
+  { _mobs        :: Table Mob
+  , _updateQueue :: MinPQueue UTCTime MobId
+  , _randSrc     :: PureMT
+  }
 
-makeLenses ''GameState
+makeClassy ''GameState
 
-data GameEngine =
-  Engine {
-      _gameState :: IORef GameState
-    }
+data GameEngine = GameEngine
+  { _gameState :: IORef GameState
+  }
 
-makeLenses ''GameEngine
+makeClassy ''GameEngine
 
 startGame :: IO GameEngine
 startGame = do
   mt <- newPureMT
-  ge <- Engine <$> newIORef (GS Table.empty PQ.empty mt)
+  ge <- GameEngine <$> newIORef (GameState Table.empty PQ.empty mt)
   forkIO $ gameLoop ge
   return ge
 
 joinPlayer :: Player -> GameEngine -> IO ()
 joinPlayer p ge = do
   -- Queue the player for insertion into the game after the next tick.
-  -- Don't return untill they're in the game?
+  -- Don't return until they are in the game?
   -- We don't want connections hanging though.
   error "We don't want no sticking players"
 
@@ -71,10 +70,10 @@ mobTick ge = do
       -- since if we're lagged and catch up we don't want a flurry of actions.
       Just ((_, mid), qr) ->
         let ugs = runIdentity $ execAct ?? gs $ do
-              updateQueue .= (PQ.insert (delayTillTick gs mid `addUTCTime` now) mid qr)
+              updateQueue .= PQ.insert (delayTillTick gs mid `addUTCTime` now) mid qr
         in (ugs, maybe (1 `addUTCTime` now) (^. _1) $ PQ.getMin (gs ^. updateQueue))
 
 gameLoop :: GameEngine -> IO ()
-gameLoop ge = do
-  forever $ do
-    mobTick ge >>= delayTill
+gameLoop ge = forever $ do
+  t <- mobTick ge
+  delayTill t
