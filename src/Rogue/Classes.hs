@@ -15,5 +15,7 @@ class MobLike a where
   -- Mobs don't actually get to depend on 's', the overall game state.
   -- Just their own definition.
   -- Monad 'm' will need to be enhanced to access random numbers and such
-  onTick :: Monad m => StateT a m ()
-  applyEvent :: Monad m => MobEvent -> StateT a m [Occurence]
+  onTick :: (MonadRandom m, Monad m) => StateT a m ()
+  applyEvent :: (MonadRandom m, Monad m) => MobEvent -> StateT a m [Occurence]
+  postEvents :: (MonadRandom m, Monad m) => StateT a m [Occurence]
+  

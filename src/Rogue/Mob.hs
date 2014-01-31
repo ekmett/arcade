@@ -35,18 +35,24 @@ class Mobify a where
 
 instance Mobify Player where
   mobify = MobPlayer
-
+ 
 instance MobLike Mob where
   onTick = do
     m <- get
-    (r, p) <- runStateT onTick (m ^. mobPlayer)
-    put $ MobPlayer p
+    (r, p) <- lift $ runStateT onTick (m ^. mobPlayer)
+    put $ mobify p
     return r
   applyEvent e = do
     m <- get
-    (r, p) <- runStateT (applyEvent e) (m ^. mobPlayer)
-    put $ MobPlayer p
+    (r, p) <- lift $ runStateT (applyEvent e) (m ^. mobPlayer)
+    put $ mobify p
     return r
+  postEvents = do
+    m <- get
+    (r, p) <- lift $ runStateT postEvents (m ^. mobPlayer)
+    put $ mobify p
+    return r
+                      
 
 instance HasDescription Mob where
   description (MobPlayer p) = description p

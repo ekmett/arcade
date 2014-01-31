@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Rogue.Mob.Player
-  ( Player(..)
+module Rogue.Mob.Player( 
+    Player
   ) where
 
 import Control.Monad.Trans
@@ -12,6 +12,7 @@ import qualified Data.Map as Map
 import qualified Data.Text as T
 import qualified Data.UUID.V1 as V1
 
+import Rogue.ASCII
 import Rogue.Utils
 import Rogue.Classes
 import Rogue.Description
@@ -47,6 +48,9 @@ instance HasStats Player where
 instance HasBuckets Player where
   buckets = playerBuckets
 
+instance ASCII Player where
+  ascii _ = '웃'
+
 instance Rollable Player where
   roll = do
       Just u <- liftIO V1.nextUUID
@@ -67,13 +71,7 @@ instance HasDescription Player where
     (T.concat ["Player ", T.pack . show $ p ^. mobId, " is a common adventurer and not long for this world."])
     (p ^. stats)
     (p ^. buckets)
-
-checkDeath :: Monad m => StateT Player m [Occurence]
-checkDeath = do
-  h <- use (bucket health.current)
-  if h <= 0
-    then error "dead!"
-    else return []
+    (ascii p)
 
 instance MobLike Player where
   onTick = do
@@ -83,14 +81,19 @@ instance MobLike Player where
       -- Based on our old health
       addBucket (bucket stamina) (sqrt (p ^. bucket health.current)) $
       p
+  postEvents = do
+    h <- use (bucket health.current)
+    if h <= 0
+      then return [Die]
+      else return []
   applyEvent (MEDamage Smash d) = do
     -- Smashing damage hurts AP and then health
     bucket actionPoints.current -= realToFrac d
     o <- use $ bucket actionPoints.current
     bucket actionPoints.current .= max 0 o
     bucket health.current -= abs (min 0 o)
-    checkDeath
+    return []
   applyEvent (MEDamage Slash d) = do
-    -- Slashing just hurts AP
+    -- Slashing just hurts HP
     bucket health.current -= realToFrac d
-    checkDeath
+    return []

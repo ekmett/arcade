@@ -29,8 +29,6 @@ import qualified Data.ByteString.Lazy as BSL
 import System.Process
 
 import Rogue.Classes
-import Rogue.Description
-import Rogue.Mob
 import Rogue.Mob.Id
 import Rogue.Mob.Player
 import Rogue.Engine
@@ -68,7 +66,7 @@ app _mon pending = isThread _mon "websocket" $ do
   void . forever $ do
     mp <- describeMob e pid
     case mp of
-      Nothing -> return ()
+      Nothing -> error "Player is dead"
       Just p -> WS.sendTextData conn . TE.decodeUtf8 . BSL.toStrict . JS.encode $ p
     delayTime 1
   finally ?? disconnect $ return ()
