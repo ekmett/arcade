@@ -56,7 +56,7 @@ serverMain options mon = do
 
 app :: Monitor -> ServerApp
 app _mon pending = isThread _mon "websocket" $ do
-  e <- startGame
+  e <- startGame _mon
   pid <- do
     p <- sample (roll::RVarT IO Player)
     joinPlayer p e
@@ -67,7 +67,7 @@ app _mon pending = isThread _mon "websocket" $ do
       print (msg :: Text)
   void . forever $ do
     mp <- describeMob e pid
-    case mp of 
+    case mp of
       Nothing -> return ()
       Just p -> WS.sendTextData conn . TE.decodeUtf8 . BSL.toStrict . JS.encode $ p
     delayTime 1

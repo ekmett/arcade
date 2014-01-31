@@ -79,9 +79,9 @@ instance MobLike Player where
   onTick = do
     modify . withBuckets sizeBuckets $ \p ->
       addBucket (bucket health) (isqrt (p ^. stat constitution)) .
+      pour (bucket stamina) (bucket actionPoints) (min 1 $ sqrt ((p ^. bucket health.current) / 10)) .
       -- Based on our old health
-      addBucket (bucket stamina) (sqrt (p ^. bucket health.current)) .
-      pour (bucket stamina) (bucket actionPoints) (isqrt (p ^. stat constitution)) $
+      addBucket (bucket stamina) (sqrt (p ^. bucket health.current)) $
       p
   applyEvent (MEDamage Smash d) = do
     -- Smashing damage hurts AP and then health

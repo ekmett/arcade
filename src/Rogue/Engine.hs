@@ -1,9 +1,11 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Rogue.Engine
   ( GameEngine
   , startGame
   , joinPlayer
   , describeMob
+  , gameEngineG
   ) where
 
 import Control.Lens
@@ -12,6 +14,7 @@ import Control.Applicative
 import Control.Concurrent
 import Data.Time
 import Data.IORef
+import System.Mem.Weak
 import Data.PQueue.Prio.Min (MinPQueue)
 import qualified Data.PQueue.Prio.Min as PQ
 import System.Random.Mersenne.Pure64 (PureMT, newPureMT)
@@ -31,6 +34,7 @@ import Rogue.Classes
 import Rogue.Time
 import Rogue.Events
 import Rogue.Description
+import Rogue.Monitor
 import Rogue.Mob
 import Rogue.Mob.Id
 import Rogue.Mob.Player
@@ -44,24 +48,25 @@ data GameState = GameState
 
 makeLenses ''GameState
 
-data GameEngine = GameEngine
-  { _gameRef :: IORef GameState
-  }
+type GameEngine = IORef GameState
 
-makeLenses ''GameEngine
+gameEngineG = "Game Engines"
 
-startGame :: IO GameEngine
-startGame = do
+startGame :: Monitor -> IO GameEngine
+startGame mon = do
+  tG <- gauge gameEngineG mon
+  inc tG
   mt <- newPureMT
-  ge <- GameEngine <$> newIORef (GameState Table.empty PQ.empty mt Map.empty)
-  forkIO $ gameLoop ge
+  ge <- newIORef (GameState Table.empty PQ.empty mt Map.empty)
+  wge <- mkWeakIORef ge (return ())
+  forkIO $ gameLoop tG wge
   return ge
 
 joinPlayer :: Player -> GameEngine -> IO ()
 joinPlayer p ge = do
   now <- getCurrentTime
   let mid = p ^. mobId
-  atomicModifyIORef' (ge ^. gameRef) $ \gs ->
+  atomicModifyIORef' ge $ \gs ->
     case gs ^. mobs.at mid of
       Just _ -> 
         -- TODO LoseConcentration here.
@@ -72,7 +77,7 @@ joinPlayer p ge = do
 
 describeMob :: GameEngine -> MobId -> IO (Maybe Description)
 describeMob ge mid = do
-  gs <- readIORef (ge ^. gameRef)
+  gs <- readIORef ge
   return . fmap description $ gs ^. mobs.at mid
 
 delayTillTick :: GameState -> MobId -> NominalDiffTime
@@ -82,8 +87,8 @@ delayTillTick _ _ = 1
 mobTick :: GameEngine -> IO UTCTime
 mobTick ge = do
   now <- getCurrentTime
-  es <- sample $ Categorical.fromWeightedList [(1::Float, [MEDamage Smash 3]), (1, [MEDamage Slash 2]), (3, [])]
-  atomicModifyIORef' (ge ^. gameRef) $ \gs ->
+  es <- sample $ Categorical.fromWeightedList [(1::Float, [MEDamage Smash 11]), (1, [MEDamage Slash 6]), (1, [])]
+  atomicModifyIORef' ge $ \gs ->
     case PQ.minViewWithKey (gs ^. updateQueue) of
       -- we never want to more then a second without checking.
       Nothing -> (gs, 1 `addUTCTime` now)
@@ -101,7 +106,15 @@ mobTick ge = do
                 -- Reschedule this Mob
                 updateQueue .= PQ.insert (delayTillTick gs mid `addUTCTime` now) mid qr
 
-gameLoop :: GameEngine -> IO ()
-gameLoop ge = forever $ do
-  t <- mobTick ge
-  delayTill t
+gameLoop :: Gauge -> Weak GameEngine -> IO ()
+gameLoop tG wge = go
+  where
+    go = do
+      mge <- deRefWeak wge
+      case mge of
+        Nothing -> do
+          dec tG
+        Just ge -> do
+          t <- mobTick ge
+          delayTill t
+          go
