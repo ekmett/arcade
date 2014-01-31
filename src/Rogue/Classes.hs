@@ -4,7 +4,6 @@ import Control.Monad.Trans
 import Data.Random
 import Control.Monad.State
 
-import Rogue.Act
 import Rogue.Events
 
 class Rollable a where

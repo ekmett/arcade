@@ -10,7 +10,6 @@ module Rogue.Engine
 
 import Control.Lens
 import Control.Monad
-import Control.Applicative
 import Control.Concurrent
 import Data.Time
 import Data.IORef
@@ -18,17 +17,15 @@ import System.Mem.Weak
 import Data.PQueue.Prio.Min (MinPQueue)
 import qualified Data.PQueue.Prio.Min as PQ
 import System.Random.Mersenne.Pure64 (PureMT, newPureMT)
-import Data.Table (Table)
 import Data.Table as Table
 import Control.Monad.State
+import Data.Text (Text)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Random
 import qualified Data.Random.Distribution.Categorical as Categorical
-
-import Debug.Trace
 
 import Rogue.Act
 import Rogue.Utils
@@ -53,6 +50,7 @@ makeLenses ''GameState
 
 type GameEngine = IORef GameState
 
+gameEngineG :: Text
 gameEngineG = "Game Engines"
 
 startGame :: Monitor -> IO GameEngine
@@ -62,7 +60,7 @@ startGame mon = do
   mt <- newPureMT
   ge <- newIORef (GameState Table.empty PQ.empty mt Map.empty Set.empty)
   wge <- mkWeakIORef ge (return ())
-  forkIO $ gameLoop tG wge
+  void . forkIO $ gameLoop tG wge
   return ge
 
 inGame :: GameEngine -> Act GameState GameState Identity a -> IO a
