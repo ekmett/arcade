@@ -24,8 +24,6 @@ import Network.WebSockets as WS
 import qualified Network.Wai.Handler.WebSockets as WaiWS
 import qualified Network.Wai.Handler.Warp as Warp
 import qualified Data.Aeson as JS
-import qualified Data.Text.Encoding as TE
-import qualified Data.ByteString.Lazy as BSL
 import System.Process
 
 import Rogue.Classes
@@ -66,9 +64,12 @@ app _mon pending = isThread _mon "websocket" $ do
   void . forever $ do
     mp <- describeMob e pid
     case mp of
-      Nothing -> error "Player is dead"
-      Just p -> WS.sendTextData conn . TE.decodeUtf8 . BSL.toStrict . JS.encode $ p
-    delayTime 1
+      Nothing -> do
+        WS.sendTextData conn ("Player is dead!"::Text)
+        WS.sendClose conn ("Sorry"::Text)
+      Just p -> do 
+        WS.sendTextData conn . JS.encode $ p
+        delayTime 1
   finally ?? disconnect $ return ()
  where disconnect = return ()
 
