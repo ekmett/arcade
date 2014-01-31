@@ -10,6 +10,7 @@
 module Rogue.Mob (
     Mob(..)
   , Mobify(..)
+  , Key(MobId, MobLocation)
   ) where
 
 import Control.Applicative
