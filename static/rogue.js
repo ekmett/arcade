@@ -14,13 +14,11 @@
         $("body").append(stats.domElement);
         // music.play();
 
-        /*
         connection.onmessage = function(event) {
           console.log("MESSAGE:",event.data);
           eval(event.data);
         };
         connection.start();
-        */
       });
     }
   );

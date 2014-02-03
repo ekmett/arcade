@@ -6,6 +6,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 module Rogue.Server
   ( serverMain
   ) where
@@ -16,65 +17,82 @@ import Control.Exception.Lens
 import Control.Concurrent
 import Control.Lens
 import Data.FileEmbed
-import Data.Random
 import Data.Text as T
 import qualified Data.Text.IO as TIO
+import Data.Typeable
 import Network.Wai.Application.Static
 import Network.WebSockets as WS
 import qualified Network.Wai.Handler.WebSockets as WaiWS
 import qualified Network.Wai.Handler.Warp as Warp
-import qualified Data.Aeson as JS
 import System.Process
 
-import Rogue.Classes
-import Rogue.Mob.Id
-import Rogue.Mob.Player
-import Rogue.Engine
+import Rogue.Connection as Rogue
 import Rogue.Monitor
-import Rogue.Server.Options
-import Rogue.Time
+import Rogue.Options
+
+registerConnection :: Rogue.Connection -> IO ()
+registerConnection r = do
+  return ()
 
 threadCountG :: Text
 threadCountG = "thread count"
 
-serverMain :: ServerOptions -> Monitor -> IO ()
-serverMain options mon = do
-  let uri = serverUri options
+serverMain :: Options -> Monitor -> IO ()
+serverMain opts mon = do
+  let uri = serverUri opts
   putStrLn $ "Serving " ++ uri
-  when (options^.serverOpen) $ do
+  when (opts^.serverOpen) $ do
     _ <- system $ "/usr/bin/open " ++ uri
     return ()
   Warp.runSettings Warp.defaultSettings
-    { Warp.settingsPort = options^.serverPort
-    , Warp.settingsTimeout = options^.serverTimeout
+    { Warp.settingsPort = opts^.serverPort
+    , Warp.settingsTimeout = opts^.serverTimeout
     , Warp.settingsIntercept = WaiWS.intercept (app mon)
     } $ staticApp $ embeddedSettings $(embedDir "static")
 
-app :: Monitor -> ServerApp
-app _mon pending = isThread _mon "websocket" $ do
-  e <- startGame _mon
-  pid <- do
-    p <- sample (roll::RVarT IO Player)
-    joinPlayer p e
-    return (p ^. mobId)
-  conn <- WS.acceptRequest pending
-  void . forkR _mon "reciever" . forever $ do 
-      msg <- WS.receiveData conn
-      print (msg :: Text)
-  void . forever $ do
-    mp <- describeMob e pid
-    case mp of
-      Nothing -> do
-        WS.sendTextData conn ("Player is dead!"::Text)
-        WS.sendClose conn ("Sorry"::Text)
-      Just p -> do 
-        WS.sendTextData conn . JS.encode $ p
-        delayTime 1
-  finally ?? disconnect $ return ()
- where disconnect = return ()
+data Hangup = Hangup deriving (Show,Typeable)
+instance Exception Hangup
 
-isThread :: Monitor -> Text -> IO a -> IO a
-isThread mon nm a = do
+app :: Monitor -> ServerApp
+app mon pending = countThread mon "websocket" $ do
+
+  let rhead = pendingRequest pending
+      rpath = requestPath rhead
+
+  putStrLn $ "connection via " ++ show rpath
+
+
+  conn <- WS.acceptRequest pending
+
+  -- TODO: coin a UUID for this connecton, or take it from the URL
+  WS.sendTextData conn ("0"::Text)
+
+  input <- newChan
+  output <- newChan
+
+  receiverId <- forkR mon "websocket.read" $
+    handle (\Hangup -> return ()) $
+    forever $ do
+      msg <- WS.receiveData conn
+      writeChan input msg
+      print msg
+
+  senderId <- myThreadId
+
+  registerConnection $ Connection
+    { Rogue.send  = writeChan output
+    , Rogue.recv  = readChan input
+    , Rogue.close = throwTo senderId Hangup
+    }
+
+  whereException "websocket.write" $
+    finally ?? throwTo receiverId Hangup $ do
+      forever $ do
+        msg <- readChan output
+        WS.sendBinaryData conn msg
+
+countThread :: Monitor -> Text -> IO a -> IO a
+countThread mon nm a = do
   tG <- gauge threadCountG mon
   whereException nm . E.bracket_ (inc tG) (dec tG) $ a
 
