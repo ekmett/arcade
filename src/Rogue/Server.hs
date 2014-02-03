@@ -89,7 +89,7 @@ app mon pending = countThread mon "websocket" $ do
     finally ?? throwTo receiverId Hangup $ do
       forever $ do
         msg <- readChan output
-        WS.sendBinaryData conn msg
+        WS.sendTextData conn msg
 
 countThread :: Monitor -> Text -> IO a -> IO a
 countThread mon nm a = do

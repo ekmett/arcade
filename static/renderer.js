@@ -13,10 +13,10 @@ define(
     };
 
     Layer.prototype = {
-      ball : function(x,y,r,c) {
+      ball : function(x,y,z,r,c) {
         var context = this.context;
         context.beginPath();
-        context.arc(x,y,r,0,2*Math.PI,false);
+        context.arc(x,y-z,r,0,2*Math.PI,false);
         context.fillStyle = c || "#3A5BCD";
         context.fill();
         // dirty the containing rectangle
@@ -71,12 +71,12 @@ define(
 
         // show random crap to slow down the canvas for testing
         for (var i = 0; i < 2000; i ++) {
-          dynamic.ball(events.mouseX % i, i % events.mouseY, 10, "#001020");
+          dynamic.ball(events.mouseX % i, i % events.mouseY, 10, 10, "#001020");
         }
 
         hud.clear();
         for (var i = 0; i < 200; i++) {
-          hud.ball(i % events.mouseX, events.mouseY % (i * 10), 10, "#802010");
+          hud.ball(i % events.mouseX, events.mouseY % (i * 10), 10, 10, "#802010");
         }
       }
 

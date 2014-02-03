@@ -53,7 +53,7 @@ define("connection",[], function() {
     if (!connection.shutdown && connection.reconnectable && attempt++ < connection.attempts) {
       if (ws != null) ws.close();
       connection.available = false;
-      ws = open(connecton.ticket);
+      ws = open(connection.ticket);
       state = typeof connection.ticket === 'undefined' ? "CONNECTING" : "CONNECTED"
       // TODO: add a connection timeout here and try reconnect again if the connection is stll unavailable then
     } else {
