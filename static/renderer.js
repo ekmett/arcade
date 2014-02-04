@@ -129,7 +129,7 @@ define(
 
     step = 0;
 
-    window.setInterval( function() { return snapBy(1,1); }, 33);
+    // window.setInterval( function() { return snapBy(1,1); }, 33);
 
     var render = function(t) { // t is a DOMHighResTimeStamp or Date
       requestAnimationFrame(render);
@@ -139,14 +139,14 @@ define(
       main.scrollLeft(scrollX);
       main.scrollTop(scrollY);
 
-      console.log(renderer.overdrawn(), renderer.visible());
+      // console.log(renderer.overdrawn(), renderer.visible());
 
       dirty = DIRTY_SHADOWS | DIRTY_FOREGROUND;
       // draw the world
 
       step = (step+1) % 60;
-      var x = drawnX + events.mouseX;// - scrollX;
-      var y = drawnY + events.mouseY;// - scrollY;
+      var x = 50; // drawnX + events.mouseX;
+      var y = 50; // drawnY + events.mouseY;
       n = Math.sin(step * 3.14 / 30) * 10 + 10;
 
       if (dirty & DIRTY_BACKGROUND) {
@@ -167,7 +167,7 @@ define(
 	for (var i = 0; i < 200; i ++) {
           n = Math.sin((step + i*2) * 3.14 / 30) * 10 + 10;
           c.beginPath();
-          c.arc(x + Math.floor(i%20)*30,y*2 + (i/20)*60,10,0,2*Math.PI,false);
+          c.arc(x + Math.floor(i%20)*30,y*2 + (i/20)*30,10,0,2*Math.PI,false);
           c.fillStyle = "rgba(0,0,0,0.25)";
           c.fill();
 	}
@@ -185,8 +185,11 @@ define(
 	  my_gradient.addColorStop(0,"red");
 	  my_gradient.addColorStop(1,"blue");
 	  c.fillStyle=my_gradient;
+	  c.strokeStyle = "black";
 
           //c.fillStyle = "#3A5BCD";
+	  c.lineWidth = 0.3;
+	  c.stroke();
           c.fill();
 	}
       }

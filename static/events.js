@@ -25,7 +25,7 @@ define("events",["jquery"],function($) {
   });
 
   map.mousemove(function(e) {
-    console.log("events","mousemove",e.pageX,e.pageY,e.offsetX, e.offsetY);
+    // console.log("events","mousemove",e.pageX,e.pageY,e.offsetX, e.offsetY);
     events.mouseX = e.offsetX;
     events.mouseY = e.offsetY;
   });

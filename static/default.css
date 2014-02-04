@@ -6,16 +6,14 @@
 html, body {
   width: 100%;
   height: 100%;
-  overflow: hidden;
-  background: #6f6fbf;
+  overflow: scroll;
 }
 
 #main {
-  overflow: hidden;
+  overflow: scroll;
   display:  block;
   top: 0;
   left: 0;
-  background-image:url('images/grid16.png');
 }
 
 .map {
@@ -28,6 +26,8 @@ html, body {
 
 #background {
   z-index: 10;
+  background: #6f6fbf;
+  background-image:url('images/grid16.png');
 }
 
 #shadows {
