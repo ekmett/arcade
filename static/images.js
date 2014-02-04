@@ -1,12 +1,12 @@
-define("image",
+define("images",
   ["jquery"],
   function ($) {
 
-  var image = {
+  var images = {
     cache: {}
   };
 
-  var load = image.load = function(uri) {
+  var load = images.load = function(uri) {
     if (image.cache[uri]) {
       return image.cache[uri];
     }
@@ -17,5 +17,5 @@ define("image",
     return img;
   };
 
-  return image;
+  return images;
 });

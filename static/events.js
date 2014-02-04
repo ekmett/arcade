@@ -1,5 +1,5 @@
 define("events",["jquery"],function($) {
-  var map = $('#main');
+  var map = $('#foreground');
 
   var events = {
     impulse: {}, // keys held
@@ -26,13 +26,8 @@ define("events",["jquery"],function($) {
 
   map.mousemove(function(e) {
     console.log("events","mousemove",e.pageX,e.pageY,e.offsetX, e.offsetY);
-    if (e.offsetX == undefined) {
-      events.mouseX = e.pageX - map.offset().left;
-      events.mouseY = e.pageY - map.offset().top;
-    } else {
-      events.mouseX = e.offsetX;
-      events.mouseY = e.offsetY;
-    }
+    events.mouseX = e.offsetX;
+    events.mouseY = e.offsetY;
   });
 
   map.mousedown(function(e) {

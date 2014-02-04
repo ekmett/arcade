@@ -6,47 +6,51 @@
 html, body {
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  background: #6f6fbf;
+}
+
+#main {
+  overflow: hidden;
+  display:  block;
+  top: 0;
+  left: 0;
+  background-image:url('images/grid16.png');
 }
 
 .map {
-  background: transparent;
-  position: fixed;
+  position: absolute;
   top: 0px;
   left: 0px;
+  display: block;
+  background: transparent;
 }
 
 #background {
-  z-index: -3;
+  z-index: 10;
 }
 
-#fixed {
-  z-index: -2;
+#shadows {
+  z-index: 20;
 }
 
-#dynamic {
-  z-index: -1;
-}
-
-#hud {
-  z-index: 0;
+#foreground {
+  z-index: 30;
 }
 
 #stats {
   position: fixed;
-  top:0px;
-  right:0px;
+  top:0;
+  right:0;
   z-index: 100;
 }
 
 #music {
   position: fixed;
-  top: 0px;
-  left: 0px;
+  top: 0;
+  left: 0;
 }
 
-.map {
-  display: block;
-}
 
 /* Mobile */
 body::before {
