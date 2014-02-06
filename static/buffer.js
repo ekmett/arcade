@@ -1,4 +1,4 @@
-define("buffer",[], function() {
+define([], function() {
   var Buffer = function(n,content,grow) {
     this.available = n
     this.length = 0;

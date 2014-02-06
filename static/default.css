@@ -6,14 +6,34 @@
 html, body {
   width: 100%;
   height: 100%;
-  overflow: scroll;
+  overflow: hidden;
+}
+
+@font-face {
+  font-family: 'xkcd-Regular';
+  src: url('fonts/xkcd-Regular.eot') format('eot'), url('fonts/xkcd-Regular.otf') format('opentype');
+}
+
+.comic {
+  font-family: xkcd-Regular;
+  font-variant: normal;
 }
 
 #main {
-  overflow: scroll;
-  display:  block;
+  overflow: hidden;
+  display: block;
   top: 0;
   left: 0;
+}
+
+image, canvas {
+ user-select: none;
+ -ms-user-select: none;
+ -webkit-user-select: none;
+ -khtml-user-select: none;
+ -moz-user-select: none;
+ -webkit-touch-callout: none;
+ -webkit-user-drag: none;
 }
 
 .map {
@@ -22,12 +42,17 @@ html, body {
   left: 0px;
   display: block;
   background: transparent;
+  -webkit-transform: translate3d(0,0,0);
+  -moz-transform: translate3d(0,0,0);
+  -ms-transform: translate3d(0,0,0);
+  -o-transform: translate3d(0,0,0);
+  transform: translate3d(0,0,0); /* gpu layer in isolation */
 }
 
 #background {
   z-index: 10;
   background: #6f6fbf;
-  background-image:url('images/grid16.png');
+  background-image:url('images/graph-tile.png');
 }
 
 #shadows {
