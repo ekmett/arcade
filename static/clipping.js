@@ -1,10 +1,11 @@
 define([], function() {
 
 // a swept bounding box.
-var Clipping = function(box,dx,dy) {
+var Clipping = function(box,dx,dy,dz) {
   this.box = box; // starting box
   this.dx = dx;
   this.dy = dy;
+  this.dz = dz;
   this.aabb = box.union(box.translate(dx,dy));
 
   // 012

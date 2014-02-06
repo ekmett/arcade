@@ -4,8 +4,10 @@ var id = 0;
 
 var physics = {
   timer: null,
-  bodies: []
+  entities: []
 };
+
+var frame = 0;
 
 var fps = 25;
 
@@ -15,29 +17,48 @@ var lerp = physics.lerp = function(x,y,alpha) {
   return x * (1 - alpha) + y * alpha;
 };
 
-var Body = physics.Body = function(x,y,z,px,py,pz,mass,inverseMass) {
+// other stuff
+var Etc = physics.Etc = function(mass,w,h,d) {
+  this.mass = mass;
+  this.inverseMass = 1/mass;
+  this.w = w;
+  this.h = h;
+  this.d = d;
+};
+
+Etc.prototype = {
+  // we don't interpolate w, h, d, mass
+  lerp: function(that, alpha) { return this; }
+};
+
+var Body = physics.Body = function(x,y,z,vx,vy,vz,etc) {
   // primary characterisics
-  this.x = x;   // center of mass
+  this.x = x; // position
   this.y = y;
   this.z = z;
-  this.px = px; // momentum
-  this.py = py;
-  this.pz = pz;
+  this.vx = vx; // velocity
+  this.vy = vy;
+  this.vz = vz;
   // constants
-  this.mass   = mass;
-  this.inverseMass = inverseMass = inverseMass || 1/mass;
-  // update secondary characterisics
-  this.vx = px * inverseMass; // velocity
-  this.vy = py * inverseMass;
-  this.vz = pz * inverseMass;
+  this.etc = etc;
+  var oom = etc.inverseMass;
+  // secondary characterisics
 };
 
 Body.prototype = {
   copy : function() {
     return new Body(
       this.x, this.y, this.z,
-      this.px, this.py, this.pz,
-      this.mass, this.inverseMass
+      this.vx, this.vy, this.vz,
+      this.etc
+    );
+  },
+  impulse : function(Fx,Fy,Fz) { // apply an instantaneous impulse
+    var oom = this.etc.inverseMass;
+    return new Body(
+      this.x, this.y, this.z,
+      this.vx + Fx * oom, this.vy + Fy * oom, this.vz + Fz * oom,
+      etc
     );
   },
   lerp : function(that, alpha) {
@@ -45,10 +66,10 @@ Body.prototype = {
       lerp(this.x,  that.x,  alpha),
       lerp(this.y,  that.y,  alpha),
       lerp(this.z,  that.z,  alpha),
-      lerp(this.px, that.px, alpha),
-      lerp(this.py, that.py, alpha),
-      lerp(this.pz, that.pz, alpha),
-      lerp(this.mass, that.mass, alpha)
+      lerp(this.vx, that.vx, alpha),
+      lerp(this.vy, that.vy, alpha),
+      lerp(this.vz, that.vz, alpha),
+      that.etc
     );
   },
   euler: function(t, dt, der) {
@@ -57,11 +78,10 @@ Body.prototype = {
       this.x + a.vx*dt,
       this.y + a.vy*dt,
       this.z + a.vz*dt,
-      this.px + a.Fx*dt,
-      this.py + a.Fy*dt,
-      this.pz + a.Fz*dt,
-      this.mass,
-      this.inverseMass
+      this.vx + a.ax*dt,
+      this.vy + a.ay*dt,
+      this.vz + a.az*dt,
+      this.etc
     );
   },
   // switch to velocity verlet for easier constraints?
@@ -75,11 +95,10 @@ Body.prototype = {
       this.x + 1/6 * dt * a.vx + 2*(b.vx + c.vx) + d.vx,
       this.y + 1/6 * dt * a.vy + 2*(b.vy + c.vy) + d.vy,
       this.z + 1/6 * dt * a.vz + 2*(b.vz + c.vz) + d.vz,
-      this.px + 1/6 * dt * (a.Fx + 2*(b.Fx + c.Fx) + d.Fx),
-      this.py + 1/6 * dt * (a.Fy + 2*(b.Fy + c.Fy) + d.Fy),
-      this.pz + 1/6 * dt * (a.Fz + 2*(b.Fz + c.Fz) + d.Fz),
-      this.mass,
-      this.inverseMass
+      this.vx + 1/6 * dt * (a.ax + 2*(b.ax + c.ax) + d.ax),
+      this.vy + 1/6 * dt * (a.ay + 2*(b.ay + c.ay) + d.ay),
+      this.vz + 1/6 * dt * (a.az + 2*(b.az + c.az) + d.az),
+      this.etc
     );
   },
   now: function(t) {
@@ -87,20 +106,37 @@ Body.prototype = {
     return { vx : this.vx
            , vy : this.vy
            , vz : this.vz
-           , Fx : mass * mu * this.vx
-           , Fy : mass * mu * this.vy
-           , Fz : mass * (G + mu * this.vz)
+           , ax : mu * this.vx
+           , ay : mu * this.vy
+           , az : G + mu * this.vz
            };
   },
+  // invoked with varying dt's
   then: function(t, dt, der) {
     return this.euler(t,dt,der).now(t + dt)
   }
 };
 
+var Entity = physics.Entity = function(then, now) {
+  this.then = null;
+  this.now = now;
+  this.future = null;
+};
+
+Entity.prototype = {
+  interpolate : function (alpha) {
+    return this.then ? this.then.lerp(this.now, alpha) : this.now;
+  }
+};
+
 var step = function() {
   physics.updated = perf.now();
-  // update everything
-
+  ++frame;
+  // update everything, mixes old universe and new universe state, rather than properly bisecting, but is fast
+  for (var i in entities) {
+    var old = entities[i].then = entities[i].now;
+    entities[i].now = old.euler(frame,1);
+  }
 };
 
 var start = physics.start = function() {
