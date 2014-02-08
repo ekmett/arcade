@@ -34,19 +34,21 @@
  * - Edward Kmett Feb 7, 2014
  */
 
-define(["shim/perf"], function(perf) {
+define(["stats","performance"], function(stats,performance) {
 
-var id = 0;
+var physics = {
+  timer : null,
+  frame : 0,
+  bodies : [],
+  constraints : [],
+  running: false
+};
 
 var PRIORITY_NORMAL = 0; // normal things can move normal things and fluff
 var PRIORITY_FLUFF  = 1; // fluff can move fluff
 
-var physics = {
-  timer      : null,
-  bodies     : [],
-  constraints: [],
-};
-
+var FPS = physics.FPS = 25;        // frames per second
+var MILLISECONDS_PER_FRAME = physics.MILLISECONDS_PER_FRAME = 1000/FPS;
 
 // stick constraint: a spring that forces the distance between a and b to be l
 function stick(a,b,l) {
@@ -70,12 +72,9 @@ function stick(a,b,l) {
   }
 };
 
-var frame = 0;       // current frame #
-
 // constants
 
 var RELAXATIONS = 2; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
-var FPS = 25;        // frames per second
 var G = -9.8/FPS^2;  // the gravity of the situation
 
 var AIR_DRAG = 0.01;
@@ -116,7 +115,7 @@ var scene = {
   clip : function(body) {
     // clip the body to the world
     body.z = Math.max(0,Math.min(body.z, MAX_WORLD_HEIGHT-MAX_BODY_HEIGHT));
-  }
+  },
   locate : function(body) {
     // air friction
     body.mu_h = AIR_DRAG;
@@ -125,11 +124,11 @@ var scene = {
 
     var standing = body.standing = body.z < 0.3;
 
-    if (standing)
+    if (standing) {
       body.mu_v = GROUND_DRAG; // standard ground friction
     }
   }
-}
+};
 
 var Body = physics.Body = function(x,y,z,w,d,h,inverseMass) {
   // primary characterisics
@@ -137,15 +136,11 @@ var Body = physics.Body = function(x,y,z,w,d,h,inverseMass) {
   this.y = y;
   this.z = z;
 
-  this.ax = 0; // acceleration impulse
-  this.ay = 0;
-  this.az = 0;
+  this.ax = 0 = this.ay = this.az = 0; // acceleration impulse
 
   this.ox = x; // retained for both rendering interpolation an verlet integration
   this.oy = y;
   this.oz = z;
-
-  this.id = ++id; // client-local unique id
 
   this.inverseMass = inverseMass; // determines collision response
 
@@ -160,6 +155,8 @@ var Body = physics.Body = function(x,y,z,w,d,h,inverseMass) {
   this.rx = x;
   this.ry = y;
   this.rz = z;
+
+  this.viewx = this.viewy = this.viewz = 0;
 
   // bounding box for the current move
   this.minx = x;
@@ -326,21 +323,28 @@ function clip_bucket(i) {
 
 // O(n*m)
 function clip_buckets(i,j) {
-  if !(buckets[j]) return;
-  var a = buckets[i];
-  while (a) {
-    var b = buckets[j];
-    while (b) {
-      a.clip_entity(b);
-      b = b.next_in_bucket;
+  if (buckets[j]) {
+    var a = buckets[i];
+    while (a) {
+      var b = buckets[j];
+      while (b) {
+        a.clip_entity(b);
+        b = b.next_in_bucket;
+      }
+      a = a.next_in_bucket;
     }
-    a = a.next_in_bucket;
   }
 }
 
-var step = function() {
-  physics.updated = perf.now();
-  ++frame;
+var step = function(t) {
+  physics.updated = t;
+  ++physics.frame;
+
+  stats.physics.begin();
+
+  var bodies = physics.bodies;
+  var buckets = physics.buckets;
+  var constraints = physics.constraints;
 
   // figure out local physical properties and plan to get impulses, shoot, etc.
   for (var i in bodies)
@@ -351,7 +355,7 @@ var step = function() {
     buckets[i] = null;
 
   // move and relink the entities
-  for (var i in bodies) {
+  for (var i in bodies)
     bodies[i].move();
 
   // Gauss-Seidel successive relaxation
@@ -372,19 +376,46 @@ var step = function() {
       clip_buckets(i,(i+1+BUCKET_COLUMNS) % BUCKETS);
     }
   }
+
+  stats.physics.end();
 };
 
+// window.setInterval drifts way too much for a server and client to stay in sync.
+function stepper()  {
+  var burst = 4; // only catch up a few frames at a time. otherwise controls will get wonky
+  var t = performance.now();
+  var delay = physics.expected - t;
+  while (physics.running && delay < 0 && --burst) { // we're running, we're late, and we're willing to binge
+    step(t); // run a frame
+    physics.expected += MILLISECONDS_PER_FRAME;
+    var t2 = performance.now();
+    delay = physics.expected - t2;
+    if (physics.frame % 250 == 0)
+      console.log("physics frame",physics.frame,"at",(t/1000).toFixed(3),"with delay",(delay/1000).toFixed(3),"took",(t2-t).toFixed(1),"ms");
+    t = t2;
+  }
+  if (!burst) {
+     console.warn("burst rate exhausted, still lagged", -delay / MILLISECONDS_PER_FRAME, "frames");
+  }
+  if (physics.running) {
+    // see you next time, same bat time, same bat channel
+    physics.timer = window.setTimeout(stepper, delay);
+  }
+}
+
 var start = physics.start = function() {
-  if (physics.timer != null)
-    window.clearInterval(physics.timer);
-  physics.interval = window.setInterval(step,1000/physics.fps);
+  physics.running = true;
+  physics.expected = performance.now();
+  stepper();
 };
 
 var stop = physics.stop = function() {
-  if (physics.interval != null)
-    window.clearInterval(physics.interval);
-  physics.interval = null;
+  physics.running = false;
+  if (physics.timer) physics.clearTimeout(physics.timer);
 };
+
+// for now just start on launch
+start();
 
 return physics;
 

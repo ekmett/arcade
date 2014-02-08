@@ -3,122 +3,142 @@
  * modified to use require.js by Edward Kmett 2014
  */
 
-define("stats",[],function() {
- var startTime = Date.now(), prevTime = startTime;
- var ms = 0, msMin = Infinity, msMax = 0;
- var fps = 0, fpsMin = Infinity, fpsMax = 0;
- var frames = 0, mode = 2;
+define("stats",["performance"],function(performance) {
 
  var container = document.createElement( 'div' );
  container.id = 'stats';
- container.addEventListener( 'mousedown', function ( event ) { event.preventDefault(); setMode( ++ mode % 3 ) }, false );
- container.style.cssText = 'width:80px;opacity:0.9;cursor:pointer';
-
- var fpsDiv = document.createElement( 'div' );
- fpsDiv.id = 'fps';
- fpsDiv.style.cssText = 'padding:0 0 3px 3px;text-align:left;background-color:#002';
- container.appendChild( fpsDiv );
-
- var fpsText = document.createElement( 'div' );
- fpsText.id = 'fpsText';
- fpsText.style.cssText = 'color:#0ff;font-family:Helvetica,Arial,sans-serif;font-size:9px;font-weight:bold;line-height:15px';
- fpsText.innerHTML = 'FPS';
- fpsDiv.appendChild( fpsText );
-
- var fpsGraph = document.createElement( 'div' );
- fpsGraph.id = 'fpsGraph';
- fpsGraph.style.cssText = 'position:relative;width:74px;height:30px;background-color:#0ff';
- fpsDiv.appendChild( fpsGraph );
-
- while ( fpsGraph.children.length < 74 ) {
-  var bar = document.createElement( 'span' );
-  bar.style.cssText = 'width:1px;height:30px;float:left;background-color:#113';
-  fpsGraph.appendChild( bar );
- }
-
- var msDiv = document.createElement( 'div' );
- msDiv.id = 'ms';
- msDiv.style.cssText = 'padding:0 0 3px 3px;text-align:left;background-color:#020;display:block';
- container.appendChild( msDiv );
-
- var msText = document.createElement( 'div' );
- msText.id = 'msText';
- msText.style.cssText = 'color:#0f0;font-family:Helvetica,Arial,sans-serif;font-size:9px;font-weight:bold;line-height:15px';
- msText.innerHTML = 'MS';
- msDiv.appendChild( msText );
-
- var msGraph = document.createElement( 'div' );
- msGraph.id = 'msGraph';
- msGraph.style.cssText = 'position:relative;width:74px;height:30px;background-color:#0f0';
- msDiv.appendChild( msGraph );
-
- while ( msGraph.children.length < 74 ) {
-  var bar = document.createElement( 'span' );
-  bar.style.cssText = 'width:1px;height:30px;float:left;background-color:#131';
-  msGraph.appendChild( bar );
- }
-
- var setMode = function ( value ) {
-  mode = value;
-  switch ( mode ) {
-   case 0:
-    fpsDiv.style.display = 'block';
-    msDiv.style.display = 'none';
-    break;
-   case 1:
-    fpsDiv.style.display = 'none';
-    msDiv.style.display = 'block';
-    break;
-   case 2:
-    fpsDiv.style.display = 'block';
-    msDiv.style.display = 'block';
-    break;
-  }
- };
+ // container.addEventListener( 'mousedown', function ( event ) { event.preventDefault(); setMode( ++ mode % 3 ) }, false );
+ // container.style.cssText = 'width:90px;opacity:0.9';
 
  var updateGraph = function ( dom, value ) {
   var child = dom.appendChild( dom.firstChild );
   child.style.height = value + 'px';
+  /*
+  var kids = dom.childNodes;
+  if (kids.length > 74) {
+    dom.removeChild(kids[kids.length-1]);
+  }
+  */
+ };
+
+ var Stats = function(name) {
+   this.startTime = performance.now();
+   this.prevTime = this.startTime;
+   this.fpsMin = Infinity;
+   this.fpsMax = 0;
+   this.msMin  = Infinity
+   this.msMax  = 0;
+   this.frames = 0
+   this.mode   = 2;
+
+   var div = this.div = document.createElement('div');
+   div.addEventListener( 'mousedown', function ( event ) { event.preventDefault(); this.setMode( ++ mode % 3 ) }, false );
+   div.style.cssText = 'width:90px;opacity:0.9;cursor:pointer';
+   container.appendChild(div);
+
+   var timerText = this.timerText = document.createElement( 'div' );
+   timerText.style.cssText = 'color:#0ff;font-family:Helvetica,Arial,sans-serif;font-size:10px;font-weight:bold;line-height:15px';
+   timerText.innerHTML = name;
+   div.appendChild( timerText );
+
+   var fpsDiv = this.fpsDiv = document.createElement( 'div' );
+   fpsDiv.style.cssText = 'padding:0 0 3px 3px;text-align:left;background-color:#002';
+   div.appendChild( fpsDiv );
+
+   var fpsText = this.fpsText = document.createElement( 'div' );
+   fpsText.style.cssText = 'color:#0ff;font-family:Helvetica,Arial,sans-serif;font-size:9px;font-weight:bold;line-height:15px';
+   fpsText.innerHTML = 'fps';
+   fpsDiv.appendChild( fpsText );
+
+   var fpsGraph = this.fpsGraph = document.createElement( 'div' );
+   fpsGraph.style.cssText = 'position:relative;width:84px;height:30px;background-color:#0ff';
+   fpsDiv.appendChild( fpsGraph );
+
+   while ( fpsGraph.children.length < 84 ) {
+     var bar = document.createElement( 'span' );
+     bar.style.cssText = 'width:1px;height:30px;float:left;background-color:#113';
+     fpsGraph.appendChild( bar );
+   }
+
+   var msDiv = this.msDiv = document.createElement( 'div' );
+   msDiv.style.cssText = 'padding:0 0 3px 3px;text-align:left;background-color:#020;display:block';
+   div.appendChild( msDiv );
+
+   var msText = this.msText = document.createElement( 'div' );
+   msText.style.cssText = 'color:#0f0;font-family:Helvetica,Arial,sans-serif;font-size:9px;font-weight:bold;line-height:15px';
+   msText.innerHTML = 'ms';
+   msDiv.appendChild( msText );
+
+   var msGraph = this.msGraph = document.createElement( 'div' );
+   msGraph.style.cssText = 'position:relative;width:84px;height:30px;background-color:#0f0';
+   msDiv.appendChild( msGraph );
+
+   while ( msGraph.children.length < 84 ) {
+     var bar = document.createElement( 'span' );
+     bar.style.cssText = 'width:1px;height:30px;float:left;background-color:#131';
+     msGraph.appendChild( bar );
+   }
+ }
+
+ Stats.prototype = {
+   setMode : function ( value ) {
+     this.mode = value;
+     switch ( this.mode ) {
+     case 0:
+       this.fpsDiv.style.display = 'block';
+       this.msDiv.style.display = 'none';
+       break;
+     case 1:
+       this.fpsDiv.style.display = 'none';
+       this.msDiv.style.display = 'block';
+       break;
+     case 2:
+       this.fpsDiv.style.display = 'block';
+       this.msDiv.style.display = 'block';
+       break;
+     default: // hide temporarily
+       this.fpsDiv.style.display = 'none';
+       this.msDiv.style.display = 'none';
+       break;
+     }
+   },
+   begin : function () {
+     this.startTime = performance.now();
+   },
+   end: function () {
+     var time = performance.now();
+
+     var ms = time - this.startTime;
+     this.msMin = Math.min( this.msMin, ms );
+     this.msMax = Math.max( this.msMax, ms );
+
+     updateGraph( this.msGraph, Math.min( 30, 30 - ( ms / 50 ) * 30 ) );
+
+     this.frames ++;
+
+     if ( time > this.prevTime + 1000 ) {
+       this.msText.textContent = ms.toFixed(1) + ' ms (' + this.msMin.toFixed(1) + '-' + this.msMax.toFixed(1) + ')';
+       var fps = ( this.frames * 1000 ) / ( time - this.prevTime );
+       this.fpsMin = Math.min( this.fpsMin, fps );
+       this.fpsMax = Math.max( this.fpsMax, fps );
+
+       this.fpsText.textContent = fps.toFixed(1) + ' fps (' + this.fpsMin.toFixed(1) + '-' + this.fpsMax.toFixed(1) + ')';
+       updateGraph( this.fpsGraph, Math.min( 30, 30 - ( fps / 60 ) * 30 ) );
+
+       this.prevTime = time;
+       this.frames = 0;
+     }
+     return time;
+   },
+   update: function () {
+     startTime = this.end();
+   }
  };
 
  return {
-  REVISION: 11,
-  domElement: container,
-  setMode: setMode,
-
-  begin: function () {
-   startTime = Date.now();
-  },
-
-  end: function () {
-   var time = Date.now();
-
-   ms = time - startTime;
-   msMin = Math.min( msMin, ms );
-   msMax = Math.max( msMax, ms );
-
-   msText.textContent = ms + ' MS (' + msMin + '-' + msMax + ')';
-   updateGraph( msGraph, Math.min( 30, 30 - ( ms / 200 ) * 30 ) );
-
-   frames ++;
-
-   if ( time > prevTime + 1000 ) {
-    fps = Math.round( ( frames * 1000 ) / ( time - prevTime ) );
-    fpsMin = Math.min( fpsMin, fps );
-    fpsMax = Math.max( fpsMax, fps );
-
-    fpsText.textContent = fps + ' FPS (' + fpsMin + '-' + fpsMax + ')';
-    updateGraph( fpsGraph, Math.min( 30, 30 - ( fps / 100 ) * 30 ) );
-
-    prevTime = time;
-    frames = 0;
-   }
-
-   return time;
-  },
-
-  update: function () {
-   startTime = this.end();
-  }
- }
+   domElement: container,
+   Stats: Stats,
+   display : new Stats("display"),
+   physics : new Stats("physics")
+ };
 });

@@ -7,8 +7,8 @@
     }
   });
   require(
-    ['jquery', 'connection', 'stats', 'music', 'physics', 'renderer'],
-    function ($, connection, stats, music, physics, renderer) {
+    ['jquery', 'connection', 'stats', 'music', 'physics', 'display'],
+    function ($, connection, stats, music, physics, display) {
 
       $(document).ready(function() {
         $("body").append(stats.domElement);

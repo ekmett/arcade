@@ -2,7 +2,7 @@
 // based off https://gist.github.com/Gaubee/6991570
 // modified to use my Performance.now polyfill by Edward Kmett
 // MIT license
-define("shim/raf",["shim/perf"],function(perf) {
+define("shim/raf",["performance"],function(performance) {
     "use strict"
     var G = window,
         lastTime = 0,
@@ -12,7 +12,7 @@ define("shim/raf",["shim/perf"],function(perf) {
         _KEY_ancel = 'ancel',
         _KEY_requestAnimationFrame = 'r' + _KEY_equest + _KEY_AnimationFrame,
         _KEY_cancelAnimationFrame = 'c' + _KEY_ancel + _KEY_AnimationFrame,
-        now = perf.now;
+        now = performance.now;
     for (var x = 0; x < vendors.length && !G[_KEY_requestAnimationFrame]; ++x) {
         G[_KEY_requestAnimationFrame] = G[vendors[x] + 'R' + _KEY_equest + _KEY_AnimationFrame];
         G[_KEY_cancelAnimationFrame] = G[vendors[x] + 'C' + _KEY_ancel + _KEY_AnimationFrame] || G[vendors[x] + 'C' + _KEY_ancel + 'R' + _KEY_equest + _KEY_AnimationFrame];

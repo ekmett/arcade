@@ -23,7 +23,7 @@ var stahp = function(e) {
 $(".map").each(function (i,it) {
    it.ondragstart   = stahp;
    it.onselectstart = stahp;
-};
+});
 
 document.body.ontouchstart = stahp;
 document.body.ontouchmove = stahp;
