@@ -102,8 +102,8 @@ var render = function() {
   // var alpha = t - pt; // Math.max(0, Math.min((t - pt) * 25/ 1000, 1));
   var alpha = (t - pt) / physics.MILLISECONDS_PER_FRAME;
 
-  if (display.frame % 600 == 0)
-    console.log("display frame", display.frame, "at", (t/1000).toFixed(3),"off physics frame", physics.frame, "from time", (pt/1000).toFixed(3), "at alpha", alpha.toFixed(2));
+  // if (display.frame % 600 == 0)
+  //   console.log("display frame", display.frame, "at", (t/1000).toFixed(3),"off physics frame", physics.frame, "from time", (pt/1000).toFixed(3), "at alpha", alpha.toFixed(2));
 
   var frame = ++display.frame;
 

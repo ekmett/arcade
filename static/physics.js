@@ -382,7 +382,7 @@ var step = function(t) {
 
 // window.setInterval drifts way too much for a server and client to stay in sync.
 function stepper()  {
-  var burst = 4; // only catch up a few frames at a time. otherwise controls will get wonky
+  var burst = 8; // only catch up a few frames at a time. otherwise controls will get wonky
   var t = performance.now();
   var delay = physics.expected - t;
   while (physics.running && delay < 0 && --burst) { // we're running, we're late, and we're willing to binge
@@ -390,12 +390,12 @@ function stepper()  {
     physics.expected += MILLISECONDS_PER_FRAME;
     var t2 = performance.now();
     delay = physics.expected - t2;
-    if (physics.frame % 250 == 0)
-      console.log("physics frame",physics.frame,"at",(t/1000).toFixed(3),"with delay",(delay/1000).toFixed(3),"took",(t2-t).toFixed(1),"ms");
+    // if (physics.frame % 250 == 0)
+    //  console.log("physics frame",physics.frame,"at",(t/1000).toFixed(3),"with delay",(delay/1000).toFixed(3),"took",(t2-t).toFixed(1),"ms");
     t = t2;
   }
   if (!burst) {
-     console.warn("burst rate exhausted, still lagged", -delay / MILLISECONDS_PER_FRAME, "frames");
+     console.warn("physics","lagging", (-delay / MILLISECONDS_PER_FRAME).toFixed(1), "frames");
   }
   if (physics.running) {
     // see you next time, same bat time, same bat channel

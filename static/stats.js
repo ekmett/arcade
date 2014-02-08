@@ -8,17 +8,15 @@ define("stats",["performance"],function(performance) {
  var container = document.createElement( 'div' );
  container.id = 'stats';
  // container.addEventListener( 'mousedown', function ( event ) { event.preventDefault(); setMode( ++ mode % 3 ) }, false );
- // container.style.cssText = 'width:90px;opacity:0.9';
+ container.style.cssText = 'width:90px;opacity:0.9';
 
  var updateGraph = function ( dom, value ) {
   var child = dom.appendChild( dom.firstChild );
   child.style.height = value + 'px';
-  /*
   var kids = dom.childNodes;
-  if (kids.length > 74) {
+  if (kids.length > 84) {
     dom.removeChild(kids[kids.length-1]);
   }
-  */
  };
 
  var Stats = function(name) {
@@ -31,13 +29,15 @@ define("stats",["performance"],function(performance) {
    this.frames = 0
    this.mode   = 2;
 
+   var self = this;
+
    var div = this.div = document.createElement('div');
-   div.addEventListener( 'mousedown', function ( event ) { event.preventDefault(); this.setMode( ++ mode % 3 ) }, false );
-   div.style.cssText = 'width:90px;opacity:0.9;cursor:pointer';
+   div.addEventListener( 'mousedown', function ( event ) { event.preventDefault(); self.setMode( ++ self.mode % 3 ) }, false );
+   div.style.cssText = 'width:90px;opacity:0.9;cursor:pointer;background-color:#300';
    container.appendChild(div);
 
    var timerText = this.timerText = document.createElement( 'div' );
-   timerText.style.cssText = 'color:#0ff;font-family:Helvetica,Arial,sans-serif;font-size:10px;font-weight:bold;line-height:15px';
+   timerText.style.cssText = 'padding: 0 0 3px 3px;color:#ccc;font-family:Helvetica,Arial,sans-serif;font-size:10px;font-weight:bold;line-height:15px;text-align:center';
    timerText.innerHTML = name;
    div.appendChild( timerText );
 
@@ -135,10 +135,19 @@ define("stats",["performance"],function(performance) {
    }
  };
 
+ var stub = {
+   begin : function() {},
+   update : function() {},
+   end : function() {}
+ };
+
  return {
    domElement: container,
-   Stats: Stats,
+   Stats   : Stats,
+   stub    : stub,
+   // display : stub,
    display : new Stats("display"),
+   // physics : stub
    physics : new Stats("physics")
  };
 });
