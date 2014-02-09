@@ -20,8 +20,8 @@
     enforceDefine: true
   });
   define(
-    ['jquery', 'connection', 'stats', 'music', 'physics', 'display'],
-    function ($, connection, stats, music, physics, display) {
+    ['jquery','bootstrap','connection','stats','music','physics','display'],
+    function ($, bootstrap, connection, stats, music, physics, display) {
       $(document).ready(function() {
         $("body").append(stats.domElement);
          // music.play();
