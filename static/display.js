@@ -1,4 +1,4 @@
-define(["jquery", "physics", "shim/raf", "shim/cc", "performance", "stats", "events","images", "aabb"], function($, physics, raf, cc, performance, stats, events, images, aabb) {
+define(["jquery", "physics", "shim/raf", "shim/cc", "performance", "stats", "events","images"], function($, physics, raf, cc, performance, stats, events, images) {
 
 var display = {
   updated : null,
@@ -7,57 +7,37 @@ var display = {
 
 var main = $("#main");
 
-var DIRTY_NOTHING    = 0;
-var DIRTY_BACKGROUND = 1;
-var DIRTY_SHADOWS    = 2;
-var DIRTY_FOREGROUND = 4;
-var DIRTY_EVERYTHING = 7;
-
-var bufferX = 128;// padding we maintain for smooth scrolling purposes, initially split
-var bufferY = 128; // padding we maintain for smooth scrolling purposes, initially split
-var drawnX  = 0;   // x coordinate of the leftmost drawn pixel, not necessarily visible
-var drawnY  = 0;   // y coordinate at the rightmost drawn pixel, not necessarily visible
-var scrollX = 128; // set during renderAnimationFrame
-var scrollY = 128; // set during renderAnimationFrame
+var scrollX = 0;
+var scrollY = 0;
 var width   = 640; // set during resize
 var height  = 480; // set during resize
-var dirty   = DIRTY_EVERYTHING;
+
+// we're using 2:1 dimetric rather than true isometric.
+
+var wx2sx = -2, wx2sy = 1,  wx2sz = 1; // increased z towards the user
+var wy2sx =  2, wy2sy = 1,  wy2sz = 1;
+var wz2sx =  0; wz2sy = -2, wz2sz = 1;
+
+/*
+function screen(x,y,z) {
+  this.sx = 2*y-2*x
+  this.sy = x+y-2*z;
+  this.sz = x+y+z
+}
+
+// monkey patch
+physics.Body.prototype.viewport = function() {
+  this.minsx = 2(this.rx+this.w) -2*(this.ry-this.d)
+  this.minsy = this.rx+        this.ry        -2*(this.rz+this.h);
+  this.maxsy = this.rx+this.w+ this.ry+this.d -2*this.rz;
+};
+
+*/
 
 var yScale  = 0.5;
 var recipYScale = 2;
 
 // pixels per meter?
-
-var overdrawn = display.overdrawn = function () {
-  return aabb(drawnX,drawnY,drawnX + width + bufferX * 2,drawnY + height + bufferY*2);
-};
-
-var visible = display.visible = function() {
-  var l = drawnX + scrollX;
-  var t = drawnY + scrollY;
-  return aabb(l,t,l+width,t+height);
-};
-
-var snapTo = display.snapTo = function(x,y) {
-  var sl = x - drawnX;
-  var st = y - drawnY;
-  if (sl >= 0 && st >= 0 && sl < bufferX*2 && st < bufferY*2) {
-    scrollX = sl;
-    scrollY = st;
-    console.log("near",drawnX,drawnY,scrollX,scrollY);
-  } else {
-    dirty = DIRTY_EVERYTHING;
-    drawnX = x - bufferX;
-    drawnY = y - bufferY;
-    scrollX = bufferX;
-    scrollY = bufferY;
-    console.log("far",drawnX,drawnY,scrollX,scrollY);
-  }
-};
-
-var snapBy = display.snapBy = function(dx,dy) {
-  snapTo(drawnX + scrollX + dx, drawnY + scrollY + dy);
-};
 
 var layer = function(name) {
   var result = $("#" + name);
@@ -69,18 +49,16 @@ var background = layer("background");
 var shadows    = layer("shadows");
 var foreground = layer("foreground");
 
-// order should match the order of the DIRTY_FOO bitmasks above
 var layers = display.layers = [ background, shadows, foreground ];
 
 var resized = function() {
-  width  = document.body.clientWidth;
-  height = document.body.clientHeight;
+  width  = document.body.innerWidth;
+  height = document.body.innerHeight;
   for (var i in layers) {
     var l = layers[i];
-    l.width(width)
+    l.width(width);
     l.height(height);
   }
-  dirty = DIRTY_EVERYTHING;
 };
 
 $(window).bind("resize", resized);
@@ -111,62 +89,44 @@ var render = function() {
 
   // console.log(display.overdrawn(), display.visible());
 
-  dirty = DIRTY_SHADOWS | DIRTY_FOREGROUND;
-  // draw the world
-
   frame = (frame+1) % 60;
-  var x = 50; // drawnX + events.mouseX;
-  var y = 50; // drawnY + events.mouseY;
+  var x = events.mouseX; // 250; // drawnX + events.mouseX;
+  var y = events.mouseY; // 250; // drawnY + events.mouseY;
+  var z = Math.sin(frame * 3.14 / 30) * 10 + 10;
+
+  var b = background.canvas;
+  b.clear(true);
+  b.setTransform(1,0,0,1,0,0);
+
+  var s = shadows.canvas;
+  s.clear(true);
+  s.setTransform(1,0,0,0.5,0,0);
+  s.shadowColor = "#000000";
+  s.shadowOffsetX = 0;
+  s.shadowOffsetY = 0;
+  s.shadowBlur = 5;
   n = Math.sin(frame * 3.14 / 30) * 10 + 10;
+  s.beginPath();
+  s.arc(x,y*2,10,0,2*Math.PI,false);
+  s.fillStyle = "rgba(0,0,0,0.25)";
+  s.fill();
 
-  if (dirty & DIRTY_BACKGROUND) {
-    var c = background.canvas;
-    c.clear(true);
-    c.setTransform(1,0,0,1,-drawnX,-drawnY);
-  }
-
-  if (dirty & DIRTY_SHADOWS) {
-    var c = shadows.canvas;
-    c.clear(true);
-    c.setTransform(1,0,0,0.5,-drawnX,-drawnY);
-    c.shadowColor = "#000000";
-    c.shadowOffsetX = 0;
-    c.shadowOffsetY = 0;
-    c.shadowBlur = 5 + (n/1.5);
-    for (var i = 0; i < 200; i ++) {
-      n = Math.sin((frame + i*2) * 3.14 / 30) * 10 + 10;
-      c.beginPath();
-      c.arc(x + Math.floor(i%20)*30,y*2 + (i/20)*60,10,0,2*Math.PI,false);
-      c.fillStyle = "rgba(0,0,0,0.25)";
-      c.fill();
-    }
-  }
-
-  if (dirty & DIRTY_FOREGROUND) {
-    var c = foreground.canvas;
-    c.clear(true);
-    c.setTransform(1,0,0,1,-drawnX,-drawnY);
-    for (var i =0; i < 200; i++) {
-      n = Math.sin((frame + i*2) * 3.14 / 30) * 10 + 10;
-      c.beginPath();
-      c.arc(x + Math.floor(i%20)*30,y-10-n + (i/20)*30,10,0,2*Math.PI,false);
-      var my_gradient=c.createLinearGradient(x,y,x+400,y+400);
-      my_gradient.addColorStop(0,"red");
-      my_gradient.addColorStop(1,"blue");
-      c.fillStyle=my_gradient;
-      c.strokeStyle = "black";
-
-      //c.fillStyle = "#3A5BCD";
-      c.lineWidth = 0.3;
-      c.stroke();
-      c.fill();
-    }
-  }
-
-  dirty = DIRTY_NOTHING;
+  var c = foreground.canvas;
+  c.clear(true);
+  c.setTransform(1,0,0,1,0,0);
+  c.beginPath();
+  c.arc(x,y-10-z,10,0,2*Math.PI,false);
+  var my_gradient=c.createLinearGradient(x,y,x+40,y+40);
+  my_gradient.addColorStop(0,"red");
+  my_gradient.addColorStop(1,"blue");
+  c.fillStyle=my_gradient;
+  c.strokeStyle = "black";
+  c.lineWidth = 0.3;
+  c.stroke();
+  c.fill();
 
   stats.display.end();
-};
+}
 
 render(performance.now());
 });

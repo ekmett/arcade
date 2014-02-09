@@ -382,7 +382,7 @@ var step = function(t) {
 
 // window.setInterval drifts way too much for a server and client to stay in sync.
 function stepper()  {
-  var burst = 8; // only catch up a few frames at a time. otherwise controls will get wonky
+  var burst = 25; // only catch up a few frames at a time. otherwise controls will get wonky
   var t = performance.now();
   var delay = physics.expected - t;
   while (physics.running && delay < 0 && --burst) { // we're running, we're late, and we're willing to binge
@@ -394,8 +394,16 @@ function stepper()  {
     //  console.log("physics frame",physics.frame,"at",(t/1000).toFixed(3),"with delay",(delay/1000).toFixed(3),"took",(t2-t).toFixed(1),"ms");
     t = t2;
   }
-  if (!burst) {
-     console.warn("physics","lagging", (-delay / MILLISECONDS_PER_FRAME).toFixed(1), "frames");
+  if (physics.running && !burst) {
+     var lag = -delay / MILLISECONDS_PER_FRAME;
+     console.warn("physics","lagging", lag.toFixed(1), "frames");
+     // if lag gets _too_ high, we should just give up and let the server reset us.
+     if (lag > FPS * 60) { // more than a minute
+       // TODO: we should ask the server for a big update, we've gone rip van winkle.
+       // in case we're connected
+       console.warn("physics clock resetting due to lag");
+       physics.expected = performance.now();
+     }
   }
   if (physics.running) {
     // see you next time, same bat time, same bat channel

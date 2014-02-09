@@ -9,6 +9,7 @@ return {
       var dx = a.x - b.x;
       var dy = a.y - b.y;
       var dz = a.z - b.z;
+      // TODO: use the Taylor series approximation around l^2 to soften the spring
       var dl = sqrt(dx*dx + dy*dy + dz*dz);
       var ima = a.inverseMass;
       var imb = b.inverseMass;

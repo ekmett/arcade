@@ -1,29 +1,15 @@
-* {
-  margin: 0;
-  padding: 0;
-}
-
-html, body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
 @font-face {
   font-family: 'xkcd-Regular';
   src: url('fonts/xkcd-Regular.eot') format('eot'), url('fonts/xkcd-Regular.otf') format('opentype');
 }
 
+html, body {
+  height: 100%;
+}
+
 .comic {
   font-family: xkcd-Regular;
   font-variant: normal;
-}
-
-#main {
-  overflow: hidden;
-  display: block;
-  top: 0;
-  left: 0;
 }
 
 image, canvas {
@@ -42,6 +28,7 @@ image, canvas {
   left: 0px;
   display: block;
   background: transparent;
+  border: 1px solid #000000;
   -webkit-transform: translate3d(0,0,0);
   -moz-transform: translate3d(0,0,0);
   -ms-transform: translate3d(0,0,0);
@@ -50,49 +37,52 @@ image, canvas {
 }
 
 #background {
-  z-index: 10;
+  z-index: -3;
   background: #6f6fbf;
   background-image:url('images/graph-tile.png');
 }
 
 #shadows {
-  z-index: 20;
+  z-index: -2;
 }
 
 #foreground {
-  z-index: 30;
+  z-index: -1;
 }
 
 #stats {
   position: fixed;
-  top:0;
+  bottom:0;
   right:0;
   z-index: 100;
 }
 
-#music {
-  position: fixed;
-  top: 0;
+#main {
+  position: relative;
+  /* This could be done in one single declaration. See the extended sample. */
+  margin-right: auto;
+  margin-left: auto;
+  width: 800px;
+  background: #000000;
+}
+
+/* Sticky footer */
+
+@media (max-height: 600px) {
+  footer {
+    visibility: hidden;
+  }
+  #stats {
+    visibility: hidden;
+  }
+}
+
+footer {
+  background-color: #f5f5f5;
+  position: absolute;
   left: 0;
+  bottom: 0;
+  height: 60px;
+  width: 100%;
 }
 
-
-/* Mobile */
-body::before {
-  display: none;
-  content: '{ "current": "small", "all": ["small"] }';
-}
-
-/* Tablet */
-@media (min-width: 480px) {
-  body::before {
-    content: '{ "current": "medium", "all": ["small", "medium"] }'
-  }
-}
-
-/* Desktop */
-@media (min-width: 640px) {
-   body::before {
-    content: '{ "current": "large", "all": ["small", "medium", "large"] }'
-  }
-}
