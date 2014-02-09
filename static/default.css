@@ -1,10 +1,11 @@
 @font-face {
   font-family: 'xkcd-Regular';
-  src: url('fonts/xkcd-Regular.eot') format('eot'), url('fonts/xkcd-Regular.otf') format('opentype');
+  src: url('fonts/xkcd.eot') format('eot'), url('fonts/xkcd.otf') format('opentype');
 }
 
 html, body {
   height: 100%;
+  background-color: #83B5D1;
 }
 
 .comic {
@@ -22,32 +23,57 @@ image, canvas {
  -webkit-user-drag: none;
 }
 
+#main {
+  border-style:solid;
+  border-width:1.5px;
+  border-color:#071419;
+  border-radius: 12px;
+  -moz-border-radius: 12px;
+  background-image:url('images/graph-tile.png');
+  z-index: 0;
+}
+
+#glass {
+  width: 800px;
+  height: 480px;
+  border-radius: 12px;
+  -moz-border-radius: 12px;
+  z-index: 20;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+
+}
+
 .map {
   position: absolute;
   top: 0px;
   left: 0px;
   display: block;
-  background: transparent;
-  border: 1px solid #000000;
   -webkit-transform: translate3d(0,0,0);
   -moz-transform: translate3d(0,0,0);
   -ms-transform: translate3d(0,0,0);
   -o-transform: translate3d(0,0,0);
   transform: translate3d(0,0,0); /* gpu layer in isolation */
+  border-radius: 12px;
+  -moz-border-radius: 12px;
+}
+
+#music {
+  visibility: hidden;
+
 }
 
 #background {
-  z-index: -3;
-  background: #6f6fbf;
-  background-image:url('images/graph-tile.png');
+  z-index: 1;
 }
 
 #shadows {
-  z-index: -2;
+  z-index: 2;
 }
 
 #foreground {
-  z-index: -1;
+  z-index: 3;
 }
 
 #stats {
@@ -57,13 +83,50 @@ image, canvas {
   z-index: 100;
 }
 
+.chat {
+  position: absolute;
+  bottom: 0px;
+  height: 60px;
+  left: 0px;
+  width: 800px;
+  max-height: 200px;
+  /* border-bottom: 1px solid #000; */
+  border-radius: 12px 12px 0px 0px;
+  -moz-border-radius: 12px 12px 0px 0px;
+  padding: 2px 2px 2px 2px;
+  overflow: scroll;
+  font-size: .8em;
+  font-color: #ccc;
+  display: table;
+  z-index: 4;
+}
+
+.line {
+  display: table-row;
+}
+
+.byline {
+  font-weight: 700;
+  padding-right: 0.5em;
+  display: table-cell;
+  text-align: right;
+}
+
+.message {
+  display: table-cell;
+/*
+  font-family: xkcd-Regular;
+  font-variant: normal;
+*/
+}
+
 #main {
   position: relative;
-  /* This could be done in one single declaration. See the extended sample. */
   margin-right: auto;
   margin-left: auto;
-  width: 800px;
-  background: #000000;
+  width:  800px;
+  height: 480px;
+  overflow: hidden;
 }
 
 /* Sticky footer */
@@ -78,11 +141,27 @@ image, canvas {
 }
 
 footer {
-  background-color: #f5f5f5;
+  color: #777;
+  background-color: #f8f8f8;
   position: absolute;
+  text-align: center;
   left: 0;
   bottom: 0;
-  height: 60px;
+  padding-bottom: 2px;
+  height: 1.5em;
   width: 100%;
+  border: 1px solid #e7e7e7;
 }
+
+
+a.site:link {
+  color: #005994;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+a.site:visited {
+  color: #000;
+}
+
 

@@ -18,22 +18,6 @@ var wx2sx = -2, wx2sy = 1,  wx2sz = 1; // increased z towards the user
 var wy2sx =  2, wy2sy = 1,  wy2sz = 1;
 var wz2sx =  0; wz2sy = -2, wz2sz = 1;
 
-/*
-function screen(x,y,z) {
-  this.sx = 2*y-2*x
-  this.sy = x+y-2*z;
-  this.sz = x+y+z
-}
-
-// monkey patch
-physics.Body.prototype.viewport = function() {
-  this.minsx = 2(this.rx+this.w) -2*(this.ry-this.d)
-  this.minsy = this.rx+        this.ry        -2*(this.rz+this.h);
-  this.maxsy = this.rx+this.w+ this.ry+this.d -2*this.rz;
-};
-
-*/
-
 var yScale  = 0.5;
 var recipYScale = 2;
 
@@ -87,11 +71,9 @@ var render = function() {
 
   stats.display.begin();
 
-  // console.log(display.overdrawn(), display.visible());
-
   frame = (frame+1) % 60;
-  var x = events.mouseX; // 250; // drawnX + events.mouseX;
-  var y = events.mouseY; // 250; // drawnY + events.mouseY;
+  var x = events.mouseX;
+  var y = events.mouseY;
   var z = Math.sin(frame * 3.14 / 30) * 10 + 10;
 
   var b = background.canvas;
@@ -101,10 +83,6 @@ var render = function() {
   var s = shadows.canvas;
   s.clear(true);
   s.setTransform(1,0,0,0.5,0,0);
-  s.shadowColor = "#000000";
-  s.shadowOffsetX = 0;
-  s.shadowOffsetY = 0;
-  s.shadowBlur = 5;
   n = Math.sin(frame * 3.14 / 30) * 10 + 10;
   s.beginPath();
   s.arc(x,y*2,10,0,2*Math.PI,false);
@@ -116,10 +94,13 @@ var render = function() {
   c.setTransform(1,0,0,1,0,0);
   c.beginPath();
   c.arc(x,y-10-z,10,0,2*Math.PI,false);
+/*
   var my_gradient=c.createLinearGradient(x,y,x+40,y+40);
   my_gradient.addColorStop(0,"red");
   my_gradient.addColorStop(1,"blue");
   c.fillStyle=my_gradient;
+*/
+  c.fillStyle = "#ff0000";
   c.strokeStyle = "black";
   c.lineWidth = 0.3;
   c.stroke();
