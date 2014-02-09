@@ -5,6 +5,14 @@
 
 html, body {
   height: 100%;
+  overflow: hidden;
+}
+
+.navbar {
+  margin-bottom: 5px; /* tighten this so we don't lose chat space to background */
+}
+ 
+body {
   background-color: #83B5D1;
 }
 
@@ -23,12 +31,19 @@ image, canvas {
  -webkit-user-drag: none;
 }
 
+.box {
+  background: #fff;
+  -moz-border-radius: 12px;
+  border-radius: 12px;
+  margin-left: auto;
+  margin-right: auto;
+  height: 600px;
+}
+
 #main {
   border-style:solid;
   border-width:1.5px;
   border-color:#071419;
-  border-radius: 12px;
-  -moz-border-radius: 12px;
   background-image:url('images/graph-tile.png');
   z-index: 0;
 }
@@ -36,14 +51,13 @@ image, canvas {
 #glass {
   cursor: crosshair; /* all-scroll? */
   width: 800px;
-  height: 480px;
+  height: 400px;
   border-radius: 12px;
   -moz-border-radius: 12px;
   z-index: 20;
   position: absolute;
   top: 0px;
   left: 0px;
-
 }
 
 .map {
@@ -56,8 +70,6 @@ image, canvas {
   -ms-transform: translate3d(0,0,0);
   -o-transform: translate3d(0,0,0);
   transform: translate3d(0,0,0); /* gpu layer in isolation */
-  border-radius: 12px;
-  -moz-border-radius: 12px;
 }
 
 #music {
@@ -85,21 +97,22 @@ image, canvas {
 }
 
 .chat {
-  position: absolute;
-  bottom: 0px;
-  height: 60px;
-  left: 0px;
-  width: 800px;
-  max-height: 200px;
+  margin-left: auto;
+  margin-right: auto;
+  max-height: 160px;
+  overflow: scroll;
   /* border-bottom: 1px solid #000; */
-  border-radius: 12px 12px 0px 0px;
-  -moz-border-radius: 12px 12px 0px 0px;
-  padding: 2px 2px 2px 2px;
+  padding: 0px 20px 0px 20px;
+  margin-top: 1px;
+  margin-bottom: 1px;
   overflow: scroll;
   font-size: .8em;
   font-color: #ccc;
-  display: table;
   z-index: 4;
+}
+
+.chat-content {
+  display: table;
 }
 
 .line {
@@ -111,33 +124,82 @@ image, canvas {
   padding-right: 0.5em;
   display: table-cell;
   text-align: right;
+  vertical-align: top;
 }
 
 .message {
   display: table-cell;
-/*
+  top: -5px;
+  left: 12px;
+  background-color: #F2F2F2;
+  border-radius: 5px;
+  box-shadow: 0 0 6px #B2B2B2;
   font-family: xkcd-Regular;
   font-variant: normal;
-*/
+  /* display: inline-block; */
+  padding: 5px 10px 5px 20px;
+  position: relative;
+  vertical-align: top;
+  float: left;
+  margin: 1px 45px 1px 2px;
+}
+
+.message::before {
+  background-color: #F2F2F2;
+  content: "\00a0";
+  display: block;
+  height: 16px;
+  position: absolute;
+  top: 6px;
+  transform:           rotate( 29deg ) skew( -35deg );
+    -moz-transform:    rotate( 29deg ) skew( -35deg );
+    -ms-transform:     rotate( 29deg ) skew( -35deg );
+    -o-transform:      rotate( 29deg ) skew( -35deg );
+    -webkit-transform: rotate( 29deg ) skew( -35deg );
+  width:  20px;
+  box-shadow: -2px 2px 2px 0 rgba( 178, 178, 178, .4 );
+  left: -9px;
 }
 
 #main {
   position: relative;
   margin-right: auto;
   margin-left: auto;
-  width:  800px;
-  height: 480px;
+  height: 400px;
   overflow: hidden;
 }
 
 /* Sticky footer */
 
+@media (min-width: 940px) {
+  #main, #chat {
+    width: 800px;
+  }
+  .box {
+    width: 900px;
+  }
+}
+
 @media (max-height: 600px) {
-  footer {
+  footer, #stats {
     visibility: hidden;
   }
-  #stats {
-    visibility: hidden;
+}
+
+@media (max-width: 940px) { /* or (max-height: 600px) { */
+  #main {
+    width: 800px;
+  }
+  /* time to kill the blue gutter */
+  body {
+    background-color: #ffffff;
+  }
+  .container-fluid {
+    padding-left: 0px;
+    padding-right: 0px;
+  }
+  .navbar {
+    margin-bottom:2px;
   }
 }
 

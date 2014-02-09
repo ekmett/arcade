@@ -35,14 +35,16 @@ var foreground = layer("foreground");
 
 var layers = display.layers = [ background, shadows, foreground ];
 
+var playarea = $(".playarea");
+
 var resized = function() {
-  width  = document.body.innerWidth;
-  height = document.body.innerHeight;
-  for (var i in layers) {
-    var l = layers[i];
-    l.width(width);
-    l.height(height);
-  }
+  width  = Math.min(document.body.clientWidth, 800);
+  height = Math.min((document.body.clientHeight) - foreground.offset().left, 400);
+  playarea.each(function(i,e) {
+    $(e).width(width);
+    $(e).height(height);
+  });
+  console.log("play area resized to",width,height);
 };
 
 $(window).bind("resize", resized);

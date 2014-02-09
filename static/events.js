@@ -53,6 +53,26 @@ map.mousemove(function(e) {
   return false;
 });
 
+map.on({'touchstart' : function (e) {
+  e = e.originalEvent || e;
+  e.preventDefault();
+  var touch = e.touches[0];
+  events.log("events","touchstart",e.pageX,e.pageY,e.offsetX, e.offsetY);
+  events.mouseX = e.offsetX;
+  events.mouseY = e.offsetY;
+  return false;
+}});
+
+map.on({'touchmove' : function (e) {
+  e = e.originalEvent || e;
+  e.preventDefault();
+  var touch = e.touches[0];
+  events.log("events","touchmove",e.pageX,e.pageY,e.offsetX, e.offsetY);
+  events.mouseX = e.offsetX;
+  events.mouseY = e.offsetY;
+  return false;
+}});
+
 map.mousedown(function(e) {
   e.preventDefault();
   events.log("events","mousedown",e.which);
