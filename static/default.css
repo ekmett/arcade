@@ -34,6 +34,7 @@ image, canvas {
 }
 
 #glass {
+  cursor: crosshair; /* all-scroll? */
   width: 800px;
   height: 480px;
   border-radius: 12px;

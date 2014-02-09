@@ -1,6 +1,6 @@
 define("events",["jquery"],function($) {
 
-var map = $('#main');
+var map = $('#glass');
 
 var events = {
   impulse: {}, // keys held
