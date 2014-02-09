@@ -3,14 +3,14 @@
  * modified to use require.js by Edward Kmett 2014
  */
 
-define("stats",["performance"],function(performance) {
+define("stats",["performance"],function stats(performance) {
 
  var container = document.createElement( 'div' );
  container.id = 'stats';
  // container.addEventListener( 'mousedown', function ( event ) { event.preventDefault(); setMode( ++ mode % 3 ) }, false );
  container.style.cssText = 'width:90px;opacity:0.9';
 
- var updateGraph = function ( dom, value ) {
+ var updateGraph = function updateGraph( dom, value ) {
   var child = dom.appendChild( dom.firstChild );
   child.style.height = value + 'px';
   var kids = dom.childNodes;
@@ -19,7 +19,7 @@ define("stats",["performance"],function(performance) {
   }
  };
 
- var Stats = function(name) {
+ var Stats = function Stats(name) {
    this.startTime = performance.now();
    this.prevTime = this.startTime;
    this.fpsMin = Infinity;
@@ -81,7 +81,7 @@ define("stats",["performance"],function(performance) {
  }
 
  Stats.prototype = {
-   setMode : function ( value ) {
+   setMode : function setMode( value ) {
      this.mode = value;
      switch ( this.mode ) {
      case 0:
@@ -102,10 +102,10 @@ define("stats",["performance"],function(performance) {
        break;
      }
    },
-   begin : function () {
+   begin : function begin() {
      this.startTime = performance.now();
    },
-   end: function () {
+   end: function end() {
      var time = performance.now();
 
      var ms = time - this.startTime;
@@ -130,15 +130,15 @@ define("stats",["performance"],function(performance) {
      }
      return time;
    },
-   update: function () {
+   update: function update() {
      startTime = this.end();
    }
  };
 
  var stub = {
-   begin : function() {},
-   update : function() {},
-   end : function() {}
+   begin : function begin() {},
+   update : function update() {},
+   end : function end() {}
  };
 
  return {

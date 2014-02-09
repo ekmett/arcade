@@ -34,7 +34,7 @@
  * - Edward Kmett Feb 7, 2014
  */
 
-define(["stats","performance"], function(stats,performance) {
+define(["clip","stats","performance"], function(clip,stats,performance) {
 
 var physics = {
   timer : null,
@@ -112,11 +112,11 @@ function bucket(x,y) {
 
 // basic scene we can replace later with the bsp
 var scene = {
-  clip : function(body) {
+  clip : function clip(body) {
     // clip the body to the world
     body.z = Math.max(0,Math.min(body.z, MAX_WORLD_HEIGHT-MAX_BODY_HEIGHT));
   },
-  locate : function(body) {
+  locate : function locate(body) {
     // air friction
     body.mu_h = AIR_DRAG;
     body.mu_v = AIR_DRAG;
@@ -175,23 +175,23 @@ var Body = physics.Body = function(x,y,z,w,d,h,inverseMass) {
 };
 
 Body.prototype = {
-  push :  function(Fx,Fy,Fz) { // apply an instantaneous impulse. mutates in place
+  push :  function push(Fx,Fy,Fz) { // apply an instantaneous impulse. mutates in place
     var im = this.inverseMass;
     this.ax += Fx * im;
     this.ay += Fy * im;
     this.az += Fz * im;
   },
-  interpolate : function(alpha) {
+  interpolate : function interpolate(alpha) {
     this.rx = this.ox * (1 - alpha) + this.x * alpha;
     this.ry = this.oy * (1 - alpha) + this.y * alpha;
     this.rz = this.oz * (1 - alpha) + this.z * alpha;
   },
-  plan: function() {
+  plan: function plan() {
     this.ai && this.ai();
     // add gravity;
   },
 
-  move : function() {
+  move : function move() {
     // stash the current location
     var tx = this.x;
     var ty = this.y;
@@ -234,15 +234,19 @@ Body.prototype = {
     buckets[i] = this;
   },
 
-  bump : function(that,beta,persistent) {
+  bump : function bump(that,beta,persistent) {
     if (that.priority <= that.priority) {
       this.beta = Math.min(this.beta, beta);
       // TODO: allow transfer of impulse energy
     }
   },
 
+  clip2d: clip.clip2d, // these only clip v
+
+  clip3d: clip.clip3d, // these only clip v
+
   // swept aabb collision
-  clip_entity : function(that) {
+  clip_entity : function clip_entity(that) {
     // bounding box for this at start
     var x1min = this.ox;
     var y1min = this.oy;
@@ -336,7 +340,7 @@ function clip_buckets(i,j) {
   }
 }
 
-var step = function(t) {
+var step = function step(t) {
   physics.updated = t;
   ++physics.frame;
 
@@ -411,13 +415,13 @@ function stepper()  {
   }
 }
 
-var start = physics.start = function() {
+var start = physics.start = function start() {
   physics.running = true;
   physics.expected = performance.now();
   stepper();
 };
 
-var stop = physics.stop = function() {
+var stop = physics.stop = function stop() {
   physics.running = false;
   if (physics.timer) physics.clearTimeout(physics.timer);
 };

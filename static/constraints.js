@@ -1,11 +1,11 @@
-define([], function () {
+define([], function constraints() {
 
 var EPSILON = 0.01; // 1cm
 
 return {
   // a spring that forces the distance between the upper right corner of a and b to be l
-  stick : function (a,b,l) {
-    return function() {
+  stick : function stick(a,b,l) {
+    return function () {
       var dx = a.x - b.x;
       var dy = a.y - b.y;
       var dz = a.z - b.z;
