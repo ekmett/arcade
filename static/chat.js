@@ -1,6 +1,6 @@
 define(['jquery'],function($) {
 
-var div = $("chat");
+var div = $("footer");
 
 // conditionally scroll on scroll wheel
 function scroll() {

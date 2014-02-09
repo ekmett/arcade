@@ -47,7 +47,7 @@ var physics = {
 var PRIORITY_NORMAL = 0; // normal things can move normal things and fluff
 var PRIORITY_FLUFF  = 1; // fluff can move fluff
 
-var FPS = physics.FPS = 25;        // frames per second
+var FPS = physics.FPS = 40;        // frames per second
 var MILLISECONDS_PER_FRAME = physics.MILLISECONDS_PER_FRAME = 1000/FPS;
 
 // stick constraint: a spring that forces the distance between a and b to be l
