@@ -183,6 +183,10 @@ var floor = function floor(c,x1,y1,z,w,d,h) {
 var cursor = new WorldPoint();
 var cursorScreen = new ScreenPoint();
 
+var player = new physics.Body( 0,0,0, 0.6,0.6,1.5,0.01);
+player.color = '#' + Math.random().toString(16).substring(2, 8)
+physics.bodies.push(player);
+
 // window.setInterval( function() { return snapBy(1,1); }, 33);
 var render = function render() {
   var t = performance.now();
@@ -208,6 +212,25 @@ var render = function render() {
 
   frame = (frame+1) % 40;
 
+  {
+
+    var pdx = 0;
+    var pdy = 0;
+    var pdz = 0;
+
+    document.title = JSON.stringify(events.impulse);
+
+    var s = player.standing ? 1 : 0.2;
+
+    if (events.impulse[87]) { pdx -= s; pdy -= s; } // W
+    if (events.impulse[65]) { pdx += s; pdy -= s; } // A
+    if (events.impulse[83]) { pdx += s; pdy += s; } // S
+    if (events.impulse[68]) { pdx -= s; pdy += s; } // D
+    if (events.impulse[32] && player.standing) { pdz += 1; }
+
+    player.push(pdx,pdy,10*pdz); // add flying
+  }
+
   if (events.mouse[1]) {
     // user clicked
     // update the cursor in world coordinates
@@ -216,9 +239,9 @@ var render = function render() {
       (events.mouseY-halfHeight) * METERS_PER_PIXEL
     );
     cursorScreen.world(cursor.x,cursor.y,0); // for testing only
-    for (var i = 0; i < 2; i ++) {
-     var body = new physics.Body(Math.random()*10-5,Math.random()*10-5,Math.random()*10,0.5,0.5,0.5,1);
-     body.push(Math.random()-0.5,Math.random()-0.5,Math.random()-0.5);
+    for (var i = 0; i < 1; i ++) {
+     var body = new physics.Body(Math.random()*9.5-5,Math.random()*9.5-5,Math.random()*10,0.5,0.5,0.5,1);
+     // body.push(0,0,0); // Math.random()-0.5,Math.random()-0.5,Math.random()-0.5);
      body.color = '#' + Math.random().toString(16).substring(2, 8)
      physics.bodies.push(body);
    }
@@ -281,9 +304,13 @@ var render = function render() {
     cube(c,b.rx,b.ry,b.rz,b.w,b.d,b.h);
     c.strokeStyle = b.color;
     c.stroke();
-    c.fillStyle = b.color;
+    if (b.beta == 1) {
+      c.fillStyle = b.color;
+    } else {
+      c.fillStyle = '#' + Math.random().toString(16).substring(2, 8)
+    }
     c.fill();
-    b.push(0,z,z);
+    // b.push(Math.random()*1-0.5,Math.random()*1-.5,Math.random()*1-.5);
     floor(s,b.rx,b.ry,0,b.w,b.d,0);
     s.fillStyle = "rgba(0,0,0,0.25)";
     s.fill();

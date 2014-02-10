@@ -9,7 +9,7 @@ var events = {
   actions: [], // events for when these things happened
   mouseX : 0,  // last known position
   mouseY : 0,
-  log    : function() { console.log.apply(console,arguments); } // function() {} // replace with console.log to watch
+  log    : function() {}// function() { console.log.apply(console,arguments); } // function() {} // replace with console.log to watch
 };
 
 var stahp = function(e) {

@@ -47,7 +47,7 @@ var physics = {
 var PRIORITY_NORMAL = 0; // normal things can move normal things and fluff
 var PRIORITY_FLUFF  = 1; // fluff can move fluff
 
-var FPS = physics.FPS = 40;        // frames per second
+var FPS = physics.FPS = 25;        // frames per second
 var MILLISECONDS_PER_FRAME = physics.MILLISECONDS_PER_FRAME = 1000/FPS;
 
 // stick constraint: a spring that forces the distance between a and b to be l
@@ -75,7 +75,7 @@ function stick(a,b,l) {
 // constants
 
 var RELAXATIONS = 1; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
-var G = 9.8/FPS^2; // 0.1; // 9.8/FPS^2 / 100;  // the gravity of the situation
+var G = 0.2; // 9.8/FPS^2*0; // 0.1; // 9.8/FPS^2 / 100;  // the gravity of the situation
 
 var AIR_DRAG = 0.001;
 var GROUND_DRAG = 0.2;
@@ -94,8 +94,8 @@ var MAX_BODY_DEPTH  = 2; // no Body has a bounding box more than 2 meters deep i
 var MAX_WORLD_HEIGHT = 5; // nothing can get more than 5 meters off the ground, making floors about 16 ft high.
 var MIN_WORLD_HEIGHT = 0; // nothing can get more than 0 meters below the floor.
 
-var BUCKET_WIDTH  = MAX_BODY_WIDTH + SPEED_LIMIT*4; // 6 meters
-var BUCKET_DEPTH  = MAX_BODY_DEPTH + SPEED_LIMIT*4;
+var BUCKET_WIDTH  = MAX_BODY_WIDTH + SPEED_LIMIT*2; // 4 meters
+var BUCKET_DEPTH  = MAX_BODY_DEPTH + SPEED_LIMIT*2;
 
 var BUCKET_COLUMNS = 16; // 96 meters without overlap
 var BUCKET_ROWS    = 16; // 96 meters without overlap
@@ -103,13 +103,13 @@ var BUCKET_ROWS    = 16; // 96 meters without overlap
 var BUCKETS = BUCKET_ROWS * BUCKET_COLUMNS;
 
 var buckets = new Array(BUCKETS); // single chained linked lists, how retro
-for (var i in buckets) buckets[i] = null; // null, not undefined
 
-
+for (var i = 0; i < buckets.length; i++)
+  buckets[i] = null; // null, not undefined
 
 function bucket(x,y) {
-  return (Math.floor(x / BUCKET_WIDTH) % BUCKET_COLUMNS) + BUCKET_COLUMNS *
-         (Math.floor(y / BUCKET_DEPTH) % BUCKET_ROWS);
+  return ((Math.floor(x / BUCKET_WIDTH) + BUCKET_COLUMNS) % BUCKET_COLUMNS) + BUCKET_COLUMNS *
+         ((Math.floor(y / BUCKET_DEPTH) + BUCKET_ROWS) % BUCKET_ROWS);
 }
 
 // basic scene we can replace later with the bsp
@@ -120,17 +120,20 @@ var scene = {
     var ny = Math.max(-5,Math.min(body.y, 5-body.d));
     var nz = Math.max(0,Math.min(body.z, MAX_WORLD_HEIGHT-body.h));
 
+/*
+    // we should figure out when that happened to avoid interpenetration on display
+    body.beta = Math.min(
+      body.beta,
+      Math.max(0,Math.min((nx - body.ox) / (body.x-body.ox), 1)),
+      Math.max(0,Math.min((ny - body.oy) / (body.y-body.oy), 1)),
+      Math.max(0,Math.min((nz - body.oz) / (body.z-body.oz), 1))
+    );
+*/
+
     body.x = nx;
     body.y = ny;
     body.z = nz;
 
-    // we should figure out when that happened to avoid interpenetration on display
-    body.beta = Math.min(
-      body.beta,
-      Math.max(0,Math.min(nx / (body.ox-body.x), 1)),
-      Math.max(0,Math.min(ny / (body.oy-body.y), 1)),
-      Math.max(0,Math.min(nz / (body.oz-body.z), 1))
-    );
     // body.z = newz;
   },
   locate : function locate(body) {
@@ -139,10 +142,10 @@ var scene = {
     body.mu_v = 0.001;
     body.ground_elasticity = 0; // for bounces
 
-    var standing = body.standing = body.z < 0.3;
+    var standing = body.standing = body.oz < 0.3; // w/in 1ft of the ground
 
     if (standing) {
-      body.mu_v = 0.002; // GROUND_DRAG; // standard ground friction
+      body.mu_v = 0.5; // standard ground friction is quite high
     }
   }
 };
@@ -199,7 +202,7 @@ Body.prototype = {
     this.az += Fz * im;
   },
   interpolate : function interpolate(alpha) {
-    alpha = Math.min(alpha, this.beta);
+    alpha = Math.min(alpha); // , this.beta);
     this.rx = this.ox * (1 - alpha) + this.x * alpha;
     this.ry = this.oy * (1 - alpha) + this.y * alpha;
     this.rz = this.oz * (1 - alpha) + this.z * alpha;
@@ -214,14 +217,14 @@ Body.prototype = {
     var beta = this.beta;
 
     // update ground truth using beta from last frame
-    var tx = this.x = this.ox * (1 - beta) + this.x * beta;
-    var ty = this.y = this.oy * (1 - beta) + this.y * beta;
-    var tz = this.z = this.oz * (1 - beta) + this.z * beta;
+    // var tx = this.x = this.ox * (1 - beta) + this.x * beta;
+    // var ty = this.y = this.oy * (1 - beta) + this.y * beta;
+    // var tz = this.z = this.oz * (1 - beta) + this.z * beta;
 
     // stash the current location
-    // var tx = this.x;
-    // var ty = this.y;
-    // var tz = this.z;
+    var tx = this.x;
+    var ty = this.y;
+    var tz = this.z;
 
     var oom = this.inverseMass;
 
@@ -274,8 +277,12 @@ Body.prototype = {
   },
 
   bump : function bump(that,beta,persistent) {
+    // console.log("bump",beta,this,that,persistent);
     if (that.priority <= that.priority) {
       this.beta = Math.min(this.beta, beta);
+
+      // for debugging
+      this.color = that.color;
       // TODO: allow transfer of impulse energy
     }
   },
@@ -286,6 +293,7 @@ Body.prototype = {
 
   // swept aabb collision
   clip_entity : function clip_entity(that) {
+    // console.log(this,that);
     // bounding box for this at start
     var x1min = this.ox;
     var y1min = this.oy;
@@ -322,7 +330,7 @@ Body.prototype = {
     var vz = this.vz - that.vz;
 
     var t0 = (x1max < x2min && vx < 0) ? (x1max - x2min) / vx :
-             (x2max < x1min && vx > 0) ? (x1min - x2max) / vx : 0
+             (x2max < x1min && vx > 0) ? (x1min - x2max) / vx : 1
 
     if (y1max < y2min && vy < 0)      t0 = Math.max(t0, (y1max - y2min) / vy);
     else if (y2max < y1min && vy > 0) t0 = Math.max(t0, (y1min - y2max) / vy);
@@ -341,7 +349,7 @@ Body.prototype = {
     if (z2max > z1min && vz < 0)      t1 = Math.min(t1, (z1min - z2max) / vz);
     else if (z1max > z2min && vz > 0) t1 = Math.min(t1, (z1max - z2min) / vz);
 
-    if (t0 <= t1 && t1 <= this.beta && t1 <= that.beta) {
+    if (t0 <= t1 && t0 <= this.beta && t0 <= that.beta) {
       // we have a window of overlap, and it occurs actually during the time we're moving, so bump.
       this.bump(that,t0,false);
       that.bump(this,t0,false);
@@ -353,10 +361,11 @@ Body.prototype = {
 
 // O(n^2)
 function clip_bucket(i) {
+  // if (i % 256 == 0) console.log("clipping",i);
   var a = buckets[i];
-  while (a) {
+  while (a != null) {
     var b = a.next_in_bucket;
-    while (b) {
+    while (b != null) {
       a.clip_entity(b);
       b = b.next_in_bucket;
     }
@@ -366,16 +375,14 @@ function clip_bucket(i) {
 
 // O(n*m)
 function clip_buckets(i,j) {
-  if (buckets[j]) {
-    var a = buckets[i];
-    while (a) {
-      var b = buckets[j];
-      while (b) {
-        a.clip_entity(b);
-        b = b.next_in_bucket;
-      }
-      a = a.next_in_bucket;
+  var a = buckets[i];
+  while (a != null) {
+    var b = buckets[j];
+    while (b != null) {
+      a.clip_entity(b);
+      b = b.next_in_bucket;
     }
+    a = a.next_in_bucket;
   }
 }
 
@@ -386,15 +393,17 @@ var step = function step(t) {
   stats.physics.begin();
 
   var bodies = physics.bodies;
-  var buckets = physics.buckets;
   var constraints = physics.constraints;
 
   // figure out local physical properties and plan to get impulses, shoot, etc.
-  for (var i in bodies)
-    bodies[i].plan();
+  for (var i in bodies) {
+    var b = bodies[i];
+    scene.locate(b); // just so we have local friction information and info about whether we can jump, etc.
+    b.plan();
+  }
 
   // unlink the buckets
-  for (var i in buckets)
+  for (var i=0;i<buckets.length;i++)
     buckets[i] = null;
 
   // move and relink the entities
@@ -402,22 +411,19 @@ var step = function step(t) {
     bodies[i].move();
 
   // Gauss-Seidel successive relaxation
-  for (var r = 0; r < RELAXATIONS; ++r) {
-    // update ragdolls and erector sets
-    for (var i in constraints)
-      constraints[i]();
+  for (var i in constraints)
+    constraints[i]();
 
     // get out of the walls
-    for (var i in bodies)
-      scene.clip(bodies[i]);
+  for (var i in bodies)
+    scene.clip(bodies[i]);
 
     // clip all the things
-    for (var i in buckets) {
-      clip_bucket(i);
-      clip_buckets(i,(i+1) % BUCKETS);
-      clip_buckets(i,(i+BUCKET_COLUMNS) % BUCKETS);
-      clip_buckets(i,(i+1+BUCKET_COLUMNS) % BUCKETS);
-    }
+  for (var i = 0; i < buckets.length; i++) {
+    clip_bucket(i);
+    clip_buckets(i,(i+1) % BUCKETS);
+    clip_buckets(i,(i+BUCKET_COLUMNS) % BUCKETS);
+    clip_buckets(i,(i+1+BUCKET_COLUMNS) % BUCKETS);
   }
 
   stats.physics.end();
