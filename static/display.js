@@ -200,6 +200,23 @@ player.draw = function() {
   c.strokeStyle = "black";
   c.stroke();
 };
+player.ai = function() {
+  var pdx = 0;
+  var pdy = 0;
+  var pdz = 0;
+
+  document.title = JSON.stringify(events.impulse);
+
+  var s = player.standing ? 1 : 0.2;
+
+  if (events.impulse[87]) { pdx -= s; pdy -= s; } // W
+  if (events.impulse[65]) { pdx += s; pdy -= s; } // A
+  if (events.impulse[83]) { pdx += s; pdy += s; } // S
+  if (events.impulse[68]) { pdx -= s; pdy += s; } // D
+  if (events.impulse[32] && player.standing) { pdz += 1; }
+
+  player.push(pdx,pdy,50*pdz);
+};
 
 var scratch = new ScreenPoint();
 
@@ -228,24 +245,6 @@ var render = function render() {
 
   frame = (frame+1) % 40;
 
-  {
-
-    var pdx = 0;
-    var pdy = 0;
-    var pdz = 0;
-
-    document.title = JSON.stringify(events.impulse);
-
-    var s = player.standing ? 1 : 0.2;
-
-    if (events.impulse[87]) { pdx -= s; pdy -= s; } // W
-    if (events.impulse[65]) { pdx += s; pdy -= s; } // A
-    if (events.impulse[83]) { pdx += s; pdy += s; } // S
-    if (events.impulse[68]) { pdx -= s; pdy += s; } // D
-    if (events.impulse[32] && player.standing) { pdz += 1; }
-
-    player.push(pdx,pdy,20*pdz); // add flying
-  }
 
   if (events.mouse[1]) {
     // user clicked
@@ -256,7 +255,8 @@ var render = function render() {
     );
 
     for (var i = 0; i < 1; i ++) {
-     var body = new physics.Body(Math.random()*9.5-5,Math.random()*9.5-5,Math.random()*10,0.5,0.5,0.5,50);
+     var r = -Math.log(Math.random())/3+0.1;
+     var body = new physics.Body(Math.random()*9.5-5,Math.random()*9.5-5,Math.random()*10,r,r,r,20*r^3);
      // body.push(0,0,0); // Math.random()-0.5,Math.random()-0.5,Math.random()-0.5);
      body.color = '#' + Math.random().toString(16).substring(2, 8);
      body.draw = function() {
@@ -266,7 +266,7 @@ var render = function render() {
        c.stroke();
        c.beginPath();
        scratch.world(this.rx,this.ry,this.rz);
-       c.arc(scratch.sx,scratch.sy,0.5*Math.sqrt(3),0,2*Math.PI,false);
+       c.arc(scratch.sx,scratch.sy,this.w*Math.sqrt(3),0,2*Math.PI,false);
        c.fillStyle = this.color;
        c.lineWidth = 0.1;
        c.strokeStyle = "black";
@@ -323,7 +323,8 @@ var render = function render() {
   }
 
   physics.bodies.sort(function(a,b) {
-    return a.rx + a.ry + a.rz - b.rx - b.ry - b.rz;
+    return a.rx + a.ry + a.rz + a.w/2 + a.h/2 + a.d/2 -
+	   b.rx - b.ry - b.rz - b.w/2 - b.h/2 - b.d/2;
   });
 
   s.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
