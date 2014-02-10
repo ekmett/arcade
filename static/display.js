@@ -183,7 +183,7 @@ var floor = function floor(c,x1,y1,z,w,d,h) {
 var cursor = new WorldPoint();
 var cursorScreen = new ScreenPoint();
 
-var player = new physics.Body( 0,0,0, 0.6,0.6,1.5,100);
+var player = new physics.Body( 0,0,0, 0.6,0.6,0.6,100);
 player.color = '#' + Math.random().toString(16).substring(2, 8)
 physics.bodies.push(player);
 
@@ -228,7 +228,7 @@ var render = function render() {
     if (events.impulse[68]) { pdx -= s; pdy += s; } // D
     if (events.impulse[32] && player.standing) { pdz += 1; }
 
-    player.push(pdx,pdy,10*pdz); // add flying
+    player.push(pdx,pdy,20*pdz); // add flying
   }
 
   if (events.mouse[1]) {
@@ -240,7 +240,7 @@ var render = function render() {
     );
     cursorScreen.world(cursor.x,cursor.y,0); // for testing only
     for (var i = 0; i < 1; i ++) {
-     var body = new physics.Body(Math.random()*9.5-5,Math.random()*9.5-5,Math.random()*10,0.5,0.5,0.5,1);
+     var body = new physics.Body(Math.random()*9.5-5,Math.random()*9.5-5,Math.random()*10,0.5,0.5,0.5,50);
      // body.push(0,0,0); // Math.random()-0.5,Math.random()-0.5,Math.random()-0.5);
      body.color = '#' + Math.random().toString(16).substring(2, 8)
      physics.bodies.push(body);
@@ -304,11 +304,7 @@ var render = function render() {
     cube(c,b.rx,b.ry,b.rz,b.w,b.d,b.h);
     c.strokeStyle = b.color;
     c.stroke();
-    if (b.beta == 1) {
-      c.fillStyle = b.color;
-    } else {
-      c.fillStyle = '#' + Math.random().toString(16).substring(2, 8)
-    }
+    c.fillStyle = b.color;
     c.fill();
     // b.push(Math.random()*1-0.5,Math.random()*1-.5,Math.random()*1-.5);
     floor(s,b.rx,b.ry,0,b.w,b.d,0);

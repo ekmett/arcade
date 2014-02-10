@@ -115,32 +115,19 @@ function bucket(x,y) {
 // basic scene we can replace later with the bsp
 var scene = {
   clip : function clip(body) {
-    // clip the body to the world
     var nx = Math.max(-5,Math.min(body.x, 5-body.w));
     var ny = Math.max(-5,Math.min(body.y, 5-body.d));
     var nz = Math.max(0,Math.min(body.z, MAX_WORLD_HEIGHT-body.h));
 
-/*
-    // we should figure out when that happened to avoid interpenetration on display
-    body.beta = Math.min(
-      body.beta,
-      Math.max(0,Math.min((nx - body.ox) / (body.x-body.ox), 1)),
-      Math.max(0,Math.min((ny - body.oy) / (body.y-body.oy), 1)),
-      Math.max(0,Math.min((nz - body.oz) / (body.z-body.oz), 1))
-    );
-*/
-
     body.x = nx;
     body.y = ny;
     body.z = nz;
-
-    // body.z = newz;
   },
   locate : function locate(body) {
     // air friction
     body.mu_h = 0.001;
     body.mu_v = 0.001;
-    body.ground_elasticity = 0; // for bounces
+    body.ground_elasticity = 0;
 
     var standing = body.standing = body.oz < 0.3; // w/in 1ft of the ground
 
@@ -169,15 +156,12 @@ var Body = physics.Body = function(x,y,z,w,d,h,mass) {
   this.d = d;
   this.h = h;
 
-  this.beta = 1; // assume we made it all the way to the end without clipping.
   this.next_in_bucket = null; // not yet threaded into the world
 
   // rendering parameters, updated by renderer to reduce display judder, not physics
   this.rx = x;
   this.ry = y;
   this.rz = z;
-
-  this.viewx = this.viewy = this.viewz = 0;
 
   // bounding box for the current move
   this.minx = x;
@@ -203,29 +187,22 @@ Body.prototype = {
     this.az += Fz * im;
   },
   interpolate : function interpolate(alpha) {
-    alpha = Math.min(alpha, this.beta);
+    alpha = Math.min(alpha);
     this.rx = this.ox * (1 - alpha) + this.x * alpha;
     this.ry = this.oy * (1 - alpha) + this.y * alpha;
     this.rz = this.oz * (1 - alpha) + this.z * alpha;
   },
   plan: function plan() {
     this.ai && this.ai();
-    // add gravity;
+    // add gravity , this.beta);;
   },
 
   move : function move() {
 
-    var beta = this.beta;
-
-    // update ground truth using beta from last frame
-    var tx = this.x = this.ox * (1 - beta) + this.x * beta;
-    var ty = this.y = this.oy * (1 - beta) + this.y * beta;
-    var tz = this.z = this.oz * (1 - beta) + this.z * beta;
-
     // stash the current location
-    // var tx = this.x;
-    // var ty = this.y;
-    // var tz = this.z;
+    var tx = this.x;
+    var ty = this.y;
+    var tz = this.z;
 
     var oom = this.inverseMass;
 
@@ -233,7 +210,7 @@ Body.prototype = {
     var vy = (1 - this.mu_h) * (ty - this.oy) + this.ay; // wind, drag
     var vz = (1 - this.mu_v) * (tz - this.oz) + this.az - G; // gravity
 
-    // enforce speed limit
+    // enforce speed limit, lest we clip through things
     var v2 = vx*vx+vy*vy+vz*vz;
 
     if (v2 > SPEED_LIMIT_SQUARED) {
@@ -245,9 +222,9 @@ Body.prototype = {
     }
 
     // update position, and derive new velocity
-    this.x += this.vx = vx;
-    this.y += this.vy = vy;
-    this.z += this.vz = vz;
+    this.x += vx;
+    this.y += vy;
+    this.z += vz;
 
     // store old position
     this.ox = tx;
@@ -258,9 +235,6 @@ Body.prototype = {
     this.ax = 0;
     this.ay = 0;
     this.az = 0;
-
-    // believe we can go the distance
-    this.beta = 1;
 
     // bounding box for the move
     this.minx = Math.min(this.ox, this.x);
@@ -277,95 +251,70 @@ Body.prototype = {
     buckets[i] = this;
   },
 
-  bump : function bump(that,beta,persistent) {
-    // console.log("bump",beta,this,that,persistent);
-    if (that.priority <= that.priority) {
-      this.beta = Math.min(this.beta, beta);
-
-      // for debugging
-      this.color = that.color;
-
-
-      var E = 0.2;
-      // TODO: allow some transfer of impulse energy
-      this.push(E * that.mass * that.vx, E * that.mass * that.vy, E * that.mass * that.vz)
-    }
-  },
-
   clip2d: clip.clip2d, // these only clip v
 
   clip3d: clip.clip3d, // these only clip v
 
   // swept aabb collision
   clip_entity : function clip_entity(that) {
-    // console.log(this,that);
-    // bounding box for this at start
-    var x1min = this.ox;
-    var y1min = this.oy;
-    var z1min = this.oz;
+    var x1min = this.x;
+    var y1min = this.y;
+    var z1min = this.z;
 
     var x1max = x1min + this.w;
     var y1max = y1min + this.d;
     var z1max = z2min + this.h;
 
     // bounding box for that at start
-    var x2min = that.ox;
-    var y2min = that.oy;
-    var z2min = that.oz;
+    var x2min = that.x;
+    var y2min = that.y;
+    var z2min = that.z;
 
     var x2max = x2min + that.w;
     var y2max = y2min + that.d;
     var z2max = z2min + that.h;
 
-    if ( Math.abs(x1min - x2min) < this.w + that.w
-      && Math.abs(y1min - y2min) < this.d + that.d
-      && Math.abs(z1min - z2min) < this.h + that.h) {
+    var xo = Math.abs(x1min - x2min);
+    var yo = Math.abs(y1min - y2min);
+    var zo = Math.abs(z1min - z2min);
 
-      // we started overlapping at start of frame
+    if ( xo < this.w + that.w
+      && yo < this.d + that.d
+      && zo < this.h + that.h) {
 
-      // permit slow interpenetration for right now
-      this.bump(that,0.01,true);
-      that.bump(this,0.01,true);
-      return true;
+      // this will lie w, d, and h disagree
+
+      var ex = (this.w + that.w)/2;
+      var ey = (this.d + that.d)/2;
+      var ez = (this.h + that.h)/2;
+
+      var dx = x1min - x2min + (this.w - that.w)/2;
+      var dy = y1min - y2min + (this.d - that.d)/2;
+      var dz = z1min - z2min + (this.h - that.h)/2;
+
+      var dl = Math.sqrt(dx*dx +dy*dy+dz*dz);
+
+      var l = Math.sqrt(ex*ex+ey*ey+ez*ez);
+
+      if (dl < l) {
+        if (dl * (ima + imb) > 200) {
+          console.log("singularity approached");
+        }
+
+        var ima = this.inverseMass;
+        var imb = that.inverseMass;
+        var diff = (dl-l)/(dl*(ima+imb))
+        dx *= diff;
+        dy *= diff;
+        dz *= diff;
+        this.x -= dx*ima;
+        this.y -= dy*ima;
+        this.z -= dz*ima;
+        that.x += dx*imb;
+        that.y += dy*imb;
+        that.z += dz*imb;
+      }
     }
-
-    // relative velocity
-    var vx = that.vx - this.vx;
-    var vy = that.vy - this.vy;
-    var vz = that.vz - this.vz;
-
-    var xt0 = (x1max < x2min && vx < 0) ? (x1max - x2min) / vx :
-              (x2max < x1min && vx > 0) ? (x1min - x2max) / vx : 0;
-
-    var yt0 = (y1max < y2min && vy < 0) ? (y1max - y2min) / vy :
-              (y2max < y1min && vy > 0) ? (y1min - y2max) / vy : 0;
-
-    var zt0 = (z1max < z2min && vz < 0) ? (z1max - z2min) / vz :
-              (z2max < z1min && vz > 0) ? (z1min - z2max) / vz : 0;
-
-    var xt1 = 1;
-    var yt1 = 1;
-    var zt1 = 1;
-
-    var xt1 = (x2max > x1min && vx < 0) ? (x1min - x2max) / vx :
-              (x1max > x2min && vx > 0) ? (x1max - x2min) / vx : 1;
-
-    var yt1 = (y2max > y1min && vy < 0) ? (y1min - y2max) / vy :
-              (y1max > y2min && vy > 0) ? (y1max - y2min) / vy : 1;
-
-    var zt1 = (z2max > z1min && vz < 0) ? (z1min - z2max) / vz :
-              (z1max > z2min && vz > 0) ? (z1max - z2min) / vz : 1;
-
-    var t0 = Math.max(0.01,xt0,yt0,zt0);
-    var t1 = Math.min(1,xt0,yt0,zt0); // ,this.beta,that.beta);
-
-    if (t0 <= t1) {
-      // we have a window of overlap, and it occurs actually during the time we're moving, so bump.
-      this.bump(that,t0,false);
-      that.bump(this,t0,false);
-      return true;
-    }
-    return false;
   }
 };
 
@@ -412,6 +361,8 @@ var step = function step(t) {
     b.plan();
   }
 
+  for (var k=0;k<1;k++) {
+
   // unlink the buckets
   for (var i=0;i<buckets.length;i++)
     buckets[i] = null;
@@ -435,6 +386,9 @@ var step = function step(t) {
     clip_buckets(i,(i+BUCKET_COLUMNS) % BUCKETS);
     clip_buckets(i,(i+1+BUCKET_COLUMNS) % BUCKETS);
   }
+
+  }
+
 
   stats.physics.end();
 };
