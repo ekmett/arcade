@@ -202,7 +202,7 @@ Body.prototype = {
     this.az += Fz * im;
   },
   interpolate : function interpolate(alpha) {
-    alpha = Math.min(alpha); // , this.beta);
+    alpha = Math.min(alpha, this.beta);
     this.rx = this.ox * (1 - alpha) + this.x * alpha;
     this.ry = this.oy * (1 - alpha) + this.y * alpha;
     this.rz = this.oz * (1 - alpha) + this.z * alpha;
@@ -217,14 +217,14 @@ Body.prototype = {
     var beta = this.beta;
 
     // update ground truth using beta from last frame
-    // var tx = this.x = this.ox * (1 - beta) + this.x * beta;
-    // var ty = this.y = this.oy * (1 - beta) + this.y * beta;
-    // var tz = this.z = this.oz * (1 - beta) + this.z * beta;
+    var tx = this.x = this.ox * (1 - beta) + this.x * beta;
+    var ty = this.y = this.oy * (1 - beta) + this.y * beta;
+    var tz = this.z = this.oz * (1 - beta) + this.z * beta;
 
     // stash the current location
-    var tx = this.x;
-    var ty = this.y;
-    var tz = this.z;
+    // var tx = this.x;
+    // var ty = this.y;
+    // var tz = this.z;
 
     var oom = this.inverseMass;
 
