@@ -253,6 +253,10 @@ player.ai = function() {
   player.push(pdx,pdy,50*pdz);
 };
 
+var genocide = $(".genocide-link").click(function() {
+  physics.bodies = [player];
+});
+
 var scratch = new ScreenPoint();
 
 // window.setInterval( function() { return snapBy(1,1); }, 33);
@@ -330,7 +334,7 @@ var render = function render() {
          dx /= l;
          dy /= l;
          dz /= l;
-         if (body.standing) this.push(dx,dy,dz*5+Math.random()*3); // this.w^3);
+         if (body.standing) this.push(dx,dy,this.w*2*dz*5+Math.random()*3); // this.w^3);
        }
      };
    } else if (ty<0.35) {
