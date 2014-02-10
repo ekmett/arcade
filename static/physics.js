@@ -75,7 +75,7 @@ function stick(a,b,l) {
 // constants
 
 var RELAXATIONS = 1; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
-var G = 0.2; // 9.8/FPS^2*0; // 0.1; // 9.8/FPS^2 / 100;  // the gravity of the situation
+var G = 0.1; // 9.8/FPS^2*0; // 0.1; // 9.8/FPS^2 / 100;  // the gravity of the situation
 
 var AIR_DRAG = 0.001;
 var GROUND_DRAG = 0.2;

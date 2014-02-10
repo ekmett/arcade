@@ -179,23 +179,59 @@ var floor = function floor(c,x1,y1,z,w,d,h) {
   c.lineTo(sx1,sy1);
 };
 
+var scratch = new ScreenPoint();
 var cursor = new WorldPoint();
-var cursorScreen = new ScreenPoint();
 
 var s = shadows.canvas;
 var c = foreground.canvas;
 
-var player = new physics.Body( 0,0,0, 0.5,0.5,1,100);
+
+var player = new physics.Body( 0,0,0, 0.8,0.8,2,100);
+var image = new Image();
+image.onload = function() {
+  image.complete = true;
+  console.log('image loaded');
+};
+image.src = 'file:///Users/ekmett/haskell/roguekcd/static/images/sprites/books_what.png';
 player.color = '#' + Math.random().toString(16).substring(2, 8)
 physics.bodies.push(player);
 player.draw = function() {
+/*
   floor(s,this.rx,this.ry,0,this.w,this.d,0);
   s.fillStyle = "rgba(0,0,0,0.25)";
   s.fill();
+*/
+  c.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
+  scratch.world(this.rx,this.ry,this.rz);
+  c.drawImage(image,
+    0,
+    0,
+    image.naturalWidth,
+    image.naturalHeight,
+    scratch.sx-1.25,
+    scratch.sy-5.5,
+    2*Math.sqrt(3),//*Math.sqrt(2),
+    4*Math.sqrt(3)
+    // width
+  );
+
+  s.setTransform(PIXELS_PER_METER,0,0,0.5*PIXELS_PER_METER,halfWidth,halfHeight);
+  s.beginPath();
+  scratch.world(this.rx,this.ry,0);
+  s.arc(scratch.sx,scratch.sy*2+this.h,this.w*0.5*Math.sqrt(3),0,2*Math.PI,false);
+  s.fillStyle = "rgba(0,0,0,0.25)";
+  s.fill();
+  s.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
+
+
+  tack(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
+  c.lineWidth = 0.01;
+  c.strokeStyle = "grey";
+  c.stroke();
   cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
-  c.fillStyle = this.color;
-  c.fill();
-  c.lineWidth = 0.1;
+  // c.fillStyle = this.color;
+  //c.fill();
+  c.lineWidth = 0.01;
   c.strokeStyle = "black";
   c.stroke();
 };
@@ -271,6 +307,7 @@ var render = function render() {
      c.strokeStyle = "black";
      c.stroke();
      c.fill();
+
      s.setTransform(PIXELS_PER_METER,0,0,0.5*PIXELS_PER_METER,halfWidth,halfHeight);
      s.beginPath();
      scratch.world(this.rx,this.ry,0);
@@ -278,6 +315,7 @@ var render = function render() {
      s.fillStyle = "rgba(0,0,0,0.25)";
      s.fill();
      s.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
+
    };
    var ty = Math.random();
    if (ty<0.25) {
