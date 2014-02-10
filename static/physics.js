@@ -86,6 +86,7 @@ var GROUND_DRAG = 0.2;
 var SPEED_LIMIT    = 1;
 var SPEED_LIMIT_SQUARED = SPEED_LIMIT * SPEED_LIMIT;
 var RECIP_SPEED_LIMIT_SQUARED = 1 / SPEED_LIMIT_SQUARED
+var SPEED_EPSILON = 0;// 0.00001;
 
 var MAX_BODY_HEIGHT = 4; // no Body is taller than 4 meters z
 var MAX_BODY_WIDTH  = 2; // no Body is wider than 2 meters: x
@@ -132,7 +133,7 @@ var scene = {
     var standing = body.standing = body.oz < 0.3; // w/in 1ft of the ground
 
     if (standing) {
-      body.mu_v = 0.5; // standard ground friction is quite high
+      body.mu_v = 0.9; // standard ground friction is quite high
     }
   }
 };
@@ -207,12 +208,24 @@ Body.prototype = {
 
     var oom = this.inverseMass;
 
-    var vx = (1 - this.mu_h) * (tx - this.ox) + this.ax; // wind, drag
-    var vy = (1 - this.mu_h) * (ty - this.oy) + this.ay; // wind, drag
-    var vz = (1 - this.mu_v) * (tz - this.oz) + this.az - G; // gravity
+    var vx = (1 - this.mu_h) * (tx - this.ox); // wind, drag
+    var vy = (1 - this.mu_h) * (ty - this.oy); // wind, drag
+    var vz = (1 - this.mu_v) * (tz - this.oz); // gravity
+
+    // enforce speed floor
+    var v2 = vx*vx+vy*vy;
+
+    if (v2 < SPEED_EPSILON && this.standing) {
+      vx = 0;
+      vy = 0;
+    }
+
+    vx += this.ax;
+    vy += this.ay;
+    vz += this.az - G;
 
     // enforce speed limit, lest we clip through things
-    var v2 = vx*vx+vy*vy+vz*vz;
+    v2 = vx*vx+vy*vy+vz*vz;
 
     if (v2 > SPEED_LIMIT_SQUARED) {
       var v = Math.sqrt(v2);

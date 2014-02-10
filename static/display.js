@@ -284,6 +284,10 @@ var render = function render() {
 
   frame = (frame+1) % 40;
 
+  // if (!frame) {
+    // console.log(player);
+  // }
+
 
   if (events.mouse[1]) {
     // user clicked
@@ -350,6 +354,16 @@ var render = function render() {
          if (body.standing) this.push(-dx,-dy,0);
        }
      };
+   } else if (ty < 0.45) {
+     body.color = "#0ff";
+     body.speed1 = Math.random()*4-1;
+     body.speed2 = Math.random()*4-1;
+     body.start = Math.random()*40;
+     body.ai = function() {
+       var dx = Math.sin((body.start+physics.frame)*3.14/20*body.speed1);
+       var dy = Math.cos((body.start+physics.frame)*3.14/20*body.speed2);
+       if (body.standing) this.push(dx*0.25,dy*0.25,0);
+     }
    }
    physics.bodies.push(body);
   }
