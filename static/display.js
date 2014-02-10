@@ -1,4 +1,4 @@
-define(["jquery", "physics", "shim/raf", "shim/cc", "performance", "stats", "events","images"], function display($, physics, raf, cc, performance, stats, events, images) {
+define(["jquery", "constraints", "physics", "shim/raf", "shim/cc", "performance", "stats", "events","images"], function display($, constraints, physics, raf, cc, performance, stats, events, images) {
 
 var display = {
   updated : null,
@@ -298,7 +298,7 @@ var render = function render() {
     );
 
    var r = -Math.log(Math.random())/2.5+0.2;
-   var body = new physics.Body(Math.random()*9.5-5,Math.random()*9.5-5,Math.random()*10,r,r,r,20*r^2.8);
+   var body = new physics.Body(Math.random()*9.5-5,Math.random()*9.5-5,Math.random()*10,r,r,r,20*r^2.9);
    body.color = '#' + Math.random().toString(16).substring(2, 8);
    body.draw = function() {
 /*
@@ -310,7 +310,11 @@ var render = function render() {
      c.beginPath();
      scratch.world(this.rx,this.ry,this.rz);
      c.arc(scratch.sx,scratch.sy,this.w*Math.sqrt(3),0,2*Math.PI,false);
-     c.fillStyle = this.color;
+     // c.fillStyle = this.color;
+     var g = c.createRadialGradient(scratch.sx-this.w/Math.sqrt(2),scratch.sy-this.d/Math.sqrt(2),0.1,scratch.sx,scratch.sy,this.w*Math.sqrt(3));
+     g.addColorStop(0,"#fcfcfc");
+     g.addColorStop(1,this.color);
+     c.fillStyle = g;
      c.lineWidth = 0.1;
      c.strokeStyle = "black";
      c.stroke();
@@ -364,6 +368,19 @@ var render = function render() {
        var dy = Math.cos((body.start+physics.frame)*3.14/20*body.speed2);
        if (body.standing) this.push(dx*0.25,dy*0.25,0);
      }
+/*
+   } else if (ty < 0.55) { // tar baby
+     body.color = "#000";
+     body.constraints = 0; // TODO: track targets so we don't add them multiple times
+     body.bump = function(that) {
+       if (this.constraints < 3 && (!that.constrained || (typeof that.constraints !== 'undefined'))) {
+         this.constraints++;
+         that.constrained = true;
+         var l = Math.min(this.w+that.w,this.d+that.d,this.h+that.h)/2;
+         physics.constraints.push(constraints.stick(body,that,l*0.9));
+       }
+     }
+*/
    }
    physics.bodies.push(body);
   }
@@ -409,6 +426,14 @@ var render = function render() {
   physics.bodies.sort(function(a,b) {
     return a.key - b.key;
   });
+
+  // experimental, slow, shadow
+  /*
+  c.shadowColor = 'rgba(0,0,0,.3)';
+  c.shadowBlur = 3;
+  c.shadowOffsetX = 1;
+  c.shadowOffsetY = 1;
+  */
 
   for (var i in physics.bodies) {
     var b = physics.bodies[i];

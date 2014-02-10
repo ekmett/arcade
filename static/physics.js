@@ -297,20 +297,21 @@ Body.prototype = {
     if ( xo < this.w + that.w
       && yo < this.d + that.d
       && zo < this.h + that.h) {
+      // bounding boxes overlap, so we've collided.
 
-      // this will lie w, d, and h disagree
 
-      var ex = (this.w + that.w)/2;
-      var ey = (this.d + that.d)/2;
-      var ez = (this.h + that.h)/2;
+      // The player is now a pefectly spherical cow
+      var ex = (this.w + that.w); //2;
+      var ey = (this.d + that.d); //2;
+      var ez = (this.h + that.h); //2;
 
-      var dx = x1min - x2min + (this.w - that.w)/2;
-      var dy = y1min - y2min + (this.d - that.d)/2;
-      var dz = z1min - z2min + (this.h - that.h)/2;
+      var dx = (x1min - x2min + (this.w - that.w)/2) / ex;
+      var dy = (y1min - y2min + (this.d - that.d)/2) / ey;
+      var dz = (z1min - z2min + (this.h - that.h)/2) / ez;
 
-      var dl = Math.sqrt(dx*dx +dy*dy+dz*dz);
+      var dl = Math.sqrt(dx*dx+dy*dy+dz*dz);
 
-      var l = Math.sqrt(ex*ex+ey*ey+ez*ez);
+      var l = 1; // Math.sqrt(ex*ex+ey*ey+ez*ez);
 
       if (dl < l) {
         if (dl * (ima + imb) > 200) {
@@ -318,10 +319,10 @@ Body.prototype = {
         }
         var ima = this.inverseMass;
         var imb = that.inverseMass;
-        var diff = (dl-l)/(dl*(ima+imb))*0.4;
-        dx *= diff;
-        dy *= diff;
-        dz *= diff;
+        var diff = (dl-l)/(dl*(ima+imb))*0.4; // a magical elasticity coefficient
+        dx *= diff*ex;
+        dy *= diff*ey;
+        dz *= diff*ez;
         this.x -= dx*ima;
         this.y -= dy*ima;
         this.z -= dz*ima;
