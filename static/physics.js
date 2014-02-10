@@ -150,7 +150,7 @@ var scene = {
   }
 };
 
-var Body = physics.Body = function(x,y,z,w,d,h,inverseMass) {
+var Body = physics.Body = function(x,y,z,w,d,h,mass) {
   // primary characterisics
   this.x = x; // position
   this.y = y;
@@ -162,7 +162,8 @@ var Body = physics.Body = function(x,y,z,w,d,h,inverseMass) {
   this.oy = y;
   this.oz = z;
 
-  this.inverseMass = inverseMass; // determines collision response
+  this.mass = mass;
+  this.inverseMass = 1/mass; // determines collision response
 
   this.w = w; // bounding box parameters
   this.d = d;
@@ -283,7 +284,11 @@ Body.prototype = {
 
       // for debugging
       this.color = that.color;
-      // TODO: allow transfer of impulse energy
+
+
+      var E = 0.2;
+      // TODO: allow some transfer of impulse energy
+      this.push(E * that.mass * that.vx, E * that.mass * that.vy, E * that.mass * that.vz)
     }
   },
 
@@ -318,38 +323,43 @@ Body.prototype = {
 
       // we started overlapping at start of frame
 
-      // TODO: perturb? otherwise we can get stuck together like siamese twins
-      this.bump(that,0,true);
-      that.bump(this,0,true);
+      // permit slow interpenetration for right now
+      this.bump(that,0.01,true);
+      that.bump(this,0.01,true);
       return true;
     }
 
     // relative velocity
-    var vx = this.vx - that.vx;
-    var vy = this.vy - that.vy;
-    var vz = this.vz - that.vz;
+    var vx = that.vx - this.vx;
+    var vy = that.vy - this.vy;
+    var vz = that.vz - this.vz;
 
-    var t0 = (x1max < x2min && vx < 0) ? (x1max - x2min) / vx :
-             (x2max < x1min && vx > 0) ? (x1min - x2max) / vx : 1
+    var xt0 = (x1max < x2min && vx < 0) ? (x1max - x2min) / vx :
+              (x2max < x1min && vx > 0) ? (x1min - x2max) / vx : 0;
 
-    if (y1max < y2min && vy < 0)      t0 = Math.max(t0, (y1max - y2min) / vy);
-    else if (y2max < y1min && vy > 0) t0 = Math.max(t0, (y1min - y2max) / vy);
+    var yt0 = (y1max < y2min && vy < 0) ? (y1max - y2min) / vy :
+              (y2max < y1min && vy > 0) ? (y1min - y2max) / vy : 0;
 
-    if (z1max < z2min && vz < 0)      t0 = Math.max(t0, (z1max - z2min) / vz);
-    else if (z2max < z1min && vz > 0) t0 = Math.max(t0, (z1min - z2max) / vz);
+    var zt0 = (z1max < z2min && vz < 0) ? (z1max - z2min) / vz :
+              (z2max < z1min && vz > 0) ? (z1min - z2max) / vz : 0;
 
-    var t1 = 2; // we don't want to register a bump
+    var xt1 = 1;
+    var yt1 = 1;
+    var zt1 = 1;
 
-    if (x2max > x1min && vx < 0)      t1 = Math.min(t1, (x1min - x2max) / vx);
-    else if (x1max > x2min && vx > 0) t1 = Math.min(t1, (x1max - x2min) / vx);
+    var xt1 = (x2max > x1min && vx < 0) ? (x1min - x2max) / vx :
+              (x1max > x2min && vx > 0) ? (x1max - x2min) / vx : 1;
 
-    if (y2max > y1min && vy < 0)      t1 = Math.min(t1, (y1min - y2max) / vy);
-    else if (y1max > y2min && vy > 0) t1 = Math.min(t1, (y1max - y2min) / vy);
+    var yt1 = (y2max > y1min && vy < 0) ? (y1min - y2max) / vy :
+              (y1max > y2min && vy > 0) ? (y1max - y2min) / vy : 1;
 
-    if (z2max > z1min && vz < 0)      t1 = Math.min(t1, (z1min - z2max) / vz);
-    else if (z1max > z2min && vz > 0) t1 = Math.min(t1, (z1max - z2min) / vz);
+    var zt1 = (z2max > z1min && vz < 0) ? (z1min - z2max) / vz :
+              (z1max > z2min && vz > 0) ? (z1max - z2min) / vz : 1;
 
-    if (t0 <= t1 && t0 <= this.beta && t0 <= that.beta) {
+    var t0 = Math.max(0.01,xt0,yt0,zt0);
+    var t1 = Math.min(1,xt0,yt0,zt0); // ,this.beta,that.beta);
+
+    if (t0 <= t1) {
       // we have a window of overlap, and it occurs actually during the time we're moving, so bump.
       this.bump(that,t0,false);
       that.bump(this,t0,false);

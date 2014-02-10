@@ -183,7 +183,7 @@ var floor = function floor(c,x1,y1,z,w,d,h) {
 var cursor = new WorldPoint();
 var cursorScreen = new ScreenPoint();
 
-var player = new physics.Body( 0,0,0, 0.6,0.6,1.5,0.01);
+var player = new physics.Body( 0,0,0, 0.6,0.6,1.5,100);
 player.color = '#' + Math.random().toString(16).substring(2, 8)
 physics.bodies.push(player);
 
