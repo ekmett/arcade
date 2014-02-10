@@ -59,7 +59,7 @@ function stick(a,b,l) {
     var dl = sqrt(dx*dx + dy*dy + dz*dz);
     var ima = a.inverseMass;
     var imb = b.inverseMass;
-    var diff = (dl-l)/(dl*(ima+imb))
+    var diff = (dl-l)/(dl*(ima+imb));
     dx *= diff;
     dy *= diff;
     dz *= diff;
@@ -125,8 +125,8 @@ var scene = {
   },
   locate : function locate(body) {
     // air friction
-    body.mu_h = 0.001;
-    body.mu_v = 0.001;
+    body.mu_h = 0.01;
+    body.mu_v = 0.01;
     body.ground_elasticity = 0;
 
     var standing = body.standing = body.oz < 0.3; // w/in 1ft of the ground
@@ -300,10 +300,9 @@ Body.prototype = {
         if (dl * (ima + imb) > 200) {
           console.log("singularity approached");
         }
-
         var ima = this.inverseMass;
         var imb = that.inverseMass;
-        var diff = (dl-l)/(dl*(ima+imb))
+        var diff = (dl-l)/(dl*(ima+imb))*0.4;
         dx *= diff;
         dy *= diff;
         dz *= diff;

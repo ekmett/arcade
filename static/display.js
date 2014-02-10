@@ -183,9 +183,25 @@ var floor = function floor(c,x1,y1,z,w,d,h) {
 var cursor = new WorldPoint();
 var cursorScreen = new ScreenPoint();
 
-var player = new physics.Body( 0,0,0, 0.6,0.6,0.6,100);
+var s = shadows.canvas;
+var c = foreground.canvas;
+
+var player = new physics.Body( 0,0,0, 0.5,0.5,1,100);
 player.color = '#' + Math.random().toString(16).substring(2, 8)
 physics.bodies.push(player);
+player.draw = function() {
+  floor(s,this.rx,this.ry,0,this.w,this.d,0);
+  s.fillStyle = "rgba(0,0,0,0.25)";
+  s.fill();
+  cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
+  c.fillStyle = this.color;
+  c.fill();
+  c.lineWidth = 0.1;
+  c.strokeStyle = "black";
+  c.stroke();
+};
+
+var scratch = new ScreenPoint();
 
 // window.setInterval( function() { return snapBy(1,1); }, 33);
 var render = function render() {
@@ -238,25 +254,39 @@ var render = function render() {
       (events.mouseX-halfWidth) * METERS_PER_PIXEL,
       (events.mouseY-halfHeight) * METERS_PER_PIXEL
     );
-    cursorScreen.world(cursor.x,cursor.y,0); // for testing only
+
     for (var i = 0; i < 1; i ++) {
      var body = new physics.Body(Math.random()*9.5-5,Math.random()*9.5-5,Math.random()*10,0.5,0.5,0.5,50);
      // body.push(0,0,0); // Math.random()-0.5,Math.random()-0.5,Math.random()-0.5);
-     body.color = '#' + Math.random().toString(16).substring(2, 8)
+     body.color = '#' + Math.random().toString(16).substring(2, 8);
+     body.draw = function() {
+       cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
+       c.lineWidth = 0.1;
+       c.strokeStyle = "black";
+       c.stroke();
+       c.beginPath();
+       scratch.world(this.rx,this.ry,this.rz);
+       c.arc(scratch.sx,scratch.sy,0.5*Math.sqrt(3),0,2*Math.PI,false);
+       c.fillStyle = this.color;
+       c.lineWidth = 0.1;
+       c.strokeStyle = "black";
+       c.stroke();
+       c.fill();
+       s.setTransform(PIXELS_PER_METER,0,0,0.5*PIXELS_PER_METER,halfWidth,halfHeight);
+       s.beginPath();
+       scratch.world(this.rx,this.ry,0);
+       s.arc(scratch.sx,scratch.sy*2,this.w,0,2*Math.PI,false);
+       s.fillStyle = "rgba(0,0,0,0.25)";
+       s.fill();
+       s.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
+     };
      physics.bodies.push(body);
    }
-
   }
   /* console.log(x,y); */
   // var x = cursorScreen.sx;
-  //var y = cursorScreen.sy;
-
-  // var x = (events.mouseX-halfWidth) * METERS_PER_PIXEL;
-  // var y = (events.mouseY-halfHeight) * METERS_PER_PIXEL;
-  var x = cursorScreen.sx;
-  var y = cursorScreen.sy;
-
-  var z = Math.sin(frame * 3.14 / 20) * 1 + 1;
+  // var y = cursorScreen.sy;
+  // var z = Math.sin(frame * 3.14 / 20) * 1 + 1;
 
   var b = background.canvas;
   b.clear(true);
@@ -300,17 +330,10 @@ var render = function render() {
   // unsorted, etc.
   for (var i in physics.bodies) {
     var b = physics.bodies[i];
-    // b.interpolate(alpha);
-    cube(c,b.rx,b.ry,b.rz,b.w,b.d,b.h);
-    c.strokeStyle = b.color;
-    c.stroke();
-    c.fillStyle = b.color;
-    c.fill();
-    // b.push(Math.random()*1-0.5,Math.random()*1-.5,Math.random()*1-.5);
-    floor(s,b.rx,b.ry,0,b.w,b.d,0);
-    s.fillStyle = "rgba(0,0,0,0.25)";
-    s.fill();
+    b.draw();
   }
+
+/*
 
   // for interactivity, cage a ball around the last cursor click
   tack(c,cursor.x-0.5,cursor.y-0.5,0,1,1,2);
@@ -334,6 +357,7 @@ var render = function render() {
   cube(c,cursor.x-0.5,cursor.y-0.5,0,1,1,2);
   c.strokeStyle = "#3cc";
   c.stroke();
+*/
 
   stats.display.end();
 }
