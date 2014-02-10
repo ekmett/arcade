@@ -74,16 +74,18 @@ function stick(a,b,l) {
 
 // constants
 
-var RELAXATIONS = 2; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
-var G = -9.8/FPS^2;  // the gravity of the situation
+var RELAXATIONS = 1; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
+var G = 9.8/FPS^2; // 0.1; // 9.8/FPS^2 / 100;  // the gravity of the situation
 
-var AIR_DRAG = 0.01;
+var AIR_DRAG = 0.001;
 var GROUND_DRAG = 0.2;
 
 // No Body can move more than 1 meter / frame. This is 25m/s or 56 miles per hour.
 // A hard clamp'll serve as a poor man's terminal velocity, but we could switch to a nicer drag model
 // to get it more smoothly.
-var MAX_VELOCITY    = 1;
+var SPEED_LIMIT    = 1;
+var SPEED_LIMIT_SQUARED = SPEED_LIMIT * SPEED_LIMIT;
+var RECIP_SPEED_LIMIT_SQUARED = 1 / SPEED_LIMIT_SQUARED
 
 var MAX_BODY_HEIGHT = 4; // no Body is taller than 4 meters z
 var MAX_BODY_WIDTH  = 2; // no Body is wider than 2 meters: x
@@ -92,8 +94,8 @@ var MAX_BODY_DEPTH  = 2; // no Body has a bounding box more than 2 meters deep i
 var MAX_WORLD_HEIGHT = 5; // nothing can get more than 5 meters off the ground, making floors about 16 ft high.
 var MIN_WORLD_HEIGHT = 0; // nothing can get more than 0 meters below the floor.
 
-var BUCKET_WIDTH  = MAX_BODY_WIDTH + MAX_VELOCITY*4; // 6 meters
-var BUCKET_DEPTH  = MAX_BODY_DEPTH + MAX_VELOCITY*4;
+var BUCKET_WIDTH  = MAX_BODY_WIDTH + SPEED_LIMIT*4; // 6 meters
+var BUCKET_DEPTH  = MAX_BODY_DEPTH + SPEED_LIMIT*4;
 
 var BUCKET_COLUMNS = 16; // 96 meters without overlap
 var BUCKET_ROWS    = 16; // 96 meters without overlap
@@ -114,18 +116,33 @@ function bucket(x,y) {
 var scene = {
   clip : function clip(body) {
     // clip the body to the world
-    body.z = Math.max(0,Math.min(body.z, MAX_WORLD_HEIGHT-MAX_BODY_HEIGHT));
+    var nx = Math.max(-5,Math.min(body.x, 5-body.w));
+    var ny = Math.max(-5,Math.min(body.y, 5-body.d));
+    var nz = Math.max(0,Math.min(body.z, MAX_WORLD_HEIGHT-body.h));
+
+    body.x = nx;
+    body.y = ny;
+    body.z = nz;
+
+    // we should figure out when that happened to avoid interpenetration on display
+    body.beta = Math.min(
+      body.beta,
+      Math.max(0,Math.min(nx / (body.ox-body.x), 1)),
+      Math.max(0,Math.min(ny / (body.oy-body.y), 1)),
+      Math.max(0,Math.min(nz / (body.oz-body.z), 1))
+    );
+    // body.z = newz;
   },
   locate : function locate(body) {
     // air friction
-    body.mu_h = AIR_DRAG;
-    body.mu_v = AIR_DRAG;
+    body.mu_h = 0.001;
+    body.mu_v = 0.001;
     body.ground_elasticity = 0; // for bounces
 
     var standing = body.standing = body.z < 0.3;
 
     if (standing) {
-      body.mu_v = GROUND_DRAG; // standard ground friction
+      body.mu_v = 0.002; // GROUND_DRAG; // standard ground friction
     }
   }
 };
@@ -136,7 +153,7 @@ var Body = physics.Body = function(x,y,z,w,d,h,inverseMass) {
   this.y = y;
   this.z = z;
 
-  this.ax = 0 = this.ay = this.az = 0; // acceleration impulse
+  this.ax = this.ay = this.az = 0; // acceleration impulse
 
   this.ox = x; // retained for both rendering interpolation an verlet integration
   this.oy = y;
@@ -182,6 +199,7 @@ Body.prototype = {
     this.az += Fz * im;
   },
   interpolate : function interpolate(alpha) {
+    alpha = Math.min(alpha, this.beta);
     this.rx = this.ox * (1 - alpha) + this.x * alpha;
     this.ry = this.oy * (1 - alpha) + this.y * alpha;
     this.rz = this.oz * (1 - alpha) + this.z * alpha;
@@ -192,19 +210,40 @@ Body.prototype = {
   },
 
   move : function move() {
-    // stash the current location
-    var tx = this.x;
-    var ty = this.y;
-    var tz = this.z;
 
-    // probe the bsp to update drag, it'll scribble changes into 'local'
+    var beta = this.beta;
+
+    // update ground truth using beta from last frame
+    var tx = this.x = this.ox * (1 - beta) + this.x * beta;
+    var ty = this.y = this.oy * (1 - beta) + this.y * beta;
+    var tz = this.z = this.oz * (1 - beta) + this.z * beta;
+
+    // stash the current location
+    // var tx = this.x;
+    // var ty = this.y;
+    // var tz = this.z;
 
     var oom = this.inverseMass;
 
-    // update position, and derive velocity
-    this.x += this.vx = (1 - local.mu_h) * (tx - this.ox) + this.ax; // wind, drag
-    this.y += this.vy = (1 - local.mu_h) * (tx - this.ox) + this.ax; // wind, drag
-    this.z += this.vz = (1 - local.mu_v) * (tz - this.oz) + this.az + G; // gravity
+    var vx = (1 - this.mu_h) * (tx - this.ox) + this.ax; // wind, drag
+    var vy = (1 - this.mu_h) * (ty - this.oy) + this.ay; // wind, drag
+    var vz = (1 - this.mu_v) * (tz - this.oz) + this.az - G; // gravity
+
+    // enforce speed limit
+    var v2 = vx*vx+vy*vy+vz*vz;
+
+    if (v2 > SPEED_LIMIT_SQUARED) {
+      var v = Math.sqrt(v2);
+      // console.log("speeding detected",Math.sqrt(v2)); // this.x,this.y,this.z,vx,vy,vz);
+      vx /= v;
+      vy /= v;
+      vz /= v;
+    }
+
+    // update position, and derive new velocity
+    this.x += this.vx = vx;
+    this.y += this.vy = vy;
+    this.z += this.vz = vz;
 
     // store old position
     this.ox = tx;
@@ -352,7 +391,7 @@ var step = function step(t) {
 
   // figure out local physical properties and plan to get impulses, shoot, etc.
   for (var i in bodies)
-    bodies[i].control();
+    bodies[i].plan();
 
   // unlink the buckets
   for (var i in buckets)
