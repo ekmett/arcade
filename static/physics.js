@@ -91,7 +91,7 @@ var MAX_BODY_HEIGHT = 4; // no Body is taller than 4 meters z
 var MAX_BODY_WIDTH  = 2; // no Body is wider than 2 meters: x
 var MAX_BODY_DEPTH  = 2; // no Body has a bounding box more than 2 meters deep in y
 
-var MAX_WORLD_HEIGHT = 5; // nothing can get more than 5 meters off the ground, making floors about 16 ft high.
+var MAX_WORLD_HEIGHT = 8; // nothing can get more than 5 meters off the ground, making floors about 16 ft high.
 var MIN_WORLD_HEIGHT = 0; // nothing can get more than 0 meters below the floor.
 
 var BUCKET_WIDTH  = MAX_BODY_WIDTH + SPEED_LIMIT*2; // 4 meters
@@ -191,6 +191,7 @@ Body.prototype = {
     this.rx = this.ox * (1 - alpha) + this.x * alpha;
     this.ry = this.oy * (1 - alpha) + this.y * alpha;
     this.rz = this.oz * (1 - alpha) + this.z * alpha;
+    this.key = this.rx + this.ry + 2*this.rz + (this.w + this.h + this.d)/2;
   },
   plan: function plan() {
     this.ai && this.ai();
@@ -249,7 +250,9 @@ Body.prototype = {
     var i = bucket(this.x,this.y);
     this.next_in_bucket = buckets[i];
     buckets[i] = this;
+    this.key = 0;
   },
+  bump: function(that) {},
 
   clip2d: clip.clip2d, // these only clip v
 
@@ -312,6 +315,8 @@ Body.prototype = {
         that.x += dx*imb;
         that.y += dy*imb;
         that.z += dz*imb;
+        this.bump(that);
+        that.bump(this);
       }
     }
   }

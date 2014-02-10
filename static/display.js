@@ -24,7 +24,6 @@ var METERS_PER_PIXEL = 1 / PIXELS_PER_METER;
 var Y_SCALE  = 0.5;
 var RECIP_Y_SCALE = 2;
 
-
 var layer = function layer(name) {
   var result = $("#" + name);
   result.canvas = result[0].getContext("2d");
@@ -254,34 +253,63 @@ var render = function render() {
       (events.mouseY-halfHeight) * METERS_PER_PIXEL
     );
 
-    for (var i = 0; i < 1; i ++) {
-     var r = -Math.log(Math.random())/3+0.1;
-     var body = new physics.Body(Math.random()*9.5-5,Math.random()*9.5-5,Math.random()*10,r,r,r,20*r^3);
-     // body.push(0,0,0); // Math.random()-0.5,Math.random()-0.5,Math.random()-0.5);
-     body.color = '#' + Math.random().toString(16).substring(2, 8);
-     body.draw = function() {
-       cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
-       c.lineWidth = 0.1;
-       c.strokeStyle = "black";
-       c.stroke();
-       c.beginPath();
-       scratch.world(this.rx,this.ry,this.rz);
-       c.arc(scratch.sx,scratch.sy,this.w*Math.sqrt(3),0,2*Math.PI,false);
-       c.fillStyle = this.color;
-       c.lineWidth = 0.1;
-       c.strokeStyle = "black";
-       c.stroke();
-       c.fill();
-       s.setTransform(PIXELS_PER_METER,0,0,0.5*PIXELS_PER_METER,halfWidth,halfHeight);
-       s.beginPath();
-       scratch.world(this.rx,this.ry,0);
-       s.arc(scratch.sx,scratch.sy*2,this.w,0,2*Math.PI,false);
-       s.fillStyle = "rgba(0,0,0,0.25)";
-       s.fill();
-       s.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
+   var r = -Math.log(Math.random())/2.5+0.2;
+   var body = new physics.Body(Math.random()*9.5-5,Math.random()*9.5-5,Math.random()*10,r,r,r,20*r^2.8);
+   body.color = '#' + Math.random().toString(16).substring(2, 8);
+   body.draw = function() {
+/*
+     cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
+     c.lineWidth = 0.1;
+     c.strokeStyle = "black";
+     c.stroke();
+*/
+     c.beginPath();
+     scratch.world(this.rx,this.ry,this.rz);
+     c.arc(scratch.sx,scratch.sy,this.w*Math.sqrt(3),0,2*Math.PI,false);
+     c.fillStyle = this.color;
+     c.lineWidth = 0.1;
+     c.strokeStyle = "black";
+     c.stroke();
+     c.fill();
+     s.setTransform(PIXELS_PER_METER,0,0,0.5*PIXELS_PER_METER,halfWidth,halfHeight);
+     s.beginPath();
+     scratch.world(this.rx,this.ry,0);
+     s.arc(scratch.sx,scratch.sy*2+this.h*2,this.w*Math.sqrt(3),0,2*Math.PI,false);
+     s.fillStyle = "rgba(0,0,0,0.25)";
+     s.fill();
+     s.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
+   };
+   var ty = Math.random();
+   if (ty<0.25) {
+     body.color = "#f33";
+     body.lag = Math.random()*5-3;
+     body.ai = function dog() {
+       var dx = player.ox * body.lag + player.x * (1 - body.lag) - this.x;
+       var dy = player.oy * body.lag + player.y * (1 - body.lag) - this.y;
+       var dz = player.oz * body.lag + player.z * (1 - body.lag) - this.z;
+       var l = Math.sqrt(dx*dx+dy*dy+dz*dz)*3;
+       if (Math.abs(l) > 0.01) {
+         dx /= l;
+         dy /= l;
+         dz /= l;
+         if (body.standing) this.push(dx,dy,dz*5+Math.random()*3); // this.w^3);
+       }
      };
-     physics.bodies.push(body);
+   } else if (ty<0.35) {
+     body.color = "#ff0";
+     body.lag = Math.random()*5-3;
+     body.ai = function scared_dog() {
+       var dx = player.ox * body.lag + player.x * (1 - body.lag) - this.x;
+       var dy = player.oy * body.lag + player.y * (1 - body.lag) - this.y;
+       var l = Math.sqrt(dx*dx+dy*dy)*3;
+       if (Math.abs(l) > 0.01) {
+         dx /= l;
+         dy /= l;
+         if (body.standing) this.push(-dx,-dy,0);
+       }
+     };
    }
+   physics.bodies.push(body);
   }
   /* console.log(x,y); */
   // var x = cursorScreen.sx;
@@ -301,7 +329,7 @@ var render = function render() {
   c.clear(true);
   c.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
 
-  // delimit the world the world
+  // delimit the world
   room(b,-5,-5,0,10,10,2);
   b.strokeStyle = "#ccc";
   b.fillStyle = "#ddd";
@@ -313,9 +341,9 @@ var render = function render() {
   b.fill();
 
   // show the origin
-  tack(c,0,0,0,1,1,1);
-  c.strokeStyle = "#0f0";
-  c.stroke();
+  tack(b,0,0,0,1,1,1);
+  b.strokeStyle = "#0f0";
+  b.stroke();
 
   for (var i in physics.bodies) {
     var b = physics.bodies[i];
@@ -323,42 +351,13 @@ var render = function render() {
   }
 
   physics.bodies.sort(function(a,b) {
-    return a.rx + a.ry + a.rz + a.w/2 + a.h/2 + a.d/2 -
-	   b.rx - b.ry - b.rz - b.w/2 - b.h/2 - b.d/2;
+    return a.key - b.key;
   });
 
-  s.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
-  // unsorted, etc.
   for (var i in physics.bodies) {
     var b = physics.bodies[i];
     b.draw();
   }
-
-/*
-
-  // for interactivity, cage a ball around the last cursor click
-  tack(c,cursor.x-0.5,cursor.y-0.5,0,1,1,2);
-  c.strokeStyle = "#277";
-  c.stroke();
-
-  c.beginPath();
-  c.arc(x,y-1-z,1,0,2*Math.PI,false);
-  c.fillStyle = "#ff0000";
-  c.strokeStyle = "black";
-  c.lineWidth = 0.1;
-  c.stroke();
-  c.fill();
-
-  s.setTransform(PIXELS_PER_METER,0,0,0.5*PIXELS_PER_METER,halfWidth,halfHeight);
-  s.beginPath();
-  s.arc(x,y*2,1,0,2*Math.PI,false);
-  s.fillStyle = "rgba(0,0,0,0.25)";
-  s.fill();
-
-  cube(c,cursor.x-0.5,cursor.y-0.5,0,1,1,2);
-  c.strokeStyle = "#3cc";
-  c.stroke();
-*/
 
   stats.display.end();
 }
