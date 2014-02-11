@@ -196,7 +196,8 @@ image.onload = function() {
   image.complete = true;
   console.log('image loaded');
 };
-image.src = 'file:///Users/ekmett/haskell/roguekcd/static/images/sprites/books_what.png';
+image.src = 'images/sprites/books_what.png';
+// image.src = 'file:///Users/ekmett/haskell/roguekcd/static/images/sprites/books_what.png';
 
 
 player.color = '#' + Math.random().toString(16).substring(2, 8)
