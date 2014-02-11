@@ -294,9 +294,9 @@ Body.prototype = {
     var yo = Math.abs(y1min - y2min);
     var zo = Math.abs(z1min - z2min);
 
-    if ( xo < this.w + that.w
-      && yo < this.d + that.d
-      && zo < this.h + that.h) {
+    if ( xo < (this.w + that.w)/2
+      && yo < (this.d + that.d)/2
+      && zo < (this.h + that.h)/2 ) {
       // bounding boxes overlap, so we've collided.
 
 

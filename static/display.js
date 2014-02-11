@@ -190,7 +190,7 @@ var bounding = false;
 var bounding_toggle = null;
 var soft_shadows = false;
 
-var player = new physics.Body( 0,0,0, 0.8,0.8,2,100);
+var player = new physics.Body( 0,0,0,0.5,0.5,2,100);
 var image = new Image();
 image.onload = function() {
   image.complete = true;
@@ -313,6 +313,7 @@ player.ai = function() {
 
    };
    var ty = Math.random();
+/*
    if (ty<0.25) {
      body.color = "#f33";
      body.lag = Math.random()*5-3;
@@ -366,6 +367,7 @@ player.ai = function() {
        }
      }
    }
+*/
    physics.bodies.push(body);
   }
 };
