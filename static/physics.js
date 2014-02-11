@@ -46,7 +46,7 @@ var physics = {
 
 var PRIORITY_NORMAL = 0; // normal things can move normal things and fluff
 var PRIORITY_FLUFF  = 1; // fluff can move fluff
-
+var DEFAULT_ELASTICITY = 0.95;
 var FPS = physics.FPS = 25;        // frames per second
 var MILLISECONDS_PER_FRAME = physics.MILLISECONDS_PER_FRAME = 1000/FPS;
 
@@ -74,8 +74,8 @@ function stick(a,b,l) {
 
 // constants
 
-var RELAXATIONS = 1; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
-var G = 0.1; // 9.8/FPS^2*0; // 0.1; // 9.8/FPS^2 / 100;  // the gravity of the situation
+var RELAXATIONS = 2; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
+var G = 0.2;// 5; // 9.8/FPS^2; // 0.1; // 9.8/FPS^2 / 100;  // the gravity of the situation
 
 var AIR_DRAG = 0.001;
 var GROUND_DRAG = 0.2;
@@ -86,7 +86,7 @@ var GROUND_DRAG = 0.2;
 var SPEED_LIMIT    = 1;
 var SPEED_LIMIT_SQUARED = SPEED_LIMIT * SPEED_LIMIT;
 var RECIP_SPEED_LIMIT_SQUARED = 1 / SPEED_LIMIT_SQUARED
-var SPEED_EPSILON = 0;// 0.00001;
+var SPEED_EPSILON = 0.00002;// 0.00001;
 
 var MAX_BODY_HEIGHT = 4; // no Body is taller than 4 meters z
 var MAX_BODY_WIDTH  = 2; // no Body is wider than 2 meters: x
@@ -128,12 +128,15 @@ var scene = {
     // air friction
     body.mu_h = 0.01;
     body.mu_v = 0.01;
+    body.drag_h = 0.01;
+    body.drag_v = 0.01;
     body.ground_elasticity = 0;
 
     var standing = body.standing = body.oz < 0.3; // w/in 1ft of the ground
 
     if (standing) {
-      body.mu_v = 0.9; // standard ground friction is quite high
+      body.mu_h = 0.35; // standard ground friction is quite high
+      body.drag_h = 0.2;
     }
   }
 };
@@ -175,6 +178,8 @@ var Body = physics.Body = function(x,y,z,w,d,h,mass) {
 
   this.priority = PRIORITY_NORMAL;
 
+  this.elasticity = DEFAULT_ELASTICITY;
+
   this.ai = null;
 
   scene.locate(this); // just so we have local friction information and info about whether we can jump, etc.
@@ -192,7 +197,7 @@ Body.prototype = {
     this.rx = this.ox * (1 - alpha) + this.x * alpha;
     this.ry = this.oy * (1 - alpha) + this.y * alpha;
     this.rz = this.oz * (1 - alpha) + this.z * alpha;
-    this.key = this.rx + this.ry + 2*this.rz + (this.w + this.h + this.d)/2;
+    this.key = 2*this.rx + 2*this.ry + this.rz + this.w + this.h + this.d*0.51;
   },
   plan: function plan() {
     this.ai && this.ai();
@@ -213,16 +218,17 @@ Body.prototype = {
     var vz = (1 - this.mu_v) * (tz - this.oz); // gravity
 
     // enforce speed floor
-    var v2 = vx*vx+vy*vy;
+    var v2 = vx*vx+vy*vy+vz*vz;
 
     if (v2 < SPEED_EPSILON && this.standing) {
       vx = 0;
       vy = 0;
+      vz = 0;
     }
 
-    vx += this.ax;
-    vy += this.ay;
-    vz += this.az - G;
+    vx += this.ax - this.drag_h*vx*vx;
+    vy += this.ay - this.drag_h*vy*vy;
+    vz += this.az - this.drag_v*vz*vz - G;
 
     // enforce speed limit, lest we clip through things
     v2 = vx*vx+vy*vy+vz*vz;
@@ -294,16 +300,15 @@ Body.prototype = {
     var yo = Math.abs(y1min - y2min);
     var zo = Math.abs(z1min - z2min);
 
-    if ( xo < (this.w + that.w)/2
-      && yo < (this.d + that.d)/2
-      && zo < (this.h + that.h)/2 ) {
+    if ( xo < (this.w + that.w)
+      && yo < (this.d + that.d)
+      && zo < (this.h + that.h) ) {
       // bounding boxes overlap, so we've collided.
 
-
       // The player is now a pefectly spherical cow
-      var ex = (this.w + that.w); //2;
-      var ey = (this.d + that.d); //2;
-      var ez = (this.h + that.h); //2;
+      var ex = (this.w + that.w)/Math.sqrt(2);
+      var ey = (this.d + that.d)/Math.sqrt(2);
+      var ez = (this.h + that.h)/Math.sqrt(2);
 
       var dx = (x1min - x2min + (this.w - that.w)/2) / ex;
       var dy = (y1min - y2min + (this.d - that.d)/2) / ey;
@@ -319,7 +324,7 @@ Body.prototype = {
         }
         var ima = this.inverseMass;
         var imb = that.inverseMass;
-        var diff = (dl-l)/(dl*(ima+imb))*0.4; // a magical elasticity coefficient
+        var diff = (dl-l)/(dl*(ima+imb))*Math.min(this.elasticity,that.elasticity); // a magical elasticity coefficient
         dx *= diff*ex;
         dy *= diff*ey;
         dz *= diff*ez;
@@ -381,31 +386,32 @@ var step = function step(t) {
 
   for (var k=0;k<1;k++) {
 
-  // unlink the buckets
-  for (var i=0;i<buckets.length;i++)
-    buckets[i] = null;
+    // unlink the buckets
+    for (var i=0;i<buckets.length;i++)
+      buckets[i] = null;
 
-  // move and relink the entities
-  for (var i in bodies)
-    bodies[i].move();
+    // move and relink the entities
+    for (var i in bodies)
+      bodies[i].move();
 
-  // Gauss-Seidel successive relaxation
-  for (var i in constraints)
-    constraints[i]();
+      // get out of the walls
+    for (var i in bodies)
+      scene.clip(bodies[i]);
 
-    // get out of the walls
+      // clip all the things
+    for (var i = 0; i < buckets.length; i++) {
+      clip_bucket(i);
+      clip_buckets(i,(i+1) % BUCKETS);
+      clip_buckets(i,(i+BUCKET_COLUMNS) % BUCKETS);
+      clip_buckets(i,(i+1+BUCKET_COLUMNS) % BUCKETS);
+    }
+
+    // Gauss-Seidel successive relaxation
+    for (var i in constraints)
+      constraints[i]();
+  }
   for (var i in bodies)
     scene.clip(bodies[i]);
-
-    // clip all the things
-  for (var i = 0; i < buckets.length; i++) {
-    clip_bucket(i);
-    clip_buckets(i,(i+1) % BUCKETS);
-    clip_buckets(i,(i+BUCKET_COLUMNS) % BUCKETS);
-    clip_buckets(i,(i+1+BUCKET_COLUMNS) % BUCKETS);
-  }
-
-  }
 
 
   stats.physics.end();

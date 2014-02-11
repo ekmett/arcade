@@ -200,7 +200,8 @@ image.src = 'images/sprites/books_what.png';
 // image.src = 'file:///Users/ekmett/haskell/roguekcd/static/images/sprites/books_what.png';
 
 
-player.color = '#' + Math.random().toString(16).substring(2, 8)
+player.elasticity = 0.8;
+player.color = '#' + (0x1000000 + Math.random() * 0xFFFFFF).toString(16).substr(1,6);
 physics.bodies.push(player);
 player.draw = function() {
   c.shadowBlur = 0;
@@ -248,11 +249,22 @@ player.ai = function() {
     if (events.impulse[65]) { pdx += m; pdy -= m; } // A
     if (events.impulse[83]) { pdx += m; pdy += m; } // S
     if (events.impulse[68]) { pdx -= m; pdy += m; } // D
-    if (events.impulse[32] && player.standing) { pdz += 1; }
+    if (player.jumpStart) {
+      if (events.impulse[32] && player.standing) {
+        // high jump
+        pdz += 1.3;
+      } else {
+        // low jump
+        pdz += 1;
+      }
+      player.jumpStart = false;
+    } else if (events.impulse[32] && player.standing) {
+      player.jumpStart = true;
+    }
     bounding = events.impulse[66]; // B held
     soft_shadows = events.impulse[78]; // N held
 
-    player.push(pdx,pdy,50*pdz);
+    player.push(5*pdx,5*pdy,50*pdz);
   }
 
   if (events.impulse[69]) {
@@ -264,8 +276,8 @@ player.ai = function() {
     );
 
    var r = -Math.log(Math.random())/2.5+0.2;
-   var body = new physics.Body(cursor.x-r/2, cursor.y-r/2, Math.random()*10,r,r,r,20*r^2.9);
-   body.color = '#' + Math.random().toString(16).substring(2, 8);
+   var body = new physics.Body(cursor.x-r/2, cursor.y-r/2, Math.random()*10,r,r,r,20*r^3);
+   body.color = '#' + (0x1000000 + Math.random() * 0xFFFFFF).toString(16).substr(1,6);
    body.specular = 0.7; // the higher the number the larger the specular highlight.
    body.draw = function() {
      if (bounding) {
@@ -313,7 +325,6 @@ player.ai = function() {
 
    };
    var ty = Math.random();
-/*
    if (ty<0.25) {
      body.color = "#f33";
      body.lag = Math.random()*5-3;
@@ -321,12 +332,12 @@ player.ai = function() {
        var dx = player.ox * body.lag + player.x * (1 - body.lag) - this.x;
        var dy = player.oy * body.lag + player.y * (1 - body.lag) - this.y;
        var dz = player.oz * body.lag + player.z * (1 - body.lag) - this.z;
-       var l = Math.sqrt(dx*dx+dy*dy+dz*dz)*3;
+       var l = Math.sqrt(dx*dx+dy*dy+dz*dz);
        if (Math.abs(l) > 0.01) {
          dx /= l;
          dy /= l;
          dz /= l;
-         if (body.standing) this.push(dx,dy,this.w*2*dz*5+Math.random()*3); // this.w^3);
+         if (body.standing) this.push(dx,dy,this.w*20*dz+Math.random()*20); // this.w^3);
        }
      };
    } else if (ty<0.35) {
@@ -357,6 +368,7 @@ player.ai = function() {
      body.specular = 0.1;
      body.inverseMass /= 10;
      body.mass *= 10;
+     body.elasticity = 0.01;
      body.constraints = 0; // TODO: track targets so we don't add them multiple times
      body.bump = function(that) {
        if (this.constraints < 4 && !that.constrained) {
@@ -367,7 +379,6 @@ player.ai = function() {
        }
      }
    }
-*/
    physics.bodies.push(body);
   }
 };
