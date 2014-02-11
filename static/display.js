@@ -185,6 +185,10 @@ var cursor = new WorldPoint();
 var s = shadows.canvas;
 var c = foreground.canvas;
 
+// show bounding boxes
+var bounding = false;
+var bounding_toggle = null;
+var soft_shadows = false;
 
 var player = new physics.Body( 0,0,0, 0.8,0.8,2,100);
 var image = new Image();
@@ -193,26 +197,27 @@ image.onload = function() {
   console.log('image loaded');
 };
 image.src = 'file:///Users/ekmett/haskell/roguekcd/static/images/sprites/books_what.png';
+
+
 player.color = '#' + Math.random().toString(16).substring(2, 8)
 physics.bodies.push(player);
 player.draw = function() {
-/*
-  floor(s,this.rx,this.ry,0,this.w,this.d,0);
-  s.fillStyle = "rgba(0,0,0,0.25)";
-  s.fill();
-*/
+  c.shadowBlur = 0;
+  c.shadowColor = '#000';
+  c.shadowOffsetX = 0;
+  c.shadowOffsetY = 0;
+
+  if (bounding) {
+    tack(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
+    c.lineWidth = 0.01;
+    c.strokeStyle = "grey";
+    c.stroke();
+  }
+
   c.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
   scratch.world(this.rx,this.ry,this.rz);
-  c.drawImage(image,
-    0,
-    0,
-    image.naturalWidth,
-    image.naturalHeight,
-    scratch.sx-1.25,
-    scratch.sy-5.5,
-    2*Math.sqrt(3),//*Math.sqrt(2),
-    4*Math.sqrt(3)
-    // width
+  c.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight,
+    scratch.sx-1.25, scratch.sy-5.5, 2*Math.sqrt(3), 4*Math.sqrt(3)
   );
 
   s.setTransform(PIXELS_PER_METER,0,0,0.5*PIXELS_PER_METER,halfWidth,halfHeight);
@@ -223,73 +228,33 @@ player.draw = function() {
   s.fill();
   s.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
 
-
-  tack(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
-  c.lineWidth = 0.01;
-  c.strokeStyle = "grey";
-  c.stroke();
-  cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
-  // c.fillStyle = this.color;
-  //c.fill();
-  c.lineWidth = 0.01;
-  c.strokeStyle = "black";
-  c.stroke();
+  if (bounding) {
+    cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
+    c.lineWidth = 0.01;
+    c.strokeStyle = "black";
+    c.stroke();
+  }
 };
 player.ai = function() {
-  var pdx = 0;
-  var pdy = 0;
-  var pdz = 0;
+  {
+    var pdx = 0;
+    var pdy = 0;
+    var pdz = 0;
 
-  document.title = JSON.stringify(events.impulse);
+    var m = player.standing ? 1 : 0.2;
 
-  var s = player.standing ? 1 : 0.2;
+    if (events.impulse[87]) { pdx -= m; pdy -= m; } // W
+    if (events.impulse[65]) { pdx += m; pdy -= m; } // A
+    if (events.impulse[83]) { pdx += m; pdy += m; } // S
+    if (events.impulse[68]) { pdx -= m; pdy += m; } // D
+    if (events.impulse[32] && player.standing) { pdz += 1; }
+    bounding = events.impulse[66]; // B held
+    soft_shadows = events.impulse[78]; // N held
 
-  if (events.impulse[87]) { pdx -= s; pdy -= s; } // W
-  if (events.impulse[65]) { pdx += s; pdy -= s; } // A
-  if (events.impulse[83]) { pdx += s; pdy += s; } // S
-  if (events.impulse[68]) { pdx -= s; pdy += s; } // D
-  if (events.impulse[32] && player.standing) { pdz += 1; }
+    player.push(pdx,pdy,50*pdz);
+  }
 
-  player.push(pdx,pdy,50*pdz);
-};
-
-var genocide = $(".genocide-link").click(function() {
-  physics.bodies = [player];
-});
-
-var scratch = new ScreenPoint();
-
-// window.setInterval( function() { return snapBy(1,1); }, 33);
-var render = function render() {
-  var t = performance.now();
-  var pt = physics.updated;
-
-  requestAnimationFrame(render);
-
-  // no physics yet
-  if (!pt) return;
-
-  // let physics run ahea of rendering by one frame.
-  // use alpha to interpolate between the last 2 physics frames for display for reduced jitter
-  // from rendering/physics framerate mismatch.
-  // var alpha = t - pt; // Math.max(0, Math.min((t - pt) * 25/ 1000, 1));
-  var alpha = (t - pt) / physics.MILLISECONDS_PER_FRAME;
-
-  // if (display.frame % 600 == 0)
-  //   console.log("display frame", display.frame, "at", (t/1000).toFixed(3),"off physics frame", physics.frame, "from time", (pt/1000).toFixed(3), "at alpha", alpha.toFixed(2));
-
-  var frame = physics.frame; // tie animation to physics frame rate, not drawing rate
-
-  stats.display.begin();
-
-  frame = (frame+1) % 40;
-
-  // if (!frame) {
-    // console.log(player);
-  // }
-
-
-  if (events.mouse[1]) {
+  if (events.impulse[69]) {
     // user clicked
     // update the cursor in world coordinates
     cursor.screen(
@@ -298,27 +263,44 @@ var render = function render() {
     );
 
    var r = -Math.log(Math.random())/2.5+0.2;
-   var body = new physics.Body(Math.random()*9.5-5,Math.random()*9.5-5,Math.random()*10,r,r,r,20*r^2.9);
+   var body = new physics.Body(cursor.x-r/2, cursor.y-r/2, Math.random()*10,r,r,r,20*r^2.9);
    body.color = '#' + Math.random().toString(16).substring(2, 8);
+   body.specular = 0.7; // the higher the number the larger the specular highlight.
    body.draw = function() {
-/*
-     cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
-     c.lineWidth = 0.1;
-     c.strokeStyle = "black";
-     c.stroke();
-*/
+     if (bounding) {
+       tack(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
+       c.lineWidth = 0.01;
+       c.strokeStyle = this.color;
+       c.stroke();
+     }
+
+     if (soft_shadows) {
+       c.shadowColor = 'rgba(0,0,0,.8)';
+       c.shadowBlur = 16*this.w;
+       c.shadowOffsetX = 0; // 8*this.w;
+       c.shadowOffsetY = 4*this.w;
+     }
+
      c.beginPath();
      scratch.world(this.rx,this.ry,this.rz);
      c.arc(scratch.sx,scratch.sy,this.w*Math.sqrt(3),0,2*Math.PI,false);
-     // c.fillStyle = this.color;
-     var g = c.createRadialGradient(scratch.sx-this.w/Math.sqrt(2),scratch.sy-this.d/Math.sqrt(2),0.1,scratch.sx,scratch.sy,this.w*Math.sqrt(3));
-     g.addColorStop(0,"#fcfcfc");
-     g.addColorStop(1,this.color);
+     c.fillStyle = this.color;
+     var g = c.createRadialGradient(scratch.sx,scratch.sy-this.h*Math.sqrt(2),0.1,scratch.sx,scratch.sy,this.w*Math.sqrt(3));
+     g.addColorStop(0,"white");
+     g.addColorStop(this.specular,this.color);
      c.fillStyle = g;
      c.lineWidth = 0.1;
      c.strokeStyle = "black";
+     // experimental, slow, shadow
      c.stroke();
      c.fill();
+
+     if (bounding) {
+       cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
+       c.lineWidth = 0.01;
+       c.strokeStyle = "black";
+       c.stroke();
+     }
 
      s.setTransform(PIXELS_PER_METER,0,0,0.5*PIXELS_PER_METER,halfWidth,halfHeight);
      s.beginPath();
@@ -368,26 +350,45 @@ var render = function render() {
        var dy = Math.cos((body.start+physics.frame)*3.14/20*body.speed2);
        if (body.standing) this.push(dx*0.25,dy*0.25,0);
      }
-/*
    } else if (ty < 0.55) { // tar baby
      body.color = "#000";
+     body.specular = 0.1;
+     body.inverseMass /= 10;
+     body.mass *= 10;
      body.constraints = 0; // TODO: track targets so we don't add them multiple times
      body.bump = function(that) {
-       if (this.constraints < 3 && (!that.constrained || (typeof that.constraints !== 'undefined'))) {
+       if (this.constraints < 4 && !that.constrained) {
          this.constraints++;
          that.constrained = true;
          var l = Math.min(this.w+that.w,this.d+that.d,this.h+that.h)/2;
          physics.constraints.push(constraints.stick(body,that,l*0.9));
        }
      }
-*/
    }
    physics.bodies.push(body);
   }
-  /* console.log(x,y); */
-  // var x = cursorScreen.sx;
-  // var y = cursorScreen.sy;
-  // var z = Math.sin(frame * 3.14 / 20) * 1 + 1;
+};
+
+var genocide = $(".genocide-link").click(function() {
+  physics.bodies = [player];
+  physics.constraints = [];
+});
+
+var scratch = new ScreenPoint();
+
+// window.setInterval( function() { return snapBy(1,1); }, 33);
+var render = function render() {
+  var t = performance.now();
+  var pt = physics.updated;
+
+  requestAnimationFrame(render);
+
+  // no physics yet
+  if (!pt) return;
+
+  var alpha = (t - pt) / physics.MILLISECONDS_PER_FRAME;
+
+  stats.display.begin();
 
   var b = background.canvas;
   b.clear(true);
@@ -402,7 +403,7 @@ var render = function render() {
   c.clear(true);
   c.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
 
-  // delimit the world
+  // draw the world
   room(b,-5,-5,0,10,10,2);
   b.strokeStyle = "#ccc";
   b.fillStyle = "#ddd";
@@ -413,10 +414,11 @@ var render = function render() {
   b.fillStyle = "#fff";
   b.fill();
 
-  // show the origin
+  /*
   tack(b,0,0,0,1,1,1);
   b.strokeStyle = "#0f0";
   b.stroke();
+  */
 
   for (var i in physics.bodies) {
     var b = physics.bodies[i];
@@ -427,13 +429,6 @@ var render = function render() {
     return a.key - b.key;
   });
 
-  // experimental, slow, shadow
-  /*
-  c.shadowColor = 'rgba(0,0,0,.3)';
-  c.shadowBlur = 3;
-  c.shadowOffsetX = 1;
-  c.shadowOffsetY = 1;
-  */
 
   for (var i in physics.bodies) {
     var b = physics.bodies[i];
