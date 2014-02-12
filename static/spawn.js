@@ -138,7 +138,6 @@ var spawnKeys = {
 
 $(document.body).keypress(function(e) {
    if (e.keyCode in spawnKeys) {
-     console.log("spawning event",e);
      spawnKeys[e.which](e);
    }
 });
