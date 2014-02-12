@@ -1,106 +1,38 @@
-/*
- * Notes:
- *
- * To minimize client side arithmetic, I normalize so the frame rate is the unit
- *
- * To enable easy constraint satisfaction, I'm using basic verlet integration.
- *
- * verlet
- * >>> let fps = 25; a = 9.81/fromIntegral fps^2; step x oldx = (x,oldx) : step (x + x - oldx + a) x in case step 0 (-a/2) !! fps of (x,oldx) -> (oldx,25*(x-oldx-a/2))
- * (4.897152000000011,9.810000000000054)
- *
- * Because javascript is terrible at GC, we're going to keep these alive and mutate in place for speed and memory pressure.
- *
- * This yields a terrible design, but should put little to no allocation pressure on the core physics loop.
- *
- * We're also aggressively inlining and flattening structures as it can make a huge performance difference.
- *
- * Coordinate system:
- *
- * x increases as you go to the right
- * y increases as you go down the screen
- * z increases as you go up
- *
- * This means these do not form an isometric projection in screen space, merely an axonometric one.
- *
- * x and z have unit scale, somewhat artificially
- * y is scaled by a multiplier for display purposes
- *
- * The reason is I can't offload a real isometric projection matrix onto canvas without reshaping all the images as well as their locations
- * in the renderer.
- *
- * Width is associated with x, depth with y, height with z.
- *
- * - Edward Kmett Feb 7, 2014
- */
-
-define(["clip","stats","performance"], function(clip,stats,performance) {
+define(
+  ["clip","stats","performance"],
+  function(clip,stats,performance) {
 
 var physics = {
-  timer : null,
-  frame : 0,
-  bodies : [],
+  particles   : [],
   constraints : [],
-  running: false
+  updated : 0,
+  frame   : 0
 };
+
+var running = false;
 
 var PRIORITY_NORMAL = 0; // normal things can move normal things and fluff
 var PRIORITY_FLUFF  = 1; // fluff can move fluff
 var DEFAULT_ELASTICITY = 0.95;
-var FPS = physics.FPS = 25;        // frames per second
-var MILLISECONDS_PER_FRAME = physics.MILLISECONDS_PER_FRAME = 1000/FPS;
-
-// stick constraint: a spring that forces the distance between a and b to be l
-function stick(a,b,l) {
-  return function() {
-    var dx = a.x - b.x;
-    var dy = a.y - b.y;
-    var dz = a.z - b.z;
-    var dl = sqrt(dx*dx + dy*dy + dz*dz);
-    var ima = a.inverseMass;
-    var imb = b.inverseMass;
-    var diff = (dl-l)/(dl*(ima+imb));
-    dx *= diff;
-    dy *= diff;
-    dz *= diff;
-    a.x -= dx*ima;
-    a.y -= dy*ima;
-    a.z -= dz*ima;
-    b.x += dx*imb;
-    b.y += dy*imb;
-    b.z += dz*imb;
-  }
-};
-
-// constants
-
-var RELAXATIONS = 2; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
+var FPS = 25;        // frames per second
+var MILLISECONDS_PER_FRAME = 1000/FPS;
+var RELAXATIONS = 1; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
 var G = 0.2;// 5; // 9.8/FPS^2; // 0.1; // 9.8/FPS^2 / 100;  // the gravity of the situation
-
 var AIR_DRAG = 0.001;
 var GROUND_DRAG = 0.2;
-
-// No Body can move more than 1 meter / frame. This is 25m/s or 56 miles per hour.
-// A hard clamp'll serve as a poor man's terminal velocity, but we could switch to a nicer drag model
-// to get it more smoothly.
 var SPEED_LIMIT    = 1;
 var SPEED_LIMIT_SQUARED = SPEED_LIMIT * SPEED_LIMIT;
 var RECIP_SPEED_LIMIT_SQUARED = 1 / SPEED_LIMIT_SQUARED
 var SPEED_EPSILON = 0.00002;// 0.00001;
-
-var MAX_BODY_HEIGHT = 4; // no Body is taller than 4 meters z
-var MAX_BODY_WIDTH  = 2; // no Body is wider than 2 meters: x
-var MAX_BODY_DEPTH  = 2; // no Body has a bounding box more than 2 meters deep in y
-
+var MAX_BODY_HEIGHT = 4; // no Particle is taller than 4 meters z
+var MAX_BODY_WIDTH  = 2; // no Particle is wider than 2 meters: x
+var MAX_BODY_DEPTH  = 2; // no Particle has a bounding box more than 2 meters deep in y
 var MAX_WORLD_HEIGHT = 8; // nothing can get more than 5 meters off the ground, making floors about 16 ft high.
 var MIN_WORLD_HEIGHT = 0; // nothing can get more than 0 meters below the floor.
-
-var BUCKET_WIDTH  = MAX_BODY_WIDTH + SPEED_LIMIT*2; // 4 meters
-var BUCKET_DEPTH  = MAX_BODY_DEPTH + SPEED_LIMIT*2;
-
+var BUCKET_WIDTH  = MAX_BODY_WIDTH + SPEED_LIMIT; // 4 meters
+var BUCKET_DEPTH  = MAX_BODY_DEPTH + SPEED_LIMIT;
 var BUCKET_COLUMNS = 16; // 96 meters without overlap
 var BUCKET_ROWS    = 16; // 96 meters without overlap
-
 var BUCKETS = BUCKET_ROWS * BUCKET_COLUMNS;
 
 var buckets = new Array(BUCKETS); // single chained linked lists, how retro
@@ -115,33 +47,33 @@ function bucket(x,y) {
 
 // basic scene we can replace later with the bsp
 var scene = {
-  clip : function clip(body) {
-    var nx = Math.max(-5,Math.min(body.x, 5-body.w));
-    var ny = Math.max(-5,Math.min(body.y, 5-body.d));
-    var nz = Math.max(0,Math.min(body.z, MAX_WORLD_HEIGHT-body.h));
+  clip : function clip(particle) {
+    var nx = Math.max(-5,Math.min(particle.x, 5-particle.w));
+    var ny = Math.max(-5,Math.min(particle.y, 5-particle.d));
+    var nz = Math.max(0,Math.min(particle.z, MAX_WORLD_HEIGHT-particle.h));
 
-    body.x = nx;
-    body.y = ny;
-    body.z = nz;
+    particle.x = nx;
+    particle.y = ny;
+    particle.z = nz;
   },
-  locate : function locate(body) {
+  locate : function locate(p) {
     // air friction
-    body.mu_h = 0.01;
-    body.mu_v = 0.01;
-    body.drag_h = 0.01;
-    body.drag_v = 0.01;
-    body.ground_elasticity = 0;
+    p.mu_h = 0.01;
+    p.mu_v = 0.01;
+    p.drag_h = 0.01;
+    p.drag_v = 0.01;
+    p.ground_elasticity = 0;
 
-    var standing = body.standing = body.oz < 0.3; // w/in 1ft of the ground
+    var standing = p.standing = p.oz < 0.3; // w/in 1ft of the ground
 
     if (standing) {
-      body.mu_h = 0.35; // standard ground friction is quite high
-      body.drag_h = 0.2;
+      p.mu_h = 0.35; // standard ground friction is quite high
+      p.drag_h = 0.2;
     }
   }
 };
 
-var Body = physics.Body = function(x,y,z,w,d,h,mass) {
+var Particle = physics.Particle = function(x,y,z,w,d,h,mass) {
   // primary characterisics
   this.x = x; // position
   this.y = y;
@@ -155,6 +87,8 @@ var Body = physics.Body = function(x,y,z,w,d,h,mass) {
 
   this.mass = mass;
   this.inverseMass = 1/mass; // determines collision response
+
+  this.bouncing = false;
 
   this.w = w; // bounding box parameters
   this.d = d;
@@ -185,7 +119,7 @@ var Body = physics.Body = function(x,y,z,w,d,h,mass) {
   scene.locate(this); // just so we have local friction information and info about whether we can jump, etc.
 };
 
-Body.prototype = {
+Particle.prototype = {
   push :  function push(Fx,Fy,Fz) { // apply an instantaneous impulse. mutates in place
     var im = this.inverseMass;
     this.ax += Fx * im;
@@ -201,6 +135,7 @@ Body.prototype = {
   },
   plan: function plan() {
     this.ai && this.ai();
+    this.bouncing = false;
     // add gravity , this.beta);;
   },
 
@@ -324,7 +259,13 @@ Body.prototype = {
         }
         var ima = this.inverseMass;
         var imb = that.inverseMass;
-        var diff = (dl-l)/(dl*(ima+imb))*Math.min(this.elasticity,that.elasticity); // a magical elasticity coefficient
+        var E = Math.min(this.elasticity,that.elasticity);
+        if (dz < 0 && that.standing) {
+          this.bouncing = true;
+        } else if (dz > 0 && this.standing) {
+          that.bouncing = true;
+        }
+        var diff = (dl-l)/(dl*(ima+imb))*E;
         dx *= diff*ex;
         dy *= diff*ey;
         dz *= diff*ez;
@@ -374,29 +315,30 @@ var step = function step(t) {
 
   stats.physics.begin();
 
-  var bodies = physics.bodies;
-  var constraints = physics.constraints;
+  var p = physics.particles;
+  var c = physics.constraints;
 
   // figure out local physical properties and plan to get impulses, shoot, etc.
-  for (var i in bodies) {
-    var b = bodies[i];
+  for (var i in p) {
+    var b = p[i];
     scene.locate(b); // just so we have local friction information and info about whether we can jump, etc.
     b.plan();
   }
 
-  for (var k=0;k<1;k++) {
+  // Gauss-Seidel successive relaxation
+  for (var k=0;k<RELAXATIONS;k++) {
 
     // unlink the buckets
     for (var i=0;i<buckets.length;i++)
       buckets[i] = null;
 
     // move and relink the entities
-    for (var i in bodies)
-      bodies[i].move();
+    for (var i in p)
+      p[i].move();
 
       // get out of the walls
-    for (var i in bodies)
-      scene.clip(bodies[i]);
+    for (var i in p)
+      scene.clip(p[i]);
 
       // clip all the things
     for (var i = 0; i < buckets.length; i++) {
@@ -406,23 +348,23 @@ var step = function step(t) {
       clip_buckets(i,(i+1+BUCKET_COLUMNS) % BUCKETS);
     }
 
-    // Gauss-Seidel successive relaxation
-    for (var i in constraints)
-      constraints[i]();
+    for (var i in c)
+      c[i]();
   }
-  for (var i in bodies)
-    scene.clip(bodies[i]);
-
+  for (var i in p)
+    scene.clip(p[i]);
 
   stats.physics.end();
 };
+
+var timer = null;
 
 // window.setInterval drifts way too much for a server and client to stay in sync.
 function stepper()  {
   var burst = 25; // only catch up a few frames at a time. otherwise controls will get wonky
   var t = performance.now();
   var delay = physics.expected - t;
-  while (physics.running && delay < 0 && --burst) { // we're running, we're late, and we're willing to binge
+  while (running && delay < 0 && --burst) { // we're running, we're late, and we're willing to binge
     step(t); // run a frame
     physics.expected += MILLISECONDS_PER_FRAME;
     var t2 = performance.now();
@@ -431,7 +373,7 @@ function stepper()  {
     //  console.log("physics frame",physics.frame,"at",(t/1000).toFixed(3),"with delay",(delay/1000).toFixed(3),"took",(t2-t).toFixed(1),"ms");
     t = t2;
   }
-  if (physics.running && !burst) {
+  if (running && !burst) {
      var lag = -delay / MILLISECONDS_PER_FRAME;
      console.warn("physics","lagging", lag.toFixed(1), "frames");
      // if lag gets _too_ high, we should just give up and let the server reset us.
@@ -442,25 +384,42 @@ function stepper()  {
        physics.expected = performance.now();
      }
   }
-  if (physics.running) {
+  if (running) {
     // see you next time, same bat time, same bat channel
-    physics.timer = window.setTimeout(stepper, delay);
+    timer = window.setTimeout(stepper, delay);
   }
 }
 
-var start = physics.start = function start() {
-  physics.running = true;
-  physics.expected = performance.now();
-  stepper();
-};
 
-var stop = physics.stop = function stop() {
-  physics.running = false;
-  if (physics.timer) physics.clearTimeout(physics.timer);
-};
+// this may have been a bad idea
+Object.defineProperties(physics, {
+  /* constants */
+  FPS                    : { value: FPS,                        __proto__ : null, configurable: false, writable: false, enumerable: true },
+  MILLISECONDS_PER_FRAME : { value: MILLISECONDS_PER_FRAME,     __proto__ : null, configurable: false, writable: false, enumerable: true },
+  RELAXATIONS            : { value: RELAXATIONS,                __proto__ : null, configurable: false, writable: false, enumerable: true },
+  G                      : { value: G,                          __proto__ : null, configurable: false, writable: false, enumerable: true },
+  SPEED_LIMIT            : { value: SPEED_LIMIT,                __proto__ : null, configurable: false, writable: false, enumerable: true },
+  /* read-write attributes */
+  scene       : { get: function() { return scene },       set: function(e) { scene = e },       __proto__ : null, configurable: false, enumerable: true },
+
+  running : {
+    __proto__ : null,
+    configurable: false,
+    enumerable: true,
+    get: function() { return running; },
+    set: function(n) {
+      if (n == running) return;
+      running = n;
+      if (n) {
+        physics.expected = performance.now();
+        stepper();
+      } else if (timer) physics.clearTimeout(timer);
+    }
+  }
+});
 
 // for now just start on launch
-start();
+physics.running = true;
 
 return physics;
 

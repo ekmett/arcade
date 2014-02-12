@@ -29,20 +29,20 @@ document.body.ontouchstart = stahp;
 document.body.ontouchmove = stahp;
 
 $(document.body).keydown(function (e) {
-  e.preventDefault();
+  // e.preventDefault();
   // TODO: check if the focused element is absorbing these events
   events.log("events","keydown",e.which);
   events.impulse[e.which] = e.timeStamp;
   events.actions.push(e);
-  return false;
+  // return false;
 });
 
 $(document.body).keyup(function (e) {
-  e.preventDefault();
+  // e.preventDefault();
   events.log("events","keyup",e.which);
   delete events.impulse[e.which];
   events.actions.push(e);
-  return false;
+  // return false;
 });
 
 map.mousemove(function(e) {
