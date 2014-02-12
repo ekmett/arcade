@@ -1,6 +1,6 @@
 define(
-  ["constraints", "physics", "shim/cc", "events", "images", "transformations", "toggles", "player","prim"],
-  function display(constraints, physics, cc, events, images, transformations, toggles, player, prim) {
+  ["constraints", "physics", "shim/cc", "events", "images", "transformations", "toggles", "player","prim","ragdoll"],
+  function display(constraints, physics, cc, events, images, transformations, toggles, player, prim, ragdoll) {
 
 var scratch = new transformations.ScreenPoint();
 
@@ -69,7 +69,7 @@ var dog_ai = function dog_ai() {
     dx /= l;
     dy /= l;
     dz /= l;
-    if (this.standing) this.push(dx*3,dy*3,this.w*20*dz+Math.random()*20); // this.w^3);
+    if (this.standing || this.bouncing) this.push(dx*3,dy*3,this.w*20*dz+Math.random()*20); // this.w^3);
   }
 };
 
@@ -132,7 +132,8 @@ var spawnKeys = {
         physics.constraints.push(constraints.stick(b,that,l*0.9));
       }
     }
-  }
+  },
+  54: ragdoll.spawn /* 6 ragdoll */
 };
 
 $(document.body).keypress(function(e) {

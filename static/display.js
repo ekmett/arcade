@@ -98,7 +98,7 @@ var render = function render() {
   });
 
   for (var i in physics.particles) {
-    var b = physics.particles[i];
+    physics.particles[i].draw(s,c);
     b.draw(s,c);
   }
 

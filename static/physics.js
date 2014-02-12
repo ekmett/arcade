@@ -255,7 +255,7 @@ Particle.prototype = {
 
       if (dl < l) {
         if (dl * (ima + imb) > 200) {
-          console.log("singularity approached");
+          // console.log("singularity approached");
         }
         var ima = this.inverseMass;
         var imb = that.inverseMass;
@@ -325,16 +325,16 @@ var step = function step(t) {
     b.plan();
   }
 
+  // unlink the buckets
+  for (var i=0;i<buckets.length;i++)
+    buckets[i] = null;
+
+  // move and relink the entities
+  for (var i in p)
+    p[i].move();
+
   // Gauss-Seidel successive relaxation
   for (var k=0;k<RELAXATIONS;k++) {
-
-    // unlink the buckets
-    for (var i=0;i<buckets.length;i++)
-      buckets[i] = null;
-
-    // move and relink the entities
-    for (var i in p)
-      p[i].move();
 
       // get out of the walls
     for (var i in p)

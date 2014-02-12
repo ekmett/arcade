@@ -1,6 +1,6 @@
 define([], function constraints() {
 
-var EPSILON = 0.01; // 1cm
+var EPSILON = 0.0001; // 1cm
 
 return {
   // a spring that forces the distance between the upper right corner of a and b to be l
@@ -26,7 +26,7 @@ return {
         b.y += dy*imb;
         b.z += dz*imb;
       } else {
-        console.log("constraints.stick", "near singularity",a,b,l)
+        // console.log("constraints.stick", "near singularity",a,b,l)
       }
     }
   }
