@@ -22,16 +22,16 @@ var scratch = new transformations.ScreenPoint();
 // 2 units tall
 var Ragdoll = function Ragdoll (w,d,h,m) {
   var r = 0.1;
-  this.head        = new Particle( 0,      0.1*d,  0.95*h,  0.35,0.35,0.45,5.1*m)
+  this.head        = new Particle( 0,      0.1*d,  0.95*h,  0.35,0.35,0.45,3.1*m)
   this.shoulder    = new Particle( 0,      0,      0.85*h,  0.2,0.2,0.2, 28.08*m);
   this.leftElbow   = new Particle( 0.2*w,  0,      0.67*h, 0.15,0.15,0.3, 3.7*m);
   this.rightElbow  = new Particle(-0.2*w,  0,      0.67*h, 0.15,0.15,0.3, 3.7*m);
-  this.leftWrist   = new Particle( 0.3*w,  0.1*d,  0.42*h, 0.05,0.05,0.05, 2.25*m);
-  this.rightWrist  = new Particle(-0.3*w,  0.1*d,  0.42*h, 0.05,0.05,0.05, 2.25*m);
+  this.leftWrist   = new Particle( 0.3*w,  0.1*d,  0.5*h, 0.15,0.15,0.15, 2.25*m);
+  this.rightWrist  = new Particle(-0.3*w,  0.1*d,  0.5*h, 0.15,0.15,0.15, 2.25*m);
   this.waist       = new Particle( 0,     -0.1*d,  0.60*h, 0.3,0.3,0.3, 33.06*m);
-  this.pelvis      = new Particle( 0,      0,      0.52*h, 0.2,0.2,0.2, 13.66*m);
-  this.leftKnee    = new Particle( 0.2*w,  0.2*d , 0.28*h, 0.1,0.1,0.3, 8*m);
-  this.rightKnee   = new Particle(-0.2*w,  0.2*d , 0.28*h, 0.1,0.1,0.3, 8*m);
+  this.pelvis      = new Particle( 0,     -0.02*d, 0.55*h, 0.2,0.2,0.2, 13.66*m);
+  this.leftKnee    = new Particle( 0.2*w,  0.2*d , 0.3*h, 0.1,0.1,0.3, 8*m);
+  this.rightKnee   = new Particle(-0.2*w,  0.2*d , 0.3*h, 0.1,0.1,0.3, 8*m);
   this.leftAnkle   = new Particle( 0.1*w, -0.05*d, 0.05*h, 0.15,0.15,0.3, 8*m);
   this.rightAnkle  = new Particle(-0.1*w, -0.05*d, 0.05*h, 0.15,0.15,0.3, 8*m);
 

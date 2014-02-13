@@ -255,6 +255,7 @@ Particle.prototype = {
 
       if (dl < l) {
         if (dl * (ima + imb) > 200) {
+          return;
           // console.log("singularity approached");
         }
         var ima = this.inverseMass;

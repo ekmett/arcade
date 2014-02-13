@@ -61,6 +61,7 @@ var ball = function ball() {
 };
 
 var dog_ai = function dog_ai() {
+  // if (Math.random() >= this.vigor) return;
   var dx = player.ox * this.lag + player.x * (1 - this.lag) - this.x;
   var dy = player.oy * this.lag + player.y * (1 - this.lag) - this.y;
   var dz = player.oz * this.lag + player.z * (1 - this.lag) - this.z;
@@ -69,18 +70,19 @@ var dog_ai = function dog_ai() {
     dx /= l;
     dy /= l;
     dz /= l;
-    if (this.standing || this.bouncing) this.push(dx*3,dy*3,this.w*20*dz+Math.random()*20); // this.w^3);
+    if (this.standing || this.bouncing) this.push(dx*3,dy*3,this.w*20*dz+Math.random()*20);
   }
 };
 
-var coward_ai = function coward_ai() {
-  var dx = player.ox * this.lag + player.x * (1 - this.lag) - this.x;
-  var dy = player.oy * this.lag + player.y * (1 - this.lag) - this.y;
-  var l = Math.sqrt(dx*dx+dy*dy)*3;
+var claw_ai = function claw_ai() {
+  if (Math.random() >= this.vigor) return;
+  var dx = (player.ox * this.lag + player.x * (1 - this.lag) - this.x) * this.sign;
+  var dy = (player.oy * this.lag + player.y * (1 - this.lag) - this.y) * this.sign;
+  var l = Math.sqrt(dx*dx+dy*dy);
   if (Math.abs(l) > 0.01) {
     dx /= l;
     dy /= l;
-    if (this.standing) this.push(-dx*3,-dy*3,0);
+    if (this.standing) this.push(dx*2,dy*2,Math.random());
   }
 };
 
@@ -94,13 +96,16 @@ var spawnKeys = {
     b.color = "#f33";
     b.lag = Math.random()*5-3;
     b.ai = dog_ai;
+    b.vigor = 1;
   },
   51: function() { /* 3: yellow scaredy cat */
     var b = ball();
     physics.particles.push(b);
     b.color = "#ff0";
     b.lag = Math.random()*5-3;
-    b.ai = coward_ai;
+    b.ai = claw_ai;
+    b.sign = -1;
+    b.vigor = Math.random();
   },
   52: function() { /* 4: cyan wobbler */
     var b = ball();
@@ -137,19 +142,43 @@ var spawnKeys = {
     return ragdoll.spawn() /* 6 ragdoll */
   },
   55: function() {
-    var r = ragdoll.spawn() /* 7 zombie */
-    r.head.lag = 0;
-    r.head.ai = dog_ai;
+    var r = ragdoll.spawn(); /* 7 zombie */
+    var ai = dog_ai;
+    var loc = ["shoulder","head","leftElbow","rightElbow"];
+    for (var i in loc) {
+      if (Math.random() < 0.5) {
+        r[loc[i]].lag = 1;
+        r[loc[i]].ai = ai;
+        r[log[i]].vigor = 1;
+      }
+    }
     r.leftWrist.lag = 2;
-    r.leftWrist.ai = dog_ai;
-    // r.leftElbow.lag = 1;
-    // r.leftElbow.ai = dog_ai;
-    // r.rightWrist.lag = 2;
-    // r.rightWrist.ai = dog_ai;
-    // r.rightElbow.lag = 1;
-    // r.rightElbow.ai = dog_ai;
-    r.waist.lag = 1;
-    r.waist.ai = dog_ai;
+    r.leftWrist.ai = claw_ai;
+    r.leftWrist.vigor = 0.6;
+    r.leftWrist.sign = 1;
+    if (Math.random() < 0.5) {
+      r.rightWrist.lag = 2;
+      r.rightWrist.ai = claw_ai;
+      r.rightWrist.vigor = 0.6;
+      r.rightWrist.sign = 1;
+    }
+  },
+  56: function() {
+    var r = ragdoll.spawn(); /* 8 wounded */
+    var ai = claw_ai;
+    var loc = ["head","rightWrist","shouder","leftElbow","rightElbow"];
+    for (var i in loc) {
+      if (Math.random() < 0.3) {
+        r[loc[i]].lag = 0;
+        r[loc[i]].ai = claw_ai;
+        r[loc[i]].vigor = 0.8;
+        r[loc[i]].sign = -1;
+      }
+    }
+    r.leftWrist.lag = 0;
+    r.leftWrist.ai = claw_ai;
+    r.leftWrist.vigor = 0.9;
+    r.leftWrist.sign = -1;
   }
 };
 
