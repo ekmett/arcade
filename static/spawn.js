@@ -70,7 +70,7 @@ var dog_ai = function dog_ai() {
     dx /= l;
     dy /= l;
     dz /= l;
-    if (this.standing || this.bouncing) this.push(dx*3,dy*3,this.w*20*dz+Math.random()*20);
+    if (this.standing || this.bouncing) this.push(dx*(Math.random(2)+2),dy*(Math.random(2)+2),this.w*20*dz+Math.random()*20);
   }
 };
 
@@ -147,19 +147,19 @@ var spawnKeys = {
     var loc = ["shoulder","head","leftElbow","rightElbow"];
     for (var i in loc) {
       if (Math.random() < 0.5) {
-        r[loc[i]].lag = 1;
+        r[loc[i]].lag = Math.random()*5-3;
         r[loc[i]].ai = ai;
-        r[log[i]].vigor = 1;
+        r[log[i]].vigor = 0.8;
       }
     }
-    r.leftWrist.lag = 2;
+    r.leftWrist.lag = Math.random()*5-3;
     r.leftWrist.ai = claw_ai;
-    r.leftWrist.vigor = 0.6;
+    r.leftWrist.vigor = 0.9;
     r.leftWrist.sign = 1;
     if (Math.random() < 0.5) {
-      r.rightWrist.lag = 2;
+      r.rightWrist.lag = Math.random()*5-3;
       r.rightWrist.ai = claw_ai;
-      r.rightWrist.vigor = 0.6;
+      r.rightWrist.vigor = 0.7;
       r.rightWrist.sign = 1;
     }
   },
@@ -169,13 +169,13 @@ var spawnKeys = {
     var loc = ["head","rightWrist","shouder","leftElbow","rightElbow"];
     for (var i in loc) {
       if (Math.random() < 0.3) {
-        r[loc[i]].lag = 0;
+        r[loc[i]].lag = Math.random()*5-3;
         r[loc[i]].ai = claw_ai;
         r[loc[i]].vigor = 0.8;
         r[loc[i]].sign = -1;
       }
     }
-    r.leftWrist.lag = 0;
+    r.leftWrist.lag = Math.random()*5-3;
     r.leftWrist.ai = claw_ai;
     r.leftWrist.vigor = 0.9;
     r.leftWrist.sign = -1;
