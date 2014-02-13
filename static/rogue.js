@@ -26,5 +26,12 @@ define(
       // music.play();
       // connection.onmessage = function(event) { eval(event.data); }; connection.start();
     });
+
+    function updateOverview() {
+      $("#particle-count").text(physics.particles.length);
+      $("#constraint-count").text(physics.constraints.length);
+    }
+
+    window.setInterval(updateOverview, 500);
   }
 );

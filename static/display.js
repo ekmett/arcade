@@ -1,8 +1,9 @@
 define(
-  ["jquery", "physics", "shim/raf", "shim/cc", "performance", "stats", "prim"],
-  function display($, physics, raf, cc, performance, stats, prim) {
+  ["jquery", "physics", "shim/raf", "shim/cc", "performance", "stats", "prim", "transformations","events"],
+  function display($, physics, raf, cc, performance, stats, prim, transformations,events) {
 
 var display = {
+  cursor : new transformations.WorldPoint()
 };
 
 var updated = 0;
@@ -63,6 +64,8 @@ var draw_background = function() {
   b.fill();
 };
 
+
+
 var render = function render() {
   var t = performance.now();
   var pt = physics.updated;
@@ -75,6 +78,12 @@ var render = function render() {
   var alpha = (t - pt) / physics.MILLISECONDS_PER_FRAME;
 
   stats.display.begin();
+
+  // move to events?
+  display.cursor.screen(
+    (events.mouseX-halfWidth) * METERS_PER_PIXEL,
+    (events.mouseY-halfHeight) * METERS_PER_PIXEL
+  );
 
   draw_background();
 

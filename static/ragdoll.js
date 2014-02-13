@@ -2,6 +2,8 @@ define(
   ["physics","transformations","constraints", "toggles","prim"],
   function(physics, transformations, constraints, toggles, prim) {
 
+// TODO: support blowing off limbs
+
 var Particle = physics.Particle;
 
 var ragdoll = {};
@@ -55,10 +57,12 @@ var Ragdoll = function Ragdoll (w,d,h,m) {
   for (var i in this.parts) {
     physics.particles.push(this.parts[i]);
     this.parts[i].draw = function(s,c) {
-      prim.cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
-      c.lineWidth = 0.01;
-      c.strokeStyle = "#000";
-      c.stroke();
+      if (toggles.bounding) {
+        prim.cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
+        c.lineWidth = 0.01;
+        c.strokeStyle = "#000";
+        c.stroke();
+      }
     };
   }
 

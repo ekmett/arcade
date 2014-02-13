@@ -1,6 +1,6 @@
 define(
-  ["constraints", "physics", "shim/cc", "events", "images", "transformations", "toggles","prim"],
-  function display(constraints, physics, cc, events, images, transformations, toggles,prim) {
+  ["constraints", "physics", "shim/cc", "events", "images", "transformations", "toggles","prim","display"],
+  function display(constraints, physics, cc, events, images, transformations, toggles,prim,display) {
 
 var scratch = new transformations.ScreenPoint();
 
@@ -81,6 +81,20 @@ player.ai = function() {
     player.jumpStart = true;
   }
   player.push(5*pdx,5*pdy,50*pdz);
+  if (events.mouse[1]) {
+    var f = 3e18;
+    var fx = f, fy = f, fz = f;
+    var x = display.cursor.x;
+    var y = display.cursor.y;
+    var z = -10;
+    var ps = physics.particles; // TODO: just check buckets around (x,y)?
+    for (var i in ps) {
+      var p = ps[i];
+      var dx = p.x - x, dy = p.y - y, dz = p.z - z;
+      var d = Math.sqrt(dx*dx+dy*dy+dz*dz); // TODO:use squared falloff with distance?
+      p.push(dx/d,dy/d,dz/d);
+    }
+  }
 };
 
 
