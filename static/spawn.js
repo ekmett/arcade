@@ -133,7 +133,24 @@ var spawnKeys = {
       }
     }
   },
-  54: ragdoll.spawn /* 6 ragdoll */
+  54: function() {
+    return ragdoll.spawn() /* 6 ragdoll */
+  },
+  55: function() {
+    var r = ragdoll.spawn() /* 7 zombie */
+    r.head.lag = 0;
+    r.head.ai = dog_ai;
+    r.leftWrist.lag = 2;
+    r.leftWrist.ai = dog_ai;
+    // r.leftElbow.lag = 1;
+    // r.leftElbow.ai = dog_ai;
+    // r.rightWrist.lag = 2;
+    // r.rightWrist.ai = dog_ai;
+    // r.rightElbow.lag = 1;
+    // r.rightElbow.ai = dog_ai;
+    r.waist.lag = 1;
+    r.waist.ai = dog_ai;
+  }
 };
 
 $(document.body).keypress(function(e) {

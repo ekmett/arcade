@@ -40,13 +40,15 @@ var resized = function resized() {
     $(e).width(width);
     $(e).height(height);
   });
+  for (var i in layers) {
+    layers[i].canvas.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
+  }
   console.log("play area resized to",width,height);
 };
 
 var draw_background = function() {
   var b = background.canvas;
   b.clear(true);
-  b.setTransform(display.PIXELS_PER_METER,0,0,display.PIXELS_PER_METER,display.halfWidth,display.halfHeight);
   b.lineWidth = 0.3;
 
   // draw the world
@@ -60,10 +62,6 @@ var draw_background = function() {
   b.fillStyle = "#fff";
   b.fill();
 };
-
-
-$(window).bind("resize", resized);
-$(window).ready(resized);
 
 var render = function render() {
   var t = performance.now();
@@ -82,11 +80,9 @@ var render = function render() {
 
   var s = shadows.canvas;
   s.clear(true);
-  s.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
 
   var c = foreground.canvas;
   c.clear(true);
-  c.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
 
   for (var i in physics.particles) {
     var b = physics.particles[i];
@@ -105,9 +101,13 @@ var render = function render() {
   stats.display.end();
 }
 
-draw_background();
 
-render(performance.now());
+$(window).bind("resize", resized);
+$(window).ready(function() {
+  resized();
+  draw_background();
+  render(performance.now());
+});
 
 // this may have been a bad idea
 Object.defineProperties(display, {
