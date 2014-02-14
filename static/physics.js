@@ -213,7 +213,6 @@ Particle.prototype = {
 
   clip3d: clip.clip3d, // these only clip v
 
-  // swept aabb collision
   clip_entity : function clip_entity(that) {
     var x1min = this.x;
     var y1min = this.y;
@@ -241,7 +240,7 @@ Particle.prototype = {
       && zo < (this.h + that.h) ) {
       // bounding boxes overlap, so we've collided.
 
-      // The player is now a pefectly spherical cow
+      // The player is now a perfectly spherical cow
       var ex = (this.w + that.w)/Math.sqrt(2);
       var ey = (this.d + that.d)/Math.sqrt(2);
       var ez = (this.h + that.h)/Math.sqrt(2);
@@ -317,14 +316,14 @@ var step = function step(t) {
 
   stats.physics.begin();
 
-  var p = physics.particles;
-  var c = physics.constraints;
+  var ps = physics.particles;
+  var cs = physics.constraints;
 
   // figure out local physical properties and plan to get impulses, shoot, etc.
-  for (var i in p) {
-    var b = p[i];
-    scene.locate(b); // just so we have local friction information and info about whether we can jump, etc.
-    b.plan();
+  for (var i in ps) {
+    var p = ps[i];
+    scene.locate(p); // just so we have local friction information and info about whether we can jump, etc.
+    p.plan();
   }
 
   // unlink the buckets
@@ -332,15 +331,15 @@ var step = function step(t) {
     buckets[i] = null;
 
   // move and relink the entities
-  for (var i in p)
-    p[i].move();
+  for (var i in ps)
+    ps[i].move();
 
   // Gauss-Seidel successive relaxation
   for (var k=0;k<RELAXATIONS;k++) {
 
       // get out of the walls
-    for (var i in p)
-      scene.clip(p[i]);
+    for (var i in ps)
+      scene.clip(ps[i]);
 
       // clip all the things
     for (var i = 0; i < buckets.length; i++) {
@@ -350,11 +349,11 @@ var step = function step(t) {
       clip_buckets(i,(i+1+BUCKET_COLUMNS) % BUCKETS);
     }
 
-    for (var i in c)
-      c[i]();
+    for (var i in cs)
+      cs[i]();
   }
-  for (var i in p)
-    scene.clip(p[i]);
+  for (var i in ps)
+    scene.clip(ps[i]);
 
   stats.physics.end();
 };

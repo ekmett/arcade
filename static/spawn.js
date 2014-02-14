@@ -105,7 +105,7 @@ var spawnKeys = {
     b.lag = Math.random()*5-3;
     b.ai = claw_ai;
     b.sign = -1;
-    b.vigor = Math.random();
+    b.vigor = 1;
   },
   52: function() { /* 4: cyan wobbler */
     var b = ball();
@@ -130,7 +130,7 @@ var spawnKeys = {
     b.elasticity = 0.01;
     b.constraints = 0;
     b.bump = function(that) {
-      if (this.constraints < 4 && !that.constrained) {
+      if (/* this.constraints < 4 && */ !that.constrained) {
         this.constraints++;
         that.constrained = true;
         var l = Math.min(this.w+that.w,this.d+that.d,this.h+that.h)/2;

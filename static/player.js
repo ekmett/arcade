@@ -13,7 +13,6 @@ image.onload = function() {
 image.src = 'images/sprites/books_what.png';
 
 player.elasticity = 0.8;
-player.color = '#' + (0x1000000 + Math.random() * 0xFFFFFF).toString(16).substr(1,6);
 physics.particles.push(player);
 player.draw = function(s,c) {
   c.save();
@@ -62,7 +61,7 @@ player.ai = function() {
   var pdy = 0;
   var pdz = 0;
 
-  var m = player.standing ? 1 : player.bouncing ? 0.7 : 0.2;
+  var m = player.standing ? 1 : player.bouncing ? 0.7 : 0.4;
 
   if (events.impulse[87]) { pdx -= m; pdy -= m; } // W
   if (events.impulse[65]) { pdx += m; pdy -= m; } // A
@@ -86,7 +85,7 @@ player.ai = function() {
     var fx = f, fy = f, fz = f;
     var x = display.cursor.x;
     var y = display.cursor.y;
-    var z = -10;
+    var z = 1;
     var ps = physics.particles; // TODO: just check buckets around (x,y)?
     for (var i in ps) {
       var p = ps[i];

@@ -104,7 +104,6 @@ var render = function render() {
 
   for (var i in physics.particles) {
     physics.particles[i].draw(s,c);
-    b.draw(s,c);
   }
 
   stats.display.end();
