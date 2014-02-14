@@ -17,7 +17,7 @@ var DEFAULT_ELASTICITY = 0.95;
 var FPS = 25;        // frames per second
 var MILLISECONDS_PER_FRAME = 1000/FPS;
 var RELAXATIONS = 1; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
-var G = 0.2;// 5; // 9.8/FPS^2; // 0.1; // 9.8/FPS^2 / 100;  // the gravity of the situation
+var G = 0.2;
 var AIR_DRAG = 0.001;
 var GROUND_DRAG = 0.2;
 var SPEED_LIMIT    = 2;
@@ -161,21 +161,20 @@ Particle.prototype = {
       vz = 0;
     }
 
-
     vx += this.ax - this.drag_h*vx*vx;
     vy += this.ay - this.drag_h*vy*vy;
     vz += this.az - this.drag_v*vz*vz - G;
 
-    // enforce speed limit, lest we clip through things
+    // enforce speed limit
     v2 = vx*vx+vy*vy+vz*vz;
-
     if (v2 > SPEED_LIMIT_SQUARED) {
-      var s = SPEED_LIMIT_SQUARED / Math.sqrt(v2);
+      var s = SPEED_LIMIT / Math.sqrt(v2); // soften this?
       // console.log("speeding detected",Math.sqrt(v2)); // this.x,this.y,this.z,vx,vy,vz);
       vx *= s;
       vy *= s;
       vz *= s;
     }
+
 
     // update position, and derive new velocity
     this.x += vx;

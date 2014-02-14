@@ -26,7 +26,16 @@ return {
         b.y += dy*imb;
         b.z += dz*imb;
       } else {
-        // console.log("constraints.stick", "near singularity",a,b,l)
+	// displacement
+        dx = (Math.random()-0.5)*(a.w+b.w)*0.2;
+        dy = (Math.random()-0.5)*(a.d+b.d)*0.2;
+        dz = (Math.random()-0.5)*(a.h+b.h)*0.2;
+        a.x -= dx;
+        a.y -= dy;
+        a.z -= dz;
+        b.x += dx;
+        b.y += dy;
+        b.z += dz;
       }
     }
   }

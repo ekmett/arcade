@@ -6,7 +6,7 @@ var scratch = new transformations.ScreenPoint();
 
 var ball = function ball() {
   var r = -Math.log(Math.random())/2.5+0.2;
-  var particle = new physics.Particle(Math.random()*10-5,Math.random()*10-5, Math.random()*10,r,r,r,20*r^3);
+  var particle = new physics.Particle(Math.random()*10-5,Math.random()*10-5, Math.random()*10,r,r,r,40*r^2.8);
   particle.color = '#' + (0x1000000 + Math.random() * 0xFFFFFF).toString(16).substr(1,6);
   particle.specular = 0.7; // the higher the number the larger the specular highlight.
   particle.draw = function(s,c) {
@@ -70,7 +70,7 @@ var dog_ai = function dog_ai() {
     dx /= l;
     dy /= l;
     dz /= l;
-    if (this.standing || this.bouncing) this.push(dx*(Math.random()-.05)*2,dy*(Math.random()-.05)*2,this.w*10*dz+Math.random()*10);
+    if (this.standing || this.bouncing) this.push(dx*(Math.random()-.05)*2,dy*(Math.random()-.05)*2,this.w*this.bounce*dz+Math.random()*this.bounce);
   }
 };
 
@@ -96,6 +96,7 @@ var spawnKeys = {
     b.color = "#f33";
     b.lag = Math.random()*5-3;
     b.ai = dog_ai;
+    b.bounce = 10;
     b.vigor = 1;
   },
   51: function() { /* 3: yellow scaredy cat */
@@ -149,18 +150,20 @@ var spawnKeys = {
       if (Math.random() < 0.5) {
         r[loc[i]].lag = Math.random()*5-3;
         r[loc[i]].ai = ai;
-        r[loc[i]].vigor = 0.8;
+        r[loc[i]].vigor = 0.05;
+        r[loc[i]].bounce = 10;
       }
     }
     r.leftWrist.lag = Math.random()*5-3;
     r.leftWrist.ai = claw_ai;
-    r.leftWrist.vigor = 0.9;
+    r.leftWrist.vigor = 0.1;
     r.leftWrist.sign = 1;
     if (Math.random() < 0.5) {
       r.rightWrist.lag = Math.random()*5-3;
       r.rightWrist.ai = Math.random()<0.4?claw_ai: dog_ai;
-      r.rightWrist.vigor = 0.7;
+      r.rightWrist.vigor = 0.05;
       r.rightWrist.sign = 1;
+      r.rightWrist.bounce = 4;
     }
   },
   56: function() {
@@ -171,13 +174,13 @@ var spawnKeys = {
       if (Math.random() < 0.6) {
         r[loc[i]].lag = Math.random()*5-3;
         r[loc[i]].ai = claw_ai;
-        r[loc[i]].vigor = 0.8;
+        r[loc[i]].vigor = 0.1;
         r[loc[i]].sign = -1;
       }
     }
     r.leftWrist.lag = Math.random()*5-3;
     r.leftWrist.ai = claw_ai;
-    r.leftWrist.vigor = 0.9;
+    r.leftWrist.vigor = 0.2;
     r.leftWrist.sign = -1;
   }
 };

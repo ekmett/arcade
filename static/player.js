@@ -80,8 +80,9 @@ player.ai = function() {
     player.jumpStart = true;
   }
   player.push(5*pdx,5*pdy,50*pdz);
-  if (events.mouse[1]) {
-    var f = 3e18;
+  if (events.mouse[1] /* && events.mouse[1] != this.shotAt */) {
+    // this.shotAt = events.mouse[1];
+    var f = 3;//e18;
     var fx = f, fy = f, fz = f;
     var x = display.cursor.x;
     var y = display.cursor.y;
