@@ -20,18 +20,19 @@ function auto(a,b,c) {
 }
 
 var scratch = new transformations.ScreenPoint();
+var scratch2 = new transformations.ScreenPoint();
 
 // 2 units tall
 var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
   var r = 0.1;
   this.head        = new Particle(x+0,    y+0.1*d, z+0.95*h,  0.35,0.35,0.45,3.1*m)
-  this.shoulder    = new Particle(x+0,    y+0,     z+0.9*h,  0.2,0.2,0.2, 28.08*m);
+  var shoulder = this.shoulder = new Particle(x+0,    y+0,     z+0.9*h,  0.2,0.2,0.2, 28.08*m);
   this.leftElbow   = new Particle(x+0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 3.7*m);
   this.rightElbow  = new Particle(x-0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 3.7*m);
   this.leftWrist   = new Particle(x+0.3*w,y+0.1*d, z+0.5*h, 0.15,0.15,0.15, 18.25*m);
   this.rightWrist  = new Particle(x-0.3*w,y+0.1*d, z+0.5*h, 0.15,0.15,0.15, 18.25*m);
-  this.waist       = new Particle(x+0,    y-0.05*d, z+0.60*h, 0.3,0.3,0.3, 33.06*m);
-  this.pelvis      = new Particle(x+0,    y-0.02*d,z+0.55*h, 0.2,0.2,0.2, 13.66*m);
+  var waist = this.waist   = new Particle(x+0,    y-0.05*d, z+0.65*h, 0.3,0.3,0.3, 33.06*m);
+  var pelvis = this.pelvis = new Particle(x+0,    y-0.02*d,z+0.55*h, 0.2,0.2,0.2, 13.66*m);
   this.leftKnee    = new Particle(x+0.2*w,y+0.2*d ,z+0.3*h, 0.1,0.1,0.3, 8*m);
   this.rightKnee   = new Particle(x-0.2*w,y+0.2*d ,z+0.3*h, 0.1,0.1,0.3, 8*m);
   this.leftAnkle   = new Particle(x+0.1*w,y-0.05*d,z+0.05*h, 0.15,0.15,0.3, 8*m);
@@ -43,12 +44,10 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
     auto(this.shoulder,this.rightElbow),
     auto(this.leftElbow,this.leftWrist),
     auto(this.rightElbow,this.rightWrist),
-    auto(this.shoulder,this.waist),
-    auto(this.waist,this.pelvis),
+    auto(this.shoulder,this.waist,false), // disable body
+    auto(this.waist,this.pelvis,false), // disable body
     auto(this.shoulder,this.pelvis,false),
     auto(this.pelvis,this.head,false),
-    auto(this.shoulder,this.waist),
-    auto(this.waist,this.pelvis),
     auto(this.leftKnee,this.leftAnkle),
     auto(this.rightKnee,this.rightAnkle),
     auto(this.pelvis,this.leftKnee),
@@ -109,6 +108,19 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
       c.stroke();
       s.stroke();
     }
+    // curved torso
+    c.beginPath();
+    s.beginPath();
+    scratch.world(shoulder.rx, shoulder.ry, shoulder.rz);
+    c.moveTo(scratch.sx, scratch.sy);
+    s.moveTo(scratch.sx, scratch.sy+shoulder.rz*2);
+    scratch.world(waist.rx, waist.ry, waist.rz);
+    scratch2.world(pelvis.rx, pelvis.ry, pelvis.rz);
+    c.quadraticCurveTo(scratch.sx, scratch.sy, scratch2.sx, scratch2.sy);
+    s.quadraticCurveTo(scratch.sx, scratch.sy+waist.rz*2, scratch2.sx, scratch2.sy + pelvis.rz*2);
+    c.stroke();
+    s.stroke();
+
     c.beginPath();
     scratch.world(this.rx,this.ry,this.rz);
     c.arc(scratch.sx,scratch.sy-this.h,this.w*Math.sqrt(3),0,2*Math.PI,false);
