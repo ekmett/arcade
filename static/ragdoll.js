@@ -25,12 +25,12 @@ var scratch = new transformations.ScreenPoint();
 var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
   var r = 0.1;
   this.head        = new Particle(x+0,    y+0.1*d, z+0.95*h,  0.35,0.35,0.45,3.1*m)
-  this.shoulder    = new Particle(x+0,    y+0,     z+0.85*h,  0.2,0.2,0.2, 28.08*m);
+  this.shoulder    = new Particle(x+0,    y+0,     z+0.9*h,  0.2,0.2,0.2, 28.08*m);
   this.leftElbow   = new Particle(x+0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 3.7*m);
   this.rightElbow  = new Particle(x-0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 3.7*m);
   this.leftWrist   = new Particle(x+0.3*w,y+0.1*d, z+0.5*h, 0.15,0.15,0.15, 18.25*m);
   this.rightWrist  = new Particle(x-0.3*w,y+0.1*d, z+0.5*h, 0.15,0.15,0.15, 18.25*m);
-  this.waist       = new Particle(x+0,    y-0.1*d, z+0.60*h, 0.3,0.3,0.3, 33.06*m);
+  this.waist       = new Particle(x+0,    y-0.05*d, z+0.60*h, 0.3,0.3,0.3, 33.06*m);
   this.pelvis      = new Particle(x+0,    y-0.02*d,z+0.55*h, 0.2,0.2,0.2, 13.66*m);
   this.leftKnee    = new Particle(x+0.2*w,y+0.2*d ,z+0.3*h, 0.1,0.1,0.3, 8*m);
   this.rightKnee   = new Particle(x-0.2*w,y+0.2*d ,z+0.3*h, 0.1,0.1,0.3, 8*m);
@@ -47,11 +47,14 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
     auto(this.waist,this.pelvis),
     auto(this.shoulder,this.pelvis,false),
     auto(this.pelvis,this.head,false),
-    auto(this.pelvis,this.leftKnee),
-    auto(this.pelvis,this.rightKnee),
+    auto(this.shoulder,this.waist),
+    auto(this.waist,this.pelvis),
     auto(this.leftKnee,this.leftAnkle),
-    auto(this.rightKnee,this.rightAnkle)
+    auto(this.rightKnee,this.rightAnkle),
+    auto(this.pelvis,this.leftKnee),
+    auto(this.pelvis,this.rightKnee)
   ];
+
   var parts = this.parts = [this.head,this.shoulder,this.leftElbow,this.rightElbow,this.leftWrist,this.rightWrist,this.waist,this.pelvis,this.leftKnee,this.rightKnee, this.leftAnkle,this.rightAnkle];
 
   for (var i in this.parts) {

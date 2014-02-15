@@ -399,6 +399,7 @@ Object.defineProperties(physics, {
   /* constants */
   FPS                    : { value: FPS,                        __proto__ : null, configurable: false, writable: false, enumerable: true },
   MILLISECONDS_PER_FRAME : { value: MILLISECONDS_PER_FRAME,     __proto__ : null, configurable: false, writable: false, enumerable: true },
+  MAX_WORLD_HEIGHT       : { value: MAX_WORLD_HEIGHT,           __proto__ : null, configurable: false, writable: false, enumerable: true },
   RELAXATIONS            : { value: RELAXATIONS,                __proto__ : null, configurable: false, writable: false, enumerable: true },
   G                      : { value: G,                          __proto__ : null, configurable: false, writable: false, enumerable: true },
   SPEED_LIMIT            : { value: SPEED_LIMIT,                __proto__ : null, configurable: false, writable: false, enumerable: true },

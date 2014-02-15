@@ -82,6 +82,8 @@ player.ai = function() {
 
   var m = player.standing ? 1 : player.bouncing ? 0.7 : 0.4;
 
+  if (player.bouncing) console.log("bouncing");
+
   if (events.impulse[87]) { pdx -= m; pdy -= m; } // W
   if (events.impulse[65]) { pdx += m; pdy -= m; } // A
   if (events.impulse[83]) { pdx += m; pdy += m; } // S
@@ -103,23 +105,33 @@ player.ai = function() {
   if (events.impulse[81] && this.selected) { // "Q" levitates target
     this.selectedZ += 0.1;
   }
-  if (events.impulse[81] && this.selected) { // "E" lowers target
+  if (events.impulse[69] && this.selected) { // "E" lowers target
     this.selectedZ -= 0.1;
   }
+
+/*
+  if (events.impulse[9] && this.selected) {
+    this.selected.inverseMass = this.selectedInverseMass;
+    var s = this.selected;
+    this.selected = null;
+    s.push(5*(s.x - display.cursor.x), 5*(s.y - display.cursor.y), 50);
+  }
+*/
 
   if (events.mouse[1]) {
     if (this.selected) {
       // drag
       this.selected.x = this.selectedX + display.cursor.x;
       this.selected.y = this.selectedY + display.cursor.y;
-      this.selected.z = this.selectedZ + this.z; // so we can jump with it.
+      this.selected.z = this.selectedZ;
       this.selected.az += physics.G;
+      physics.scene.clip(this.selected);
     } else {
       this.selected = select();
       if (this.selected) {
         this.selectedX = this.selected.rx - display.cursor.x;
         this.selectedY = this.selected.ry - display.cursor.y;
-        this.selectedZ = this.selected.rz - this.z;
+        this.selectedZ = this.selected.rz;
         this.selectedInverseMass = this.selected.inverseMass;
         this.selected.inverseMass = 0;
       }
