@@ -1,7 +1,7 @@
 define([], function() {
 
 return {
-  bounding: false,
+  bounding: true,
   soft_shadows: false
 };
 

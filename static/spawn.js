@@ -158,7 +158,7 @@ var spawnKeys = {
         r[loc[i]].lag = Math.random()*5-3;
         r[loc[i]].ai = ai;
         r[loc[i]].vigor = 0.05;
-        r[loc[i]].bounce = 10;
+        r[loc[i]].bounce = 4;
       }
     }
     r.leftWrist.lag = Math.random()*5-3;
@@ -170,7 +170,7 @@ var spawnKeys = {
       r.rightWrist.ai = Math.random()<0.4?claw_ai: dog_ai;
       r.rightWrist.vigor = 0.05;
       r.rightWrist.sign = 1;
-      r.rightWrist.bounce = 4;
+      r.rightWrist.bounce = 2;
     }
   },
   56: function() {

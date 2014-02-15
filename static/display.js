@@ -9,7 +9,7 @@ var display = {
 var updated = 0;
 var frame = 0;
 
-var PIXELS_PER_METER = 20;
+var PIXELS_PER_METER = 16;
 var METERS_PER_PIXEL = 1 / PIXELS_PER_METER;
 var RECIP_Y_SCALE    = 2;
 var Y_SCALE    = 0.5;
@@ -53,13 +53,13 @@ var draw_background = function() {
   b.lineWidth = 0.3;
 
   // draw the world
-  prim.room(b,-5,-5,0,10,10,2);
+  prim.room(b,-physics.SCENE_WIDTH/2,-physics.SCENE_DEPTH/2,0,physics.SCENE_WIDTH,physics.SCENE_DEPTH,physics.SCENE_HEIGHT);
   b.strokeStyle = "#ccc";
   b.fillStyle = "#ddd";
   b.fill();
   b.stroke();
 
-  prim.floor(b,-5,-5,0,10,10,2);
+  prim.floor(b,-physics.SCENE_WIDTH/2,-physics.SCENE_DEPTH/2,0,physics.SCENE_WIDTH,physics.SCENE_DEPTH,physics.SCENE_HEIGHT);
   b.fillStyle = "#fff";
   b.fill();
 };

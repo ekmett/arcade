@@ -133,12 +133,15 @@ player.ai = function() {
         this.selectedY = this.selected.ry - display.cursor.y;
         this.selectedZ = this.selected.rz;
         this.selectedInverseMass = this.selected.inverseMass;
+        // this.selectedElasticity = this.selected.elasticity;
         this.selected.inverseMass = 0;
+        // this.selected.elasticity = 5;
       }
     }
   } else {
     if (this.selected) {
       this.selected.inverseMass = this.selectedInverseMass;
+      // this.selected.elasticity = this.selectedElasticity;
     }
     this.selected = null;
   }

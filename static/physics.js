@@ -27,13 +27,14 @@ var SPEED_EPSILON = 0.00002;// 0.00001;
 var MAX_BODY_HEIGHT = 4; // no Particle is taller than 4 meters z
 var MAX_BODY_WIDTH  = 2; // no Particle is wider than 2 meters: x
 var MAX_BODY_DEPTH  = 2; // no Particle has a bounding box more than 2 meters deep in y
-var MAX_WORLD_HEIGHT = 8; // nothing can get more than 5 meters off the ground, making floors about 16 ft high.
-var MIN_WORLD_HEIGHT = 0; // nothing can get more than 0 meters below the floor.
-var BUCKET_WIDTH  = MAX_BODY_WIDTH + SPEED_LIMIT; // 4 meters
-var BUCKET_DEPTH  = MAX_BODY_DEPTH + SPEED_LIMIT;
+var BUCKET_WIDTH = MAX_BODY_WIDTH + SPEED_LIMIT; // 4 meters
+var BUCKET_DEPTH = MAX_BODY_DEPTH + SPEED_LIMIT;
 var BUCKET_COLUMNS = 16; // 96 meters without overlap
 var BUCKET_ROWS    = 16; // 96 meters without overlap
 var BUCKETS = BUCKET_ROWS * BUCKET_COLUMNS;
+var SCENE_WIDTH = 12;
+var SCENE_DEPTH = 12;
+var SCENE_HEIGHT = 8; // nothing can get more than 8 meters off the ground, making floors about 26ft high.
 
 var buckets = new Array(BUCKETS); // single chained linked lists, how retro
 
@@ -48,9 +49,9 @@ function bucket(x,y) {
 // basic scene we can replace later with the bsp
 var scene = {
   clip : function clip(particle) {
-    var nx = Math.max(-5,Math.min(particle.x, 5-particle.w));
-    var ny = Math.max(-5,Math.min(particle.y, 5-particle.d));
-    var nz = Math.max(0,Math.min(particle.z, MAX_WORLD_HEIGHT-particle.h));
+    var nx = Math.max(-SCENE_WIDTH/2,Math.min(particle.x, SCENE_WIDTH/2-particle.w));
+    var ny = Math.max(-SCENE_DEPTH/2,Math.min(particle.y, SCENE_DEPTH/2-particle.d));
+    var nz = Math.max(0,Math.min(particle.z, SCENE_HEIGHT-particle.h));
 
     particle.x = nx;
     particle.y = ny;
@@ -132,7 +133,7 @@ Particle.prototype = {
     this.rx = this.ox * (1 - alpha) + this.x * alpha;
     this.ry = this.oy * (1 - alpha) + this.y * alpha;
     this.rz = this.oz * (1 - alpha) + this.z * alpha;
-    this.key = 2*this.rx + 2*this.ry + this.rz + this.w + this.h + this.d*0.51;
+    this.key = 2*this.rx + 2*this.ry + this.rz + this.w + this.d + this.h*0.51;
   },
   plan: function plan() {
     this.ai && this.ai();
@@ -399,7 +400,9 @@ Object.defineProperties(physics, {
   /* constants */
   FPS                    : { value: FPS,                        __proto__ : null, configurable: false, writable: false, enumerable: true },
   MILLISECONDS_PER_FRAME : { value: MILLISECONDS_PER_FRAME,     __proto__ : null, configurable: false, writable: false, enumerable: true },
-  MAX_WORLD_HEIGHT       : { value: MAX_WORLD_HEIGHT,           __proto__ : null, configurable: false, writable: false, enumerable: true },
+  SCENE_WIDTH            : { value: SCENE_WIDTH,                __proto__ : null, configurable: false, writable: false, enumerable: true },
+  SCENE_DEPTH            : { value: SCENE_DEPTH,                __proto__ : null, configurable: false, writable: false, enumerable: true },
+  SCENE_HEIGHT           : { value: SCENE_HEIGHT,               __proto__ : null, configurable: false, writable: false, enumerable: true },
   RELAXATIONS            : { value: RELAXATIONS,                __proto__ : null, configurable: false, writable: false, enumerable: true },
   G                      : { value: G,                          __proto__ : null, configurable: false, writable: false, enumerable: true },
   SPEED_LIMIT            : { value: SPEED_LIMIT,                __proto__ : null, configurable: false, writable: false, enumerable: true },
