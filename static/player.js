@@ -4,6 +4,22 @@ define(
 
 var scratch = new transformations.ScreenPoint();
 
+// pick the item under the mouse cursor, if any
+function select() {
+  scratch.world(display.cursor.x, display.cursor.y,0);
+  var hit = null
+  var hit_d = -1000;
+  for (i in physics.particles) {
+    var p = physics.particles[i];
+    var d = p.pick(scratch.sx, scratch.sy);
+    if (d != null && d > hit_d) {
+      hit = p;
+      hit_d = d;
+    }
+  }
+  return hit;
+}
+
 var player = new physics.Particle( 0,0,0,0.5,0.5,2,100);
 var image = new Image();
 image.onload = function() {
@@ -56,6 +72,9 @@ player.draw = function(s,c) {
   s.restore();
 };
 
+// you can't pick yourself for now.
+player.pick = function(x,y) { return null };
+
 player.ai = function() {
   var pdx = 0;
   var pdy = 0;
@@ -80,7 +99,40 @@ player.ai = function() {
     player.jumpStart = true;
   }
   player.push(5*pdx,5*pdy,50*pdz);
-  if (events.mouse[1] /* && events.mouse[1] != this.shotAt */) {
+
+  if (events.impulse[81] && this.selected) { // "Q" levitates target
+    this.selectedZ += 0.1;
+  }
+  if (events.impulse[81] && this.selected) { // "E" lowers target
+    this.selectedZ -= 0.1;
+  }
+
+  if (events.mouse[1]) {
+    if (this.selected) {
+      // drag
+      this.selected.x = this.selectedX + display.cursor.x;
+      this.selected.y = this.selectedY + display.cursor.y;
+      this.selected.z = this.selectedZ + this.z; // so we can jump with it.
+      this.selected.az += physics.G;
+    } else {
+      this.selected = select();
+      if (this.selected) {
+        this.selectedX = this.selected.rx - display.cursor.x;
+        this.selectedY = this.selected.ry - display.cursor.y;
+        this.selectedZ = this.selected.rz - this.z;
+        this.selectedInverseMass = this.selected.inverseMass;
+        this.selected.inverseMass = 0;
+      }
+    }
+  } else {
+    if (this.selected) {
+      this.selected.inverseMass = this.selectedInverseMass;
+    }
+    this.selected = null;
+  }
+
+ /*
+  if (events.mouse[1]) {
     // this.shotAt = events.mouse[1];
     var f = 3;//e18;
     var fx = f, fy = f, fz = f;
@@ -88,13 +140,24 @@ player.ai = function() {
     var y = display.cursor.y;
     var z = 1;
     var ps = physics.particles; // TODO: just check buckets around (x,y)?
+    var dx = x - player.x, dy = y - player.y, dz = 0;
+    var d = Math.sqrt(dx*dx +dy*dy + dz*dz);
+    if (d < 0.0001) return;
     for (var i in ps) {
       var p = ps[i];
-      var dx = p.x - x, dy = p.y - y, dz = p.z - z;
-      var d = Math.sqrt(dx*dx+dy*dy+dz*dz); // TODO:use squared falloff with distance?
-      p.push(dx/d,dy/d,dz/d);
+      var dpx = p.x - player.x, dpy = p.y - player.y, dpz = p.z - player.z;
+      var dp = Math.sqrt(dpx*dpx+dpy*dpy+dpz*dpz);
+      if (dp < 0.0001) continue;
+      dpx /= dp;
+      dpy /= dp;
+      dpz /= dp;
+
+      var dc = Math.sqrt(dpx*dx +dpy*dy + dpz*dz); // dot product of direction
+      if (dc > 0.9659 && !Object.is(p,player)) // 30 degree arc
+        p.push(dpx,dpy,dpz); // add fall off?
     }
   }
+  */
 };
 
 

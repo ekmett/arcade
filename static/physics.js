@@ -16,7 +16,7 @@ var PRIORITY_FLUFF  = 1; // fluff can move fluff
 var DEFAULT_ELASTICITY = 0.95;
 var FPS = 25;        // frames per second
 var MILLISECONDS_PER_FRAME = 1000/FPS;
-var RELAXATIONS = 1; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
+var RELAXATIONS = 2; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
 var G = 0.2;
 var AIR_DRAG = 0.001;
 var GROUND_DRAG = 0.2;
@@ -113,6 +113,7 @@ var Particle = physics.Particle = function(x,y,z,w,d,h,mass) {
   this.priority = PRIORITY_NORMAL;
 
   this.elasticity = DEFAULT_ELASTICITY;
+  this.corrections = 0;
 
   this.ai = null;
 
@@ -169,7 +170,6 @@ Particle.prototype = {
     v2 = vx*vx+vy*vy+vz*vz;
     if (v2 > SPEED_LIMIT_SQUARED) {
       var s = SPEED_LIMIT / Math.sqrt(v2); // soften this?
-      // console.log("speeding detected",Math.sqrt(v2)); // this.x,this.y,this.z,vx,vy,vz);
       vx *= s;
       vy *= s;
       vz *= s;
@@ -200,6 +200,7 @@ Particle.prototype = {
     this.maxy = Math.max(this.oy, this.y) + this.d;
     this.maxz = Math.max(this.oz, this.z) + this.h;
 
+    this.corrections = 0;
     // thread ourselves onto a bucket based on our new position
     var i = bucket(this.x,this.y);
     this.next_in_bucket = buckets[i];
@@ -253,6 +254,8 @@ Particle.prototype = {
       var l = 1; // Math.sqrt(ex*ex+ey*ey+ez*ez);
 
       if (dl < l) {
+        ++this.corrections;
+        ++that.corrections;
         if (dl * (ima + imb) > 200) {
           return;
           // console.log("singularity approached");

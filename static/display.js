@@ -129,6 +129,7 @@ Object.defineProperties(display, {
   halfWidth  : { get: function() { return halfWidth }, __proto__ : null, configurable: false, enumerable: true },
   height     : { get: function() { return height },   __proto__ : null, configurable: false, enumerable: true },
   width      : { get: function() { return width }, __proto__ : null, configurable: false, enumerable: true },
+  foreground : { get: function() { return foreground }, __proto__ : null, configurable: false, enumerable: true },
   /* read-write attributes */
   scrollX : { get: function() { return scrollX },   set: function(e) { scrollX = e },   __proto__ : null, configurable: false, enumerable: true },
   scrollY : { get: function() { return scrollY },   set: function(e) { scrollY = e },   __proto__ : null, configurable: false, enumerable: true },

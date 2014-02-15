@@ -9,6 +9,13 @@ var ball = function ball() {
   var particle = new physics.Particle(Math.random()*10-5,Math.random()*10-5, Math.random()*10,r,r,r,40*r^2.8);
   particle.color = '#' + (0x1000000 + Math.random() * 0xFFFFFF).toString(16).substr(1,6);
   particle.specular = 0.7; // the higher the number the larger the specular highlight.
+  particle.pick = function(x,y) {
+    scratch.world(this.rx,this.ry,this.rz);
+    var dx = scratch.sx-x;
+    var dy = scratch.sy-y;
+    var near = dx*dx + dy*dy < this.w * this.w * 3;
+    return near ? this.key : null;
+  };
   particle.draw = function(s,c) {
     c.save();
 

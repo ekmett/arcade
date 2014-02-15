@@ -64,6 +64,13 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
         c.stroke();
       }
     };
+    this.parts[i].pick = function(x,y) {
+      scratch.world(this.rx,this.ry,this.rz);
+      var dx = scratch.sx-x;
+      var dy = scratch.sy-y;
+      var near = dx*dx + dy*dy < this.w * this.w * 3;
+      return near ? this.key : null;
+    };
   }
 
   for (var i in this.constraints)
