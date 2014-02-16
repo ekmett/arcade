@@ -14,12 +14,12 @@ function curveThrough(s, c, points) {
     var x = (u.sx + v.sx) * 0.5;
     var y = (u.sy + v.sy) * 0.5;
     c.quadraticCurveTo(u.sx, u.sy, x, y);
-    s.quadraticCurveTo(u.sx, u.sy + points[i].rz*2, x, y + points[i].rz + points[i+1].rz);
+    s.quadraticCurveTo(u.sx, u.sy + points[i].rz*2 + points[i].h/2, x, y + points[i].rz + (points[i].h + points[i+1].h)/4 + points[i+1].rz);
     var t = u; u = v; v = t;
   }
   v.worldR(points[n+1]);
   c.quadraticCurveTo(u.sx, u.sy, v.sx, v.sy);
-  s.quadraticCurveTo(u.sx, u.sy + points[n].rz*2, v.sx, v.sy + points[n+1].rz*2);
+  s.quadraticCurveTo(u.sx, u.sy + (points[n].rz*2 + points[n].h/2), v.sx, v.sy + points[n+1].rz*2 + points[n+1].h/2);
 }
 
 var SCENE_WIDTH  = physics.SCENE_WIDTH;
@@ -100,7 +100,7 @@ var dog_ai = function dog_ai() {
     dx /= l;
     dy /= l;
     dz /= l;
-    if (this.standing || this.bouncing) this.push(dx*(Math.random()-.05)*2,dy*(Math.random()-.05)*2,this.w*this.bounce*dz+Math.random()*this.bounce);
+    if (this.standing || this.bouncing) this.push(dx*(Math.random()-.05)*(this.vscale||2),dy*(Math.random()-.05)*(this.vscale||2),this.w*this.bounce*dz+Math.random()*this.bounce);
   }
 };
 
@@ -161,7 +161,7 @@ var spawnKeys = {
     b.elasticity = 0.01;
     b.constraints = 0;
     b.bump = function(that) {
-      if (/* this.constraints < 4 && */ !that.constrained) {
+      if (this.constraints < 15 && !that.constrained) {
         this.constraints++;
         that.constrained = true;
         var l = Math.min(this.w+that.w,this.d+that.d,this.h+that.h)/2;
@@ -214,11 +214,11 @@ var spawnKeys = {
     r.leftWrist.sign = -1;
   },
   57: function() { /* 9 */
-    var r = 0.2;
-    var l = 6;
+    var r = Math.random()*0.1+0.25;
+    var l = Math.floor(Math.random()*10+6);
     var ps = new Array(l);
     for (var i=0;i<l;i++) {
-      ps[i] = new physics.Particle(0,0.8*i,0,r,r,r,1.8);
+      ps[i] = new physics.Particle(0,0.5*i,0,r,r,r,23.5*r^2);
       ps[i].draw = function(s,c) {
         if (toggles.bounding) {
           c.save();
@@ -252,15 +252,15 @@ var spawnKeys = {
 
       curveThrough(s,c,ps);
       c.lineCap = 'round';
-      c.lineWidth = 0.3;
+      c.lineWidth = r+0.05;
       c.strokeStyle = "#000";
       c.stroke();
-      c.lineWidth = 0.2;
-      c.strokeStyle = "#fff";
+      c.lineWidth = r-0.05;
+      c.strokeStyle = "#eee";
       c.stroke();
 
       s.lineCap = 'round';
-      s.lineWidth = 0.15;
+      s.lineWidth = r;
       s.strokeStyle = "rgba(0,0,0,0.25)";
       s.stroke();
 
@@ -269,13 +269,22 @@ var spawnKeys = {
       s.restore();
     };
     ps[0].ai = dog_ai;
-    ps[0].bounce = 0.5;
-    ps[0].lag = 2;
-    ps[1].ai = dog_ai;
-    ps[1].bounce = 1.5;
-    ps[1].lag = 2;
-    // ps[l-1].inverseMass = 0;
-    for (var i=0;i<l-1;i++) {
+    ps[0].bounce = 1.5;
+    ps[0].lag = 0.5;
+    ps[0].vscale = 1.75;
+    ps[2].ai = dog_ai;
+    ps[2].bounce = 4.5;
+    ps[2].lag = 0;
+    ps[2].vscale = 1.75;
+    for (var i=1;i<l;++i) {
+      ps[i].pred = ps[i-1];
+    }
+    var base = physics.frame;
+    for (var i=3;i<l/2;++i) {
+      ps[i].ai = function() {
+      };
+    }
+    for (var i=0;i<l-1;++i) {
       physics.constraints.push(ragdoll.auto(ps[i],ps[i+1]));
     }
   }

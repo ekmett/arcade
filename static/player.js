@@ -82,7 +82,7 @@ player.ai = function() {
 
   var m = player.standing ? 1 : player.bouncing ? 0.7 : 0.4;
 
-  if (player.bouncing) console.log("bouncing");
+  // if (player.bouncing) console.log("bouncing");
 
   if (events.impulse[87]) { pdx -= m; pdy -= m; } // W
   if (events.impulse[65]) { pdx += m; pdy -= m; } // A
