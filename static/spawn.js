@@ -58,7 +58,7 @@ var ball = function ball() {
     s.scale(1,0.5);
     s.beginPath();
     scratch.world(this.rx,this.ry,0);
-    s.arc(scratch.sx,scratch.sy*2+this.h*2,this.w*Math.sqrt(3),0,2*Math.PI,false);
+    s.arc(scratch.sx,scratch.sy*2+this.h*2,this.w*Math.sqrt(2),0,2*Math.PI,false);
     s.fillStyle = "rgba(0,0,0,0.25)";
     s.fill();
     s.restore();

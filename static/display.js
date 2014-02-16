@@ -89,6 +89,10 @@ var render = function render() {
 
   var s = shadows.canvas;
   s.clear(true);
+/*
+  prim.floor(s,-physics.SCENE_WIDTH/2,-physics.SCENE_DEPTH/2,0,physics.SCENE_WIDTH,physics.SCENE_DEPTH,physics.SCENE_HEIGHT);
+  s.clip();
+*/
 
   var c = foreground.canvas;
   c.clear(true);

@@ -25,7 +25,7 @@ var scratch2 = new transformations.ScreenPoint();
 // 2 units tall
 var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
   var r = 0.1;
-  this.head        = new Particle(x+0,    y+0.1*d, z+0.95*h,  0.35,0.35,0.45,3.1*m)
+  this.head        = new Particle(x+0,    y+0.1*d, z+0.95*h,  0.35,0.35,0.35,3.1*m)
   var shoulder = this.shoulder = new Particle(x+0,    y+0,     z+0.9*h,  0.2,0.2,0.2, 28.08*m);
   this.leftElbow   = new Particle(x+0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 3.7*m);
   this.rightElbow  = new Particle(x-0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 3.7*m);
@@ -108,6 +108,7 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
       c.stroke();
       s.stroke();
     }
+
     // curved torso
     c.beginPath();
     s.beginPath();
@@ -121,8 +122,9 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
     c.stroke();
     s.stroke();
 
+
     c.beginPath();
-    scratch.world(this.rx,this.ry,this.rz);
+    scratch.world(this.rx,this.ry,this.rz-this.h/2);
     c.arc(scratch.sx,scratch.sy-this.h,this.w*Math.sqrt(3),0,2*Math.PI,false);
     c.fillStyle = "#fff"
     c.lineWidth = 0.15;
@@ -132,9 +134,16 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
 
     s.beginPath();
     s.scale(1,0.5);
-    s.arc(scratch.sx,scratch.sy*2+this.rz*4,this.w*Math.sqrt(3),0,2*Math.PI,false);
+    s.arc(scratch.sx,scratch.sy*2+this.rz*4,this.w*Math.sqrt(2),0,2*Math.PI,false);
     s.fillStyle = 'rgba(0,0,0,0.2)';
     s.fill();
+
+    if (toggles.bounding) {
+      prim.cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
+      c.lineWidth = 0.01;
+      c.strokeStyle = "#000";
+      c.stroke();
+    }
 
     c.restore();
     s.restore();
