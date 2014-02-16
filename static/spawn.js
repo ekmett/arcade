@@ -215,10 +215,10 @@ var spawnKeys = {
   },
   57: function() { /* 9 */
     var r = 0.2;
-    var l = 20;
+    var l = 6;
     var ps = new Array(l);
     for (var i=0;i<l;i++) {
-      ps[i] = new physics.Particle(0,0.2*i,0,r,r,r,0.8);
+      ps[i] = new physics.Particle(0,0.8*i,0,r,r,r,1.8);
       ps[i].draw = function(s,c) {
         if (toggles.bounding) {
           c.save();
@@ -268,10 +268,13 @@ var spawnKeys = {
       c.restore();
       s.restore();
     };
-    ps[2].ai = dog_ai;
-    ps[2].bounce = 1;
-    ps[2].lag = 2;
-    ps[l-1].inverseMass = 0;
+    ps[0].ai = dog_ai;
+    ps[0].bounce = 0.5;
+    ps[0].lag = 2;
+    ps[1].ai = dog_ai;
+    ps[1].bounce = 1.5;
+    ps[1].lag = 2;
+    // ps[l-1].inverseMass = 0;
     for (var i=0;i<l-1;i++) {
       physics.constraints.push(ragdoll.auto(ps[i],ps[i+1]));
     }

@@ -16,7 +16,7 @@ var PRIORITY_FLUFF  = 1; // fluff can move fluff
 var DEFAULT_ELASTICITY = 0.95;
 var FPS = 25;        // frames per second
 var MILLISECONDS_PER_FRAME = 1000/FPS;
-var RELAXATIONS = 2; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
+var RELAXATIONS = 1; // # of successive over-relaxation steps for Gauss-Seidel/Jacobi
 var G = 0.2;
 var AIR_DRAG = 0.001;
 var GROUND_DRAG = 0.2;
@@ -223,7 +223,6 @@ Particle.prototype = {
     var y1max = y1min + this.d;
     var z1max = z2min + this.h;
 
-    // bounding box for that at start
     var x2min = that.x;
     var y2min = that.y;
     var z2min = that.z;
@@ -257,12 +256,12 @@ Particle.prototype = {
       if (dl < l) {
         ++this.corrections;
         ++that.corrections;
-        if (dl * (ima + imb) > 200) {
+        var ima = this.inverseMass;
+        var imb = that.inverseMass;
+        if (dl * (ima + imb) == 0) {
           return;
           // console.log("singularity approached");
         }
-        var ima = this.inverseMass;
-        var imb = that.inverseMass;
         var E = Math.min(this.elasticity,that.elasticity);
         if (dz < 0) {
           that.bouncing = true;
