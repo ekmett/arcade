@@ -103,20 +103,12 @@ player.ai = function() {
   player.push(5*pdx,5*pdy,50*pdz);
 
   if (events.impulse[81] && this.selected) { // "Q" levitates target
-    this.selectedZ += 0.1;
-  }
-  if (events.impulse[69] && this.selected) { // "E" lowers target
-    this.selectedZ -= 0.1;
+    this.selectedZ += 0.20;
   }
 
-/*
-  if (events.impulse[9] && this.selected) {
-    this.selected.inverseMass = this.selectedInverseMass;
-    var s = this.selected;
-    this.selected = null;
-    s.push(5*(s.x - display.cursor.x), 5*(s.y - display.cursor.y), 50);
+  if (events.impulse[69] && this.selected) { // "E" lowers target
+    this.selectedZ -= 0.20;
   }
-*/
 
   if (events.mouse[1]) {
     if (this.selected) {
@@ -133,46 +125,15 @@ player.ai = function() {
         this.selectedY = this.selected.ry - display.cursor.y;
         this.selectedZ = this.selected.rz;
         this.selectedInverseMass = this.selected.inverseMass;
-        // this.selectedElasticity = this.selected.elasticity;
         this.selected.inverseMass = 0;
-        // this.selected.elasticity = 5;
       }
     }
   } else {
     if (this.selected) {
       this.selected.inverseMass = this.selectedInverseMass;
-      // this.selected.elasticity = this.selectedElasticity;
     }
     this.selected = null;
   }
-
- /*
-  if (events.mouse[1]) {
-    // this.shotAt = events.mouse[1];
-    var f = 3;//e18;
-    var fx = f, fy = f, fz = f;
-    var x = display.cursor.x;
-    var y = display.cursor.y;
-    var z = 1;
-    var ps = physics.particles; // TODO: just check buckets around (x,y)?
-    var dx = x - player.x, dy = y - player.y, dz = 0;
-    var d = Math.sqrt(dx*dx +dy*dy + dz*dz);
-    if (d < 0.0001) return;
-    for (var i in ps) {
-      var p = ps[i];
-      var dpx = p.x - player.x, dpy = p.y - player.y, dpz = p.z - player.z;
-      var dp = Math.sqrt(dpx*dpx+dpy*dpy+dpz*dpz);
-      if (dp < 0.0001) continue;
-      dpx /= dp;
-      dpy /= dp;
-      dpz /= dp;
-
-      var dc = Math.sqrt(dpx*dx +dpy*dy + dpz*dz); // dot product of direction
-      if (dc > 0.9659 && !Object.is(p,player)) // 30 degree arc
-        p.push(dpx,dpy,dpz); // add fall off?
-    }
-  }
-  */
 };
 
 

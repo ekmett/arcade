@@ -2,11 +2,15 @@ define(
   ["constraints", "physics", "shim/cc", "events", "images", "transformations", "toggles", "player","prim","ragdoll"],
   function display(constraints, physics, cc, events, images, transformations, toggles, player, prim, ragdoll) {
 
+var SCENE_WIDTH  = physics.SCENE_WIDTH;
+var SCENE_HEIGHT = physics.SCENE_HEIGHT;
+var SCENE_DEPTH  = physics.SCENE_DEPTH;
+
 var scratch = new transformations.ScreenPoint();
 
 var ball = function ball() {
-  var r = -Math.log(Math.random())/2.5+0.2;
-  var particle = new physics.Particle(Math.random()*10-5,Math.random()*10-5, Math.random()*10,r,r,r,40*r^2.8);
+  var r = -Math.log(Math.random())/3+0.2;
+  var particle = new physics.Particle(Math.random()*(SCENE_WIDTH-r)-SCENE_WIDTH/2,Math.random()*(SCENE_DEPTH-r)-SCENE_DEPTH/2, Math.random()*(SCENE_HEIGHT-r),r,r,r,40*r^2.8);
   particle.color = '#' + (0x1000000 + Math.random() * 0xFFFFFF).toString(16).substr(1,6);
   particle.specular = 0.7; // the higher the number the larger the specular highlight.
   particle.pick = function(x,y) {
@@ -189,6 +193,15 @@ var spawnKeys = {
     r.leftWrist.ai = claw_ai;
     r.leftWrist.vigor = 0.2;
     r.leftWrist.sign = -1;
+  },
+  57: function() { /* 9 */
+/*
+    for (var i = 0; i < 4;i++) {
+      var particle = new physics.Particle(,Math.random()*10-5, Math.random()*10,r,r,r,40*r^2.8);
+    }
+*/
+
+
   }
 };
 

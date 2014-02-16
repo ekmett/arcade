@@ -264,10 +264,10 @@ Particle.prototype = {
         var ima = this.inverseMass;
         var imb = that.inverseMass;
         var E = Math.min(this.elasticity,that.elasticity);
-        if (dz < 0 && that.standing) {
-          this.bouncing = true;
-        } else if (dz > 0 && this.standing) {
+        if (dz < 0) {
           that.bouncing = true;
+        } else if (dz > 0) {
+          this.bouncing = true;
         }
         var diff = (dl-l)/(dl*(ima+imb))*E;
         dx *= diff*ex;
