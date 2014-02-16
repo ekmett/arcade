@@ -6,7 +6,6 @@ define(
 
 var Particle = physics.Particle;
 
-var ragdoll = {};
 
 function auto(a,b,c) {
   var dx = a.x - b.x;
@@ -18,6 +17,10 @@ function auto(a,b,c) {
   result.c = c;
   return result;
 }
+
+var ragdoll = {
+  auto: auto
+};
 
 var scratch = new transformations.ScreenPoint();
 var scratch2 = new transformations.ScreenPoint();

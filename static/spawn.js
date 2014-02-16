@@ -2,11 +2,30 @@ define(
   ["constraints", "physics", "shim/cc", "events", "images", "transformations", "toggles", "player","prim","ragdoll"],
   function display(constraints, physics, cc, events, images, transformations, toggles, player, prim, ragdoll) {
 
+var scratch = new transformations.ScreenPoint();
+var scratch2 = new transformations.ScreenPoint();
+
+function curveThrough(s, c, points) {
+  var n = points.length - 2;
+  var u = scratch, v = scratch2;
+  u.worldR(points[1]);
+  for (var i=1;i<n;i++) {
+    v.worldR(points[i+1]);
+    var x = (u.sx + v.sx) * 0.5;
+    var y = (u.sy + v.sy) * 0.5;
+    c.quadraticCurveTo(u.sx, u.sy, x, y);
+    s.quadraticCurveTo(u.sx, u.sy + points[i].rz*2, x, y + points[i].rz + points[i+1].rz);
+    var t = u; u = v; v = t;
+  }
+  v.worldR(points[n+1]);
+  c.quadraticCurveTo(u.sx, u.sy, v.sx, v.sy);
+  s.quadraticCurveTo(u.sx, u.sy + points[n].rz*2, v.sx, v.sy + points[n+1].rz*2);
+}
+
 var SCENE_WIDTH  = physics.SCENE_WIDTH;
 var SCENE_HEIGHT = physics.SCENE_HEIGHT;
 var SCENE_DEPTH  = physics.SCENE_DEPTH;
 
-var scratch = new transformations.ScreenPoint();
 
 var ball = function ball() {
   var r = -Math.log(Math.random())/3+0.2;
@@ -195,13 +214,67 @@ var spawnKeys = {
     r.leftWrist.sign = -1;
   },
   57: function() { /* 9 */
-/*
-    for (var i = 0; i < 4;i++) {
-      var particle = new physics.Particle(,Math.random()*10-5, Math.random()*10,r,r,r,40*r^2.8);
+    var r = 0.2;
+    var l = 20;
+    var ps = new Array(l);
+    for (var i=0;i<l;i++) {
+      ps[i] = new physics.Particle(0,0.2*i,0,r,r,r,0.8);
+      ps[i].draw = function(s,c) {
+        if (toggles.bounding) {
+          c.save();
+          prim.tack(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
+          c.lineWidth = 0.01;
+          c.strokeStyle = this.color;
+          c.stroke();
+          c.restore();
+        }
+      };
+      ps[i].pick = function(x,y) {
+        scratch.world(this.rx,this.ry,this.rz);
+        var dx = scratch.sx-x;
+        var dy = scratch.sy-y;
+        var near = dx*dx + dy*dy < this.w * this.w * 3;
+        return near ? this.key : null;
+      };
+      physics.particles.push(ps[i]);
     }
-*/
 
+    var oldDraw = ps[0].draw;
+    ps[0].draw = function(s,c) {
+      c.save();
+      s.save();
 
+      c.beginPath();
+      s.beginPath();
+      scratch.world(this.rx,this.ry,this.rz);
+      c.moveTo(scratch.sx,scratch.sy);
+      s.moveTo(scratch.sx,scratch.sy+this.rz*2);
+
+      curveThrough(s,c,ps);
+      c.lineCap = 'round';
+      c.lineWidth = 0.3;
+      c.strokeStyle = "#000";
+      c.stroke();
+      c.lineWidth = 0.2;
+      c.strokeStyle = "#fff";
+      c.stroke();
+
+      s.lineCap = 'round';
+      s.lineWidth = 0.15;
+      s.strokeStyle = "rgba(0,0,0,0.25)";
+      s.stroke();
+
+      oldDraw.call(this,s,c);
+      c.restore();
+      s.restore();
+    };
+    ps[2].ai = dog_ai;
+    ps[2].bounce = 1;
+    ps[2].lag = 2;
+    ps[l-1].inverseMass = 0;
+    for (var i=0;i<l-1;i++) {
+      physics.constraints.push(ragdoll.auto(ps[i],ps[i+1]));
+    }
   }
 };
 
