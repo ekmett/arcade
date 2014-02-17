@@ -20,7 +20,7 @@ function select() {
   return hit;
 }
 
-var player = new physics.Particle( 0,0,0,0.5,0.5,2,100);
+var player = new physics.Particle(0,0,0,0.5,0.5,2,100);
 var image = new Image();
 image.onload = function() {
   image.complete = true;
@@ -51,13 +51,13 @@ player.draw = function(s,c) {
 
   scratch.world(this.rx,this.ry,this.rz);
   c.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight,
-    scratch.sx-1.25, scratch.sy-5.5, 2*Math.sqrt(3), 4*Math.sqrt(3)
+    scratch.sx-1.25, scratch.sy-4.75, 2*Math.sqrt(2), 4*Math.sqrt(2)
   );
 
-  s.scale(0,0.5);
+  s.scale(1,0.5);
   scratch.world(this.rx,this.ry,0);
   s.beginPath();
-  s.arc(scratch.sx,scratch.sy*2+this.h,this.w*0.5*Math.sqrt(3),0,2*Math.PI,false);
+  s.arc(scratch.sx,scratch.sy*2+this.h*0.60,this.w*Math.sqrt(3),0,2*Math.PI,false);
   s.fillStyle = "rgba(0,0,0,0.25)";
   s.fill();
 

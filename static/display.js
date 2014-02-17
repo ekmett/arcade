@@ -1,6 +1,6 @@
 define(
-  ["jquery", "physics", "shim/raf", "shim/cc", "performance", "stats", "prim", "transformations","events"],
-  function display($, physics, raf, cc, performance, stats, prim, transformations,events) {
+  ["jquery", "physics", "shim/raf", "shim/cc", "performance", "stats", "prim", "transformations","events","toggles" ],
+  function display($, physics, raf, cc, performance, stats, prim, transformations,events, toggles) {
 
 var display = {
   cursor : new transformations.WorldPoint()
@@ -78,6 +78,9 @@ var render = function render() {
   var alpha = (t - pt) / physics.MILLISECONDS_PER_FRAME;
 
   stats.display.begin();
+
+  toggles.bounding = events.impulse[66];
+  toggles.soft_shadows = events.impulse[67];
 
   // move to events?
   display.cursor.screen(

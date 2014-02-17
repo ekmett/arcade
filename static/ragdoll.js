@@ -27,9 +27,10 @@ var scratch2 = new transformations.ScreenPoint();
 
 // 2 units tall
 var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
+  var color = '#' + (0x1000000 + Math.random() * 0xFFFFFF).toString(16).substr(1,6);
   var r = 0.1;
   this.head        = new Particle(x+0,    y+0.1*d, z+0.95*h,  0.35,0.35,0.35,3.1*m)
-  var shoulder = this.shoulder = new Particle(x+0,    y+0,     z+0.9*h,  0.2,0.2,0.2, 28.08*m);
+  var shoulder = this.shoulder = new Particle(x+0,    y+0,     z+0.85*h,  0.2,0.2,0.2, 28.08*m);
   this.leftElbow   = new Particle(x+0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 3.7*m);
   this.rightElbow  = new Particle(x-0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 3.7*m);
   this.leftWrist   = new Particle(x+0.3*w,y+0.1*d, z+0.5*h, 0.15,0.15,0.15, 8.25*m);
@@ -95,26 +96,22 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
       c.shadowOffsetY = 0; // 4*this.w;
     }
 
-    c.lineWidth = 0.1;
-    c.strokeStyle = "black";
+    c.beginPath();
+    s.beginPath();
     for (i in constraints) {
       var it = constraints[i];
       if (typeof it.c !== 'undefined') continue;
-      c.beginPath();
-      s.beginPath();
       scratch.world(it.a.rx, it.a.ry, it.a.rz);
       c.moveTo(scratch.sx, scratch.sy);
       s.moveTo(scratch.sx, scratch.sy+it.a.rz*2);
       scratch.world(it.b.rx, it.b.ry, it.b.rz);
       c.lineTo(scratch.sx, scratch.sy);
       s.lineTo(scratch.sx, scratch.sy+it.b.rz*2);
-      c.stroke();
-      s.stroke();
     }
 
     // curved torso
-    c.beginPath();
-    s.beginPath();
+    // c.beginPath();
+    // s.beginPath();
     scratch.world(shoulder.rx, shoulder.ry, shoulder.rz);
     c.moveTo(scratch.sx, scratch.sy);
     s.moveTo(scratch.sx, scratch.sy+shoulder.rz*2);
@@ -122,7 +119,19 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
     scratch2.world(pelvis.rx, pelvis.ry, pelvis.rz);
     c.quadraticCurveTo(scratch.sx, scratch.sy, scratch2.sx, scratch2.sy);
     s.quadraticCurveTo(scratch.sx, scratch.sy+waist.rz*2, scratch2.sx, scratch2.sy + pelvis.rz*2);
+
+    c.lineCap = 'round';
+    c.lineBevel = 'round';
+    c.lineWidth = 0.3;
+    c.strokeStyle = "black";
     c.stroke();
+    c.lineWidth = 0.15;
+    c.strokeStyle = color;
+    c.stroke();
+    c.lineWidth = 0.05;
+    c.strokeStyle = "white";
+    c.stroke();
+
     s.stroke();
 
 
