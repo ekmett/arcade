@@ -30,8 +30,8 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
   var color = '#' + (0x1000000 + Math.random() * 0xFFFFFF).toString(16).substr(1,6);
   // var color = 'black';
   var r = 0.1;
-  this.head        = new Particle(x+0,    y+0.1*d, z+0.95*h,  0.35,0.35,0.35,3.1*m)
-  var shoulder = this.shoulder = new Particle(x+0,    y+0,     z+0.85*h,  0.2,0.2,0.2, 28.08*m);
+  this.head        = new Particle(x+0,    y+0.1*d, z+0.90*h,  0.35,0.35,0.35,3.1*m)
+  var shoulder = this.shoulder = new Particle(x+0,    y+0,     z+0.87*h,  0.2,0.2,0.2, 28.08*m);
   this.leftElbow   = new Particle(x+0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 3.7*m);
   this.rightElbow  = new Particle(x-0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 3.7*m);
   this.leftWrist   = new Particle(x+0.3*w,y+0.1*d, z+0.5*h, 0.15,0.15,0.15, 8.25*m);
@@ -43,6 +43,8 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
   this.leftAnkle   = new Particle(x+0.1*w,y-0.05*d,z+0.05*h, 0.15,0.15,0.3, 8*m);
   this.rightAnkle  = new Particle(x-0.1*w,y-0.05*d,z+0.05*h, 0.15,0.15,0.3, 8*m);
 
+  this.shoulder.outlets = 1;
+
   var constraints = this.constraints = [
     auto(this.head,this.shoulder),
     auto(this.shoulder,this.leftElbow),
@@ -53,6 +55,7 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
     auto(this.waist,this.pelvis,false), // disable body
     auto(this.shoulder,this.pelvis,false),
     auto(this.pelvis,this.head,false),
+    auto(this.shoulder,this.head,false),
     auto(this.leftKnee,this.leftAnkle),
     auto(this.rightKnee,this.rightAnkle),
     auto(this.pelvis,this.leftKnee),
