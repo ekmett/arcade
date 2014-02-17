@@ -43,7 +43,6 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
   this.leftAnkle   = new Particle(x+0.1*w,y-0.05*d,z+0.05*h, 0.15,0.15,0.3, 8*m);
   this.rightAnkle  = new Particle(x-0.1*w,y-0.05*d,z+0.05*h, 0.15,0.15,0.3, 8*m);
 
-  this.shoulder.outlets = 1;
 
   var constraints = this.constraints = [
     auto(this.head,this.shoulder),
@@ -63,6 +62,9 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
   ];
 
   var parts = this.parts = [this.head,this.shoulder,this.leftElbow,this.rightElbow,this.leftWrist,this.rightWrist,this.waist,this.pelvis,this.leftKnee,this.rightKnee, this.leftAnkle,this.rightAnkle];
+
+  // parts[Math.floor(Math.random()*parts.length)].outlets = 1;
+  this.shoulder.outlets = 1;
 
   for (var i in this.parts) {
     physics.particles.push(this.parts[i]);

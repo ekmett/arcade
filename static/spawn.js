@@ -79,7 +79,7 @@ var ball = function ball() {
     s.restore();
     c.restore();
   };
-  particle.outlets = 2;
+  // particle.outlets = Math.floor(particle.w/0.3);
   return particle;
 };
 
@@ -94,7 +94,7 @@ var Cable = function Cable() {
   // var color = '#383';
   var ps = new Array(l);
   for (var i=0;i<l;i++) {
-    var y0 = r*2.5*i-1.25*r*l;
+    var y0 = r*1.5*i-.75*r*l;
     ps[i] = new physics.Particle(x0*s0+y0*c0,x0*c0-y0*s0,0,r,r,r,13.5*r^2);
     ps[i].draw = function(s,c) {
       if (toggles.bounding) {
@@ -106,6 +106,7 @@ var Cable = function Cable() {
         c.restore();
       }
     };
+    ps[i].elasticity = 1;
     ps[i].pick = function(x,y) {
       scratch.world(this.rx,this.ry,this.rz);
       var dx = scratch.sx-x;

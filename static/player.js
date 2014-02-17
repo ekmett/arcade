@@ -28,7 +28,7 @@ image.onload = function() {
 };
 image.src = 'images/sprites/books_what.png';
 
-player.elasticity = 0.8;
+player.elasticity = 2;
 physics.particles.push(player);
 player.draw = function(s,c) {
   c.save();
