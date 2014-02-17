@@ -28,6 +28,7 @@ var scratch2 = new transformations.ScreenPoint();
 // 2 units tall
 var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
   var color = '#' + (0x1000000 + Math.random() * 0xFFFFFF).toString(16).substr(1,6);
+  // var color = 'black';
   var r = 0.1;
   this.head        = new Particle(x+0,    y+0.1*d, z+0.95*h,  0.35,0.35,0.35,3.1*m)
   var shoulder = this.shoulder = new Particle(x+0,    y+0,     z+0.85*h,  0.2,0.2,0.2, 28.08*m);
@@ -138,11 +139,17 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
     c.beginPath();
     scratch.world(this.rx,this.ry,this.rz-this.h/2);
     c.arc(scratch.sx,scratch.sy-this.h,this.w*Math.sqrt(3),0,2*Math.PI,false);
-    c.fillStyle = "#fff"
-    c.lineWidth = 0.15;
-    c.strokeStyle = "black";
-    c.stroke();
+    var g = c.createRadialGradient(scratch.sx,scratch.sy-this.h*2,this.w*0.1
+		                  ,scratch.sx,scratch.sy-this.h,this.w*Math.sqrt(3));
+    c.globalAlpha = 0.95;
+    g.addColorStop(0,"white");
+    g.addColorStop(0.8,color);
+    c.fillStyle = g;
     c.fill();
+    c.lineWidth = 0.05;
+    c.strokeStyle = "black";
+    c.globalAlpha = 1;
+    c.stroke();
 
     s.beginPath();
     s.scale(1,0.5);
