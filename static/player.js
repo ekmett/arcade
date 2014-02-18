@@ -29,6 +29,7 @@ image.onload = function() {
 image.src = 'images/sprites/books_what.png';
 
 player.elasticity = 2;
+player.graspable = true;
 physics.particles.push(player);
 player.draw = function(s,c) {
   c.save();

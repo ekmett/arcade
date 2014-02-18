@@ -83,13 +83,13 @@ var ball = function ball() {
   return particle;
 };
 
-var Cable = function Cable() {
+var Cable = function Cable(l) {
   var r = Math.random()*0.1+0.28;
   var x0 = Math.random()*10-5;
   var a0 = Math.random()*Math.PI*2;
   var s0 = Math.sin(a0);
   var c0 = Math.cos(a0);
-  var l = Math.floor(Math.random()*10+2);
+  l = l || Math.floor(Math.random()*6+2);
   var color = '#' + (0x1000000 + Math.random() * 0xFFFFFF).toString(16).substr(1,6);
   // var color = '#383';
   var ps = new Array(l);
@@ -230,6 +230,12 @@ var dog_ai = function dog_ai() {
   var dy = player.oy * this.lag + player.y * (1 - this.lag) - this.y;
   var dz = player.oz * this.lag + player.z * (1 - this.lag) - this.z;
   var l = Math.sqrt(dx*dx+dy*dy+dz*dz);
+
+  if (this.grasping && (Math.random() < (this.releaseFrequency || 0.95))) {
+    this.grasping.inactive = true;
+    this.grasping = null;
+  }
+
   if (Math.abs(l) > 0.01) {
     dx /= l;
     dy /= l;
@@ -243,6 +249,12 @@ var claw_ai = function claw_ai() {
   var dx = (player.ox * this.lag + player.x * (1 - this.lag) - this.x) * this.sign;
   var dy = (player.oy * this.lag + player.y * (1 - this.lag) - this.y) * this.sign;
   var l = Math.sqrt(dx*dx+dy*dy);
+
+  if (this.grasping && (Math.random() < (this.releaseFrequency || 0.95))) {
+    this.grasping.inactive = true;
+    this.grasping = null;
+  }
+
   if (Math.abs(l) > 0.01) {
     dx /= l;
     dy /= l;
@@ -251,11 +263,20 @@ var claw_ai = function claw_ai() {
 };
 
 var plug = function plug(that) {
-  if (!this.plugged && that.outlets != null && that.outlets > 0) {
+  if (!this.plugged && that.outlets > 0) {
     this.plugged = true;
     that.outlets--;
     var l = Math.min(that.w,that.d,that.h)/2;
     physics.constraints.push(constraints.stick(this,that,l));
+  }
+}
+
+var grasp = function grasp(that) {
+  if (!this.grasping && that.graspable == true && Math.random() < (this.graspFrequency || 0.9)) {
+    var l = Math.min(that.w,that.d,that.h);
+    var l2 = Math.max(that.w,that.d,that.h);
+    this.grasping = constraints.stick(this,that,l,l2/l*2);
+    physics.constraints.push(this.grasping);
   }
 }
 
@@ -281,17 +302,18 @@ var spawnKeys = {
     b.sign = -1;
     b.vigor = 1;
   },
-  52: function() { /* 4: cyan wobbler */
+  52: function() { /* 4: cyan balloon */
     var b = ball();
     physics.particles.push(b);
     b.color = "#0ff";
-    var speed1 = Math.random()*4-1;
-    var speed2 = Math.random()*4-1;
+    var speed1 = Math.random()*0.1-0.05;
+    var speed2 = Math.random()*0.1-0.05;
     b.start = Math.random()*40;
     b.ai = function() {
-      var dx = Math.sin((b.start+physics.frame)*3.14/20*speed1);
-      var dy = Math.cos((b.start+physics.frame)*3.14/20*speed2);
-      if (b.standing) this.push(dx*2,dy*2,0);
+      var dx = Math.sin((b.start+physics.frame)*3.14/20)*speed1;
+      var dy = Math.cos((b.start+physics.frame)*3.14/20)*speed2;
+      this.push(dx*2,dy*2,10*this.w*this.d*10); // lift proportional to surface area.
+      this.outlets = 1;
     }
   },
   53: function() { /* 5: tar baby */
@@ -331,12 +353,14 @@ var spawnKeys = {
     r.leftWrist.ai = claw_ai;
     r.leftWrist.vigor = 0.1;
     r.leftWrist.sign = 1;
+    r.leftWrist.bump = grasp;
     if (Math.random() < 0.5) {
       r.rightWrist.lag = Math.random()*5-3;
       r.rightWrist.ai = Math.random()<0.4?claw_ai: dog_ai;
       r.rightWrist.vigor = 0.05;
       r.rightWrist.sign = 1;
       r.rightWrist.bounce = 2;
+      r.rightWrist.bump = grasp;
     }
   },
   56: function() {
@@ -359,6 +383,9 @@ var spawnKeys = {
   // 57: snake,/* 9 snake */
   57: function() {
     var cable = new Cable();
+    for (var i in cable.parts) {
+      cable.parts[i].graspable = true;
+    }
     cable.parts[0].bump = plug;
     cable.parts[cable.parts.length-1].bump = plug;
   } /* "O" cable */
