@@ -3,7 +3,8 @@ define(
   function display($, physics, raf, cc, performance, stats, prim, transformations,events, toggles) {
 
 var display = {
-  cursor : new transformations.WorldPoint()
+  cursor : new transformations.WorldPoint(),
+  camera : null
 };
 
 var updated = 0;
@@ -17,8 +18,21 @@ var halfWidth  = 400;
 var halfHeight = 200;
 var width      = 800; // set during resize
 var height     = 400; // set during resize
-var scrollX    = 0;
-var scrollY    = 0;
+
+
+/*
+$('#glass').bind('mousewheel', function(e){
+   if(e.originalEvent.wheelDelta > 0) {
+       PIXELS_PER_METER /= 1.1;
+       METERS_PER_PIXEL *= 1.1;
+   }else {
+       PIXELS_PER_METER *= 1.1;
+       METERS_PER_PIXEL /= 1.1;
+   }
+   //prevent page fom scrolling
+   return false;
+ });
+*/
 
 var layer = function layer(name) {
   var result = $("#" + name);
@@ -72,6 +86,7 @@ var render = function render() {
 
   requestAnimationFrame(render);
 
+
   // no physics yet
   if (!pt) return;
 
@@ -88,7 +103,6 @@ var render = function render() {
     (events.mouseY-halfHeight) * METERS_PER_PIXEL
   );
 
-  draw_background();
 
   var s = shadows.canvas;
   s.clear(true);
@@ -104,6 +118,12 @@ var render = function render() {
     var b = physics.particles[i];
     b.interpolate(alpha);
   }
+
+  if (display.camera) {
+    transformations.scrollX = display.camera.rx;
+    transformations.scrollY = display.camera.ry;
+  }
+  draw_background();
 
   physics.particles.sort(function(a,b) {
     return a.key - b.key;
@@ -124,11 +144,14 @@ $(window).ready(function() {
   render(performance.now());
 });
 
+
 // this may have been a bad idea
 Object.defineProperties(display, {
   /* constants */
-  PIXELS_PER_METER : { value: PIXELS_PER_METER, __proto__ : null, configurable: false, writable: false, enumerable: true },
-  METERS_PER_PIXEL : { value: METERS_PER_PIXEL, __proto__ : null, configurable: false, writable: false, enumerable: true },
+  // PIXELS_PER_METER : { value: PIXELS_PER_METER, __proto__ : null, configurable: false, writable: false, enumerable: true },
+  // METERS_PER_PIXEL : { value: METERS_PER_PIXEL, __proto__ : null, configurable: false, writable: false, enumerable: true },
+  PIXELS_PER_METER : { get: function() { return PIXELS_PER_METER },   __proto__ : null, configurable: false, enumerable: true },
+  METERS_PER_PIXEL : { get: function() { return METERS_PER_PIXEL }, __proto__ : null, configurable: false, enumerable: true },
   /* read-only attributes */
   frame      : { get: function() { return frame },   __proto__ : null, configurable: false, enumerable: true },
   updated    : { get: function() { return updated }, __proto__ : null, configurable: false, enumerable: true },
@@ -137,9 +160,6 @@ Object.defineProperties(display, {
   height     : { get: function() { return height },   __proto__ : null, configurable: false, enumerable: true },
   width      : { get: function() { return width }, __proto__ : null, configurable: false, enumerable: true },
   foreground : { get: function() { return foreground }, __proto__ : null, configurable: false, enumerable: true },
-  /* read-write attributes */
-  scrollX : { get: function() { return scrollX },   set: function(e) { scrollX = e },   __proto__ : null, configurable: false, enumerable: true },
-  scrollY : { get: function() { return scrollY },   set: function(e) { scrollY = e },   __proto__ : null, configurable: false, enumerable: true },
 });
 
 return display;

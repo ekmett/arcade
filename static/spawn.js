@@ -49,7 +49,6 @@ var ball = function ball(r) {
     c.arc(scratch.sx,scratch.sy,this.w*Math.sqrt(3),0,2*Math.PI,false);
     c.fillStyle = this.color;
     c.strokeStyle = "#555";
-
     var g = c.createRadialGradient(scratch.sx,scratch.sy-this.h*Math.sqrt(2),0.1,scratch.sx,scratch.sy,this.w*Math.sqrt(3));
     c.globalAlpha = this.opacity || 0.88;
     g.addColorStop(0,"white");
@@ -60,6 +59,26 @@ var ball = function ball(r) {
     c.stroke();
     c.fill();
     c.globalAlpha = 1;
+
+    var amp = 0.5;
+    var dx = (this.x - this.ox)*amp;
+    var dy = (this.y - this.oy)*amp;
+    var dz = (this.z - this.oz)*amp;
+    scratch.world(this.rx + dx, this.ry + dy, this.rz + dz);
+    var x1 = scratch.sx;
+    var y1 = scratch.sy;
+    scratch.world(this.rx - dx, this.ry - dy, this.rz - dz);
+    var x2 = scratch.sx;
+    var y2 = scratch.sy;
+
+    // draw motion vector
+    c.beginPath();
+    c.moveTo(x1,y1);
+    c.lineTo(x2,y2);
+    c.lineWidth = 0.3;
+    c.lineCap = 'round';
+    c.strokeStyle = "#777";
+    c.stroke();
 
     // experimental, pretty but slow, shadow
     if (toggles.bounding) {

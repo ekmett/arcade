@@ -33,8 +33,8 @@ var BUCKET_DEPTH = MAX_BODY_DEPTH + SPEED_LIMIT;
 var BUCKET_COLUMNS = 16; // 96 meters without overlap
 var BUCKET_ROWS    = 16; // 96 meters without overlap
 var BUCKETS = BUCKET_ROWS * BUCKET_COLUMNS;
-var SCENE_WIDTH = 12;
-var SCENE_DEPTH = 12;
+var SCENE_WIDTH = 20;
+var SCENE_DEPTH = 20;
 var SCENE_HEIGHT = 7; // nothing can get more than 8 meters off the ground, making floors about 26ft high.
 
 var buckets = new Array(BUCKETS); // single chained linked lists, how retro

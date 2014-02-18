@@ -1,10 +1,10 @@
-define([], function() {
+define(["transformations"], function(transformations) {
 
 // cheesy display primitives
 
 var tack = function tack(c,x,y,z,w,d,h) {
-  x -= scrollX;
-  y -= scrollY;
+  x -= transformations.scrollX;
+  y -= transformations.scrollY;
 
   var oz = -2*z;
   var sx = 2*(y-x), sy = y+x+oz;
@@ -19,8 +19,8 @@ var tack = function tack(c,x,y,z,w,d,h) {
 };
 
 var cube = function cube(c,x1,y1,z,w,d,h) {
-  x1 -= scrollX; // offset into the world
-  y1 -= scrollY;
+  x1 -= transformations.scrollX; // offset into the world
+  y1 -= transformations.scrollY;
 
   var x2 = x1 + w;
   var y2 = y1 + d;
@@ -49,8 +49,8 @@ var cube = function cube(c,x1,y1,z,w,d,h) {
 };
 
 var room = function cube(c,x1,y1,z,w,d,h) {
-  x1 -= scrollX; // offset into the world
-  y1 -= scrollY;
+  x1 -= transformations.scrollX; // offset into the world
+  y1 -= transformations.scrollY;
 
   var x2 = x1 + w;
   var y2 = y1 + d;
@@ -79,8 +79,8 @@ var room = function cube(c,x1,y1,z,w,d,h) {
 };
 
 var floor = function floor(c,x1,y1,z,w,d,h) {
-  x1 -= scrollX; // offset into the world
-  y1 -= scrollY;
+  x1 -= transformations.scrollX; // offset into the world
+  y1 -= transformations.scrollY;
 
   var x2 = x1 + w;
   var y2 = y1 + d;

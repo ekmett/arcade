@@ -144,6 +144,7 @@ player.ai = function() {
   }
 };
 
+display.camera = player;
 
 return player;
 
