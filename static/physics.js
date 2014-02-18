@@ -87,6 +87,10 @@ var Particle = physics.Particle = function(x,y,z,w,d,h,mass) {
   this.oy = y;
   this.oz = z;
 
+  this.oox = x;
+  this.ooy = y;
+  this.ooz = z;
+
   this.mass = mass;
   this.inverseMass = 1/mass; // determines collision response
 
@@ -143,6 +147,10 @@ Particle.prototype = {
   },
 
   move : function move() {
+
+    this.oox = this.ox;
+    this.ooy = this.oy;
+    this.ooz = this.oz;
 
     // stash the current location
     var tx = this.x;

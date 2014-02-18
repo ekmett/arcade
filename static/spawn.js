@@ -27,7 +27,7 @@ var ball = function ball(r) {
     var near = dx*dx + dy*dy < this.w * this.w * 3;
     return near ? this.key : null;
   };
-  particle.draw = function(s,c) {
+  particle.draw = function(s,c, alpha) {
     c.save();
 
     if (toggles.bounding) {
@@ -44,43 +44,62 @@ var ball = function ball(r) {
       c.shadowOffsetY = 4*this.w;
     }
 
-    c.beginPath();
-    scratch.world(this.rx,this.ry,this.rz);
-    c.arc(scratch.sx,scratch.sy,this.w*Math.sqrt(3),0,2*Math.PI,false);
-    c.fillStyle = this.color;
-    c.strokeStyle = "#555";
-    var g = c.createRadialGradient(scratch.sx,scratch.sy-this.h*Math.sqrt(2),0.1,scratch.sx,scratch.sy,this.w*Math.sqrt(3));
-    c.globalAlpha = this.opacity || 0.88;
-    g.addColorStop(0,"white");
-    g.addColorStop(this.specular,this.color); // "black");
-    c.fillStyle = g;
-    c.lineWidth = 0.1;
-    c.strokeStyle = "black";
-    c.stroke();
-    c.fill();
-    c.globalAlpha = 1;
+    // calculate motion vector
 
-    var amp = 0.5;
-    var dx = (this.x - this.ox)*amp;
-    var dy = (this.y - this.oy)*amp;
-    var dz = (this.z - this.oz)*amp;
+    var amp = 0.2;
+    var dx1 = (this.x - this.ox)*amp;
+    var dy1 = (this.y - this.oy)*amp;
+    var dz1 = (this.z - this.oz)*amp;
+    var dx2 = (this.ox - this.oox)*amp;
+    var dy2 = (this.oy - this.ooy)*amp;
+    var dz2 = (this.oz - this.ooz)*amp;
+    var dx = dx2 + (1 + alpha) * (dx1 - dx2)
+    var dy = dy2 + (1 + alpha) * (dy1 - dy2)
+    var dz = dz2 + (1 + alpha) * (dz1 - dz2);
+    var d = Math.sqrt(dx*dx + dy*dy + dz*dz)
     scratch.world(this.rx + dx, this.ry + dy, this.rz + dz);
     var x1 = scratch.sx;
     var y1 = scratch.sy;
     scratch.world(this.rx - dx, this.ry - dy, this.rz - dz);
     var x2 = scratch.sx;
     var y2 = scratch.sy;
+    var angle = Math.atan2(y2-y1,x2-x1);
+    var dw = Math.min(d, this.w/3);
+
+    c.save(); // we translate below
+    // draw boring arc
+    c.beginPath();
+    scratch.world(this.rx,this.ry,this.rz);
+    c.translate(scratch.sx,scratch.sy);
+    c.rotate(angle);
+    c.scale((this.w+dw)/this.w,(this.w-dw)/this.w);
+    c.arc(0,0,this.w*Math.sqrt(3),0,2*Math.PI,false);
+    c.fillStyle = this.color;
+    c.strokeStyle = "#555";
+    var dh = this.h*Math.sqrt(2);
+    var g = c.createRadialGradient(-Math.sin(angle)*dh,-Math.cos(angle)*dh,0,0,0,this.w*Math.sqrt(3));
+    c.globalAlpha = this.opacity || 0.8;
+    g.addColorStop(0,"white");
+    g.addColorStop(this.specular,this.color); // "black");
+    c.fillStyle = g; // this.color; // g;
+    c.lineWidth = 0.1;
+    c.strokeStyle = "black";
+    c.stroke();
+    c.fill();
+    c.globalAlpha = 1;
+    c.restore(); // restore translation
 
     // draw motion vector
+    /*
     c.beginPath();
     c.moveTo(x1,y1);
     c.lineTo(x2,y2);
     c.lineWidth = 0.3;
     c.lineCap = 'round';
-    c.strokeStyle = "#777";
+    c.strokeStyle = "#000";
     c.stroke();
+    */
 
-    // experimental, pretty but slow, shadow
     if (toggles.bounding) {
       prim.cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
       c.lineWidth = 0.01;
@@ -88,11 +107,13 @@ var ball = function ball(r) {
       c.stroke();
     }
 
+    // draw drop shadow. TODO: rotate this properly
     s.save();
     s.scale(1,0.5);
     s.beginPath();
     scratch.world(this.rx,this.ry,0);
-    s.arc(scratch.sx,scratch.sy*2+this.h*2,this.w*Math.sqrt(2),0,2*Math.PI,false);
+    s.translate(scratch.sx,scratch.sy*2+this.h*2);
+    s.arc(0,0,this.w*Math.sqrt(2),0,2*Math.PI,false);
     s.fillStyle = "rgba(0,0,0,0.25)";
     s.fill();
     s.restore();

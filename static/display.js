@@ -122,7 +122,7 @@ var render = function render() {
   });
 
   for (var i in physics.particles) {
-    physics.particles[i].draw(s,c);
+    physics.particles[i].draw(s,c,alpha);
   }
 
   stats.display.end();
