@@ -322,9 +322,10 @@ var grasp = function grasp(that) {
   if (this.grasping && this.grasping.inactive) this.grasping = undefined;
   if (!this.grasping && that.graspable == true && Math.random() < (this.graspFrequency || 0.6)) {
     var l = Math.min(that.w,that.d,that.h);
-    this.grasping = constraints.stick(this,that,l*0.6,2*(this.grip || 2));
+    this.grasping = constraints.stick(this,that,l*0.3,4*(this.grip || 2));
     this.grasping.oz = -Math.random()*that.h/3-that.h/3;
     this.grasping.onto = that;
+    this.grasping.hard = true;
     that.grasped = (that.grasped || 0) + 1;
     physics.constraints.push(this.grasping);
   }
@@ -365,7 +366,7 @@ var spawnKeys = {
     b.ai = function() {
       var dx = Math.sin((b.start+physics.frame)*3.14/20)*speed1;
       var dy = Math.cos((b.start+physics.frame)*3.14/20)*speed2;
-      this.push(0,0,9); // dx*2,dy*2,10*this.w*this.d); // lift proportional to surface area.
+      this.push(0,0,100); // dx*2,dy*2,10*this.w*this.d); // lift proportional to surface area.
       this.outlets = 1;
     }
   },

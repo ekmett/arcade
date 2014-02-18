@@ -11,8 +11,9 @@ var physics = {
 
 var running = false;
 
-var PRIORITY_NORMAL = 0; // normal things can move normal things and fluff
-var PRIORITY_FLUFF  = 1; // fluff can move fluff
+var PRIORITY_PINNED = 0; // forced can move normal things
+var PRIORITY_NORMAL = 1; // normal things can move normal things and fluff
+var PRIORITY_FLUFF  = 2; // fluff can move fluff
 var DEFAULT_ELASTICITY = 0.95;
 var FPS = 20;        // frames per second
 var MILLISECONDS_PER_FRAME = 1000/FPS;
@@ -20,7 +21,7 @@ var RELAXATIONS = 3; // # of successive over-relaxation steps for Gauss-Seidel/J
 var G = 0.2;
 var AIR_DRAG = 0.001;
 var GROUND_DRAG = 0.2;
-var SPEED_LIMIT    = 2;
+var SPEED_LIMIT = 1.5;
 var SPEED_LIMIT_SQUARED = SPEED_LIMIT * SPEED_LIMIT;
 var RECIP_SPEED_LIMIT_SQUARED = 1 / SPEED_LIMIT_SQUARED
 var SPEED_EPSILON = 0.00002;// 0.00001;
@@ -34,7 +35,7 @@ var BUCKET_ROWS    = 16; // 96 meters without overlap
 var BUCKETS = BUCKET_ROWS * BUCKET_COLUMNS;
 var SCENE_WIDTH = 12;
 var SCENE_DEPTH = 12;
-var SCENE_HEIGHT = 5; // nothing can get more than 8 meters off the ground, making floors about 26ft high.
+var SCENE_HEIGHT = 7; // nothing can get more than 8 meters off the ground, making floors about 26ft high.
 
 var buckets = new Array(BUCKETS); // single chained linked lists, how retro
 
@@ -165,7 +166,7 @@ Particle.prototype = {
 
     vx += this.ax - this.drag_h*vx*vx;
     vy += this.ay - this.drag_h*vy*vy;
-    vz += this.az - this.drag_v*vz*vz - G + (this.lift || 0);
+    vz += this.az - this.drag_v*vz*vz + (this.lift || -G);
 
     // enforce speed limit
     v2 = vx*vx+vy*vy+vz*vz;
@@ -342,12 +343,11 @@ var step = function step(t) {
 
   // Gauss-Seidel successive relaxation
   for (var k=0;k<RELAXATIONS;k++) {
-
       // get out of the walls
     for (var i in ps)
       scene.clip(ps[i]);
 
-      // clip all the things
+    // clip all the things
     for (var i = 0; i < buckets.length; i++) {
       clip_bucket(i);
       clip_buckets(i,(i+1) % BUCKETS);
@@ -356,9 +356,13 @@ var step = function step(t) {
     }
 
     var str = k / RELAXATIONS;
-    for (var i in cs)
-      cs[i](str);
+    // for (var i=cs.length-1;i>=0;--i) cs[i](str);
+    for (var i in cs) cs[i](str);
   }
+
+  for (var i in cs)
+    if (cs[i].hard) cs[i](str);
+
   for (var i in ps)
     scene.clip(ps[i]);
 

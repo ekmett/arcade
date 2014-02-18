@@ -110,6 +110,12 @@ player.ai = function() {
   if (events.impulse[69] && this.selected) { // "E" lowers target
     this.selectedZ -= 0.20;
   }
+  if (events.impulse[90] && this.selected) {
+    this.selected.lift = 0; // hover forever
+    this.selected.priority = 0; // pinned
+    this.selectedInverseMass = 0; // pin it forever
+  }
+
 
   if (events.mouse[1]) {
     if (this.selected) {
@@ -117,7 +123,6 @@ player.ai = function() {
       this.selected.x = this.selectedX + display.cursor.x;
       this.selected.y = this.selectedY + display.cursor.y;
       this.selected.z = this.selectedZ;
-      this.selected.az += physics.G;
       physics.scene.clip(this.selected);
     } else {
       this.selected = select();
@@ -125,6 +130,7 @@ player.ai = function() {
         this.selectedX = this.selected.rx - display.cursor.x;
         this.selectedY = this.selected.ry - display.cursor.y;
         this.selectedZ = this.selected.rz;
+        this.selectedLift = this.selected.lift;
         this.selectedInverseMass = this.selected.inverseMass;
         this.selected.inverseMass = 0;
       }
@@ -132,6 +138,7 @@ player.ai = function() {
   } else {
     if (this.selected) {
       this.selected.inverseMass = this.selectedInverseMass;
+      this.selected.lift = this.selectedLift;
     }
     this.selected = null;
   }
