@@ -79,6 +79,7 @@ var ball = function ball() {
     s.restore();
     c.restore();
   };
+  // particle.graspable = true;
   // particle.outlets = Math.floor(particle.w/0.3);
   return particle;
 };
@@ -308,6 +309,7 @@ var spawnKeys = {
     b.ai = dog_ai;
     b.bounce = 10;
     b.vigor = 1;
+    b.vscale = 4;
   },
   51: function() { /* 3: yellow scaredy cat */
     var b = ball();
@@ -341,14 +343,21 @@ var spawnKeys = {
     b.mass *= 10;
     b.elasticity = 0.01;
     b.constraints = 0;
+    var originalSize = b.w;
+    var originalMass = b.mass;
     b.bump = function(that) {
-      if (this.constraints < 25 && !that.constrained) {
+      if (!that.constrained) {
         this.constraints++;
+        // this.w = this.h = this.d = originalSize / this.constraints;
+        // this.mass = originalMass / (this.constraints^3)
+        // this.inverseMass = 1/ this.mass;
         that.constrained = true;
         var l = Math.min(this.w+that.w,this.d+that.d,this.h+that.h)/2;
         physics.constraints.push(constraints.stick(b,that,l*0.9,10));
       }
+      grasp.call(this,that); // in addition, grasp graspables.
     }
+    b.grip = 2.5;
   },
   54: function() {
     return ragdoll.spawn() /* 6 ragdoll */
