@@ -116,6 +116,11 @@ var Cable = function Cable(l) {
     };
     physics.particles.push(ps[i]);
   }
+  var constraints = [];
+  for (var i=0;i<l-1;++i) {
+    constraints.push(ragdoll.auto(ps[i],ps[i+1]));
+  }
+  Array.prototype.push.apply(physics.constraints, constraints);
 
   var oldDraw = ps[Math.floor(l/2)].draw;
   ps[Math.floor(l/2)].draw = function(s,c) {
@@ -128,6 +133,7 @@ var Cable = function Cable(l) {
     c.moveTo(scratch.sx,scratch.sy);
     s.moveTo(scratch.sx,scratch.sy+ps[0].rz*2);
 
+
     var n = ps.length - 2;
     var u = scratch, v = scratch2;
     u.worldR(ps[1]);
@@ -135,14 +141,22 @@ var Cable = function Cable(l) {
       v.worldR(ps[i+1]);
       var x = (u.sx + v.sx) * 0.5;
       var y = (u.sy + v.sy) * 0.5;
-      c.quadraticCurveTo(u.sx, u.sy, x, y);
-      s.quadraticCurveTo(u.sx, u.sy + ps[i].rz*2 + ps[i].h/2,
+      if (constraints[i-1].inactive == true) {
+        c.moveTo(x, y);
+        s.moveTo(x, y + ps[i].rz + (ps[i].h + ps[i+1].h)/4 + ps[i+1].rz);
+      } else {
+        c.quadraticCurveTo(u.sx, u.sy, x, y);
+        s.quadraticCurveTo(u.sx, u.sy + ps[i].rz*2 + ps[i].h/2,
                          x   , y + ps[i].rz + (ps[i].h + ps[i+1].h)/4 + ps[i+1].rz);
+      }
       var t = u; u = v; v = t;
     }
-    v.worldR(ps[n+1]);
-    c.quadraticCurveTo(u.sx, u.sy, v.sx, v.sy);
-    s.quadraticCurveTo(u.sx, u.sy + (ps[n].rz*2 + ps[n].h/2), v.sx, v.sy + ps[n+1].rz*2 + ps[n+1].h/2);
+    if (!constraints[n].inactive) {
+      v.worldR(ps[n+1]);
+      c.quadraticCurveTo(u.sx, u.sy, v.sx, v.sy);
+      s.quadraticCurveTo(u.sx, u.sy + (ps[n].rz*2 + ps[n].h/2), v.sx, v.sy + ps[n+1].rz*2 + ps[n+1].h/2);
+    }
+
     c.lineCap = 'round';
     c.lineJoin = 'round';
     c.lineWidth = r+0.05;
@@ -151,7 +165,7 @@ var Cable = function Cable(l) {
     c.lineWidth = r-0.05;
     c.strokeStyle = color;
     c.stroke();
-    c.lineWidth = 0.05; // offset upwards please
+    c.lineWidth = 0.05; // offset upwards?
     c.globalCompositeOperation = "lighter";
     c.strokeStyle = "#555";
     c.stroke();
@@ -170,10 +184,7 @@ var Cable = function Cable(l) {
 
   this.parts = ps;
   this.radius = r;
-
-  for (var i=0;i<l-1;++i) {
-    physics.constraints.push(ragdoll.auto(ps[i],ps[i+1]));
-  }
+  this.constraints = constraints;
 
 };
 
@@ -231,8 +242,9 @@ var dog_ai = function dog_ai() {
   var dz = player.oz * this.lag + player.z * (1 - this.lag) - this.z;
   var l = Math.sqrt(dx*dx+dy*dy+dz*dz);
 
-  if (this.grasping && (Math.random() < (this.releaseFrequency || 0.95))) {
+  if (this.grasping && (physics.frame % 12 == 0) && (Math.random() < (this.releaseFrequency || 0.3))) {
     this.grasping.inactive = true;
+    --this.grasping.onto.grasped;
     this.grasping = null;
   }
 
@@ -250,15 +262,16 @@ var claw_ai = function claw_ai() {
   var dy = (player.oy * this.lag + player.y * (1 - this.lag) - this.y) * this.sign;
   var l = Math.sqrt(dx*dx+dy*dy);
 
-  if (this.grasping && (Math.random() < (this.releaseFrequency || 0.95))) {
+  if (this.grasping && (physics.frame % 12 == 0) && (Math.random() < (this.releaseFrequency || 0.3))) {
     this.grasping.inactive = true;
+    --this.grasping.onto.grasped;
     this.grasping = null;
   }
 
   if (Math.abs(l) > 0.01) {
     dx /= l;
     dy /= l;
-    if (this.standing) this.push(dx*2,dy*2,Math.random());
+    if (this.standing) this.push((Math.random()*dx-0.05)*(this.vscale||2),(Math.random()*dy-0.05)*(this.vscale||2),Math.random());
   }
 };
 
@@ -267,15 +280,18 @@ var plug = function plug(that) {
     this.plugged = true;
     that.outlets--;
     var l = Math.min(that.w,that.d,that.h)/2;
-    physics.constraints.push(constraints.stick(this,that,l));
+    physics.constraints.push(constraints.stick(this,that,l)); // ,20));
   }
 }
 
 var grasp = function grasp(that) {
-  if (!this.grasping && that.graspable == true && Math.random() < (this.graspFrequency || 0.9)) {
+  if (this.grasping && this.grasping.inactive) this.grasping = undefined;
+  if (!this.grasping && that.graspable == true && Math.random() < (this.graspFrequency || 0.6)) {
     var l = Math.min(that.w,that.d,that.h);
-    var l2 = Math.max(that.w,that.d,that.h);
-    this.grasping = constraints.stick(this,that,l,l2/l*2);
+    this.grasping = constraints.stick(this,that,l*0.6,2*(this.grip || 2));
+    this.grasping.oz = -Math.random()*that.h/3-that.h/3;
+    this.grasping.onto = that;
+    that.grasped = (that.grasped || 0) + 1;
     physics.constraints.push(this.grasping);
   }
 }
@@ -326,11 +342,11 @@ var spawnKeys = {
     b.elasticity = 0.01;
     b.constraints = 0;
     b.bump = function(that) {
-      if (this.constraints < 15 && !that.constrained) {
+      if (this.constraints < 25 && !that.constrained) {
         this.constraints++;
         that.constrained = true;
         var l = Math.min(this.w+that.w,this.d+that.d,this.h+that.h)/2;
-        physics.constraints.push(constraints.stick(b,that,l*0.9));
+        physics.constraints.push(constraints.stick(b,that,l*0.9,10));
       }
     }
   },
@@ -339,29 +355,39 @@ var spawnKeys = {
   },
   55: function() {
     var r = ragdoll.spawn(); /* 7 zombie */
-    var ai = dog_ai;
-    var loc = ["shoulder","head","leftElbow","rightElbow"];
+    var loc = ["shoulder","waist","leftElbow","rightElbow"];
     for (var i in loc) {
-      if (Math.random() < 0.5) {
+      if (Math.random() < 0.2) {
         r[loc[i]].lag = Math.random()*5-3;
-        r[loc[i]].ai = ai;
+        r[loc[i]].ai = dog_ai;
         r[loc[i]].vigor = 0.05;
-        r[loc[i]].bounce = 4;
+        r[loc[i]].bounce = 2.4;
+	r[loc[i]].vscale = 0.2;
       }
     }
+    r.head.bump = grasp;
+    r.head.grip = 2.45;
+    r.head.lag = Math.random()*5-3;
+    r.head.ai = dog_ai;
+    r.head.vigor = 0.05;
+    r.head.bounce = 3;
+    r.head.vscale = 0.5;
+
     r.leftWrist.lag = Math.random()*5-3;
-    r.leftWrist.ai = claw_ai;
-    r.leftWrist.vigor = 0.1;
+    r.leftWrist.ai = claw_ai; // Math.random()<0.4?claw_ai: dog_ai;
+    r.leftWrist.vigor = 0.05;
     r.leftWrist.sign = 1;
     r.leftWrist.bump = grasp;
-    if (Math.random() < 0.5) {
-      r.rightWrist.lag = Math.random()*5-3;
-      r.rightWrist.ai = Math.random()<0.4?claw_ai: dog_ai;
-      r.rightWrist.vigor = 0.05;
-      r.rightWrist.sign = 1;
-      r.rightWrist.bounce = 2;
-      r.rightWrist.bump = grasp;
-    }
+    r.leftWrist.vscale = 2;
+    r.leftWrist.grip = 2.3;
+    r.rightWrist.lag = Math.random()*5-3;
+    r.rightWrist.ai = dog_ai; // Math.random()<0.4?claw_ai: dog_ai;
+    r.rightWrist.vscale = 1.2;
+    r.rightWrist.vigor = 0.05;
+    r.rightWrist.sign = 1;
+    r.rightWrist.bounce = 2;
+    r.rightWrist.bump = grasp;
+    r.rightWrist.grip = 2.3;
   },
   56: function() {
     var r = ragdoll.spawn(); /* 8 wounded */
@@ -381,14 +407,12 @@ var spawnKeys = {
     r.leftWrist.sign = -1;
   },
   // 57: snake,/* 9 snake */
-  57: function() {
+  57: function() { /* 9 cable */
     var cable = new Cable();
-    for (var i in cable.parts) {
-      cable.parts[i].graspable = true;
-    }
+    //  for (var i in cable.parts) cable.parts[i].graspable = true;
     cable.parts[0].bump = plug;
     cable.parts[cable.parts.length-1].bump = plug;
-  } /* "O" cable */
+  }
 };
 
 $(document.body).keypress(function(e) {

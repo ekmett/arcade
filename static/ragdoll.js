@@ -7,11 +7,11 @@ define(
 var Particle = physics.Particle;
 
 
-function auto(a,b,c) {
+function auto(a,b,c,d) {
   var dx = a.x - b.x;
   var dy = a.y - b.y;
   var dz = a.z - b.z;
-  var result = constraints.stick(a,b,Math.sqrt(dx*dx+dy*dy+dz*dz));
+  var result = constraints.stick(a,b,Math.sqrt(dx*dx+dy*dy+dz*dz),d);
   result.a = a;
   result.b = b;
   result.c = c;
@@ -30,18 +30,21 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
   var color = '#' + (0x1000000 + Math.random() * 0xFFFFFF).toString(16).substr(1,6);
   // var color = 'black';
   var r = 0.1;
-  this.head        = new Particle(x+0,    y+0.1*d, z+0.93*h,  0.35,0.35,0.35,3.1*m)
-  var shoulder = this.shoulder = new Particle(x+0,    y+0,     z+0.87*h,  0.2,0.2,0.2, 28.08*m);
-  this.leftElbow   = new Particle(x+0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 3.7*m);
-  this.rightElbow  = new Particle(x-0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 3.7*m);
+  this.head        = new Particle(x+0,    y+0.1*d, z+0.93*h,  0.35,0.35,0.35,4.1*m)
+  var shoulder = this.shoulder = new Particle(x+0,    y+0,     z+0.87*h,  0.2,0.2,0.2, 8.08*m);
+  this.leftElbow   = new Particle(x+0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 8.7*m);
+  this.rightElbow  = new Particle(x-0.2*w,y+0,     z+0.67*h, 0.35,0.35,0.35, 8.7*m);
   this.leftWrist   = new Particle(x+0.3*w,y+0.1*d, z+0.5*h, 0.15,0.15,0.15, 8.25*m);
   this.rightWrist  = new Particle(x-0.3*w,y+0.1*d, z+0.5*h, 0.15,0.15,0.15, 8.25*m);
-  var waist = this.waist   = new Particle(x+0,    y-0.05*d, z+0.65*h, 0.3,0.3,0.3, 33.06*m);
+  var waist = this.waist   = new Particle(x+0,    y-0.05*d, z+0.65*h, 0.3,0.3,0.3, 20.06*m);
   var pelvis = this.pelvis = new Particle(x+0,    y-0.02*d,z+0.55*h, 0.2,0.2,0.2, 13.66*m);
   this.leftKnee    = new Particle(x+0.2*w,y+0.2*d ,z+0.3*h, 0.1,0.1,0.3, 8*m);
   this.rightKnee   = new Particle(x-0.2*w,y+0.2*d ,z+0.3*h, 0.1,0.1,0.3, 8*m);
   this.leftAnkle   = new Particle(x+0.1*w,y-0.05*d,z+0.05*h, 0.15,0.15,0.3, 8*m);
   this.rightAnkle  = new Particle(x-0.1*w,y-0.05*d,z+0.05*h, 0.15,0.15,0.3, 8*m);
+
+  this.head.lift = 0.03;
+  this.shoulder.lift = -0.03;
 
   var constraints = this.constraints = [
     auto(this.head,this.shoulder),
@@ -57,7 +60,8 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
     auto(this.leftKnee,this.leftAnkle),
     auto(this.rightKnee,this.rightAnkle),
     auto(this.pelvis,this.leftKnee),
-    auto(this.pelvis,this.rightKnee)
+    auto(this.pelvis,this.rightKnee),
+    auto(this.head,this.shoulder,false)
   ];
 
   var parts = this.parts = [this.head,this.shoulder,this.leftElbow,this.rightElbow,this.leftWrist,this.rightWrist,this.waist,this.pelvis,this.leftKnee,this.rightKnee, this.leftAnkle,this.rightAnkle];
@@ -105,7 +109,7 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
     s.beginPath();
     for (i in constraints) {
       var it = constraints[i];
-      if (typeof it.c !== 'undefined') continue;
+      if (typeof it.c !== 'undefined' || it.inactive) continue;
       scratch.world(it.a.rx, it.a.ry, it.a.rz);
       c.moveTo(scratch.sx, scratch.sy);
       s.moveTo(scratch.sx, scratch.sy+it.a.rz*2);

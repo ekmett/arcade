@@ -165,7 +165,7 @@ Particle.prototype = {
 
     vx += this.ax - this.drag_h*vx*vx;
     vy += this.ay - this.drag_h*vy*vy;
-    vz += this.az - this.drag_v*vz*vz - G;
+    vz += this.az - this.drag_v*vz*vz - G + (this.lift || 0);
 
     // enforce speed limit
     v2 = vx*vx+vy*vy+vz*vz;
@@ -321,6 +321,10 @@ var step = function step(t) {
   var ps = physics.particles;
   var cs = physics.constraints;
 
+  if (physics.frame % 25) {
+    physics.constraints = physics.constraints.filter(function(e) { return !e.inactive; })
+  }
+
   // figure out local physical properties and plan to get impulses, shoot, etc.
   for (var i in ps) {
     var p = ps[i];
@@ -351,8 +355,9 @@ var step = function step(t) {
       clip_buckets(i,(i+1+BUCKET_COLUMNS) % BUCKETS);
     }
 
+    var str = k / RELAXATIONS;
     for (var i in cs)
-      cs[i]();
+      cs[i](str);
   }
   for (var i in ps)
     scene.clip(ps[i]);

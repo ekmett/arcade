@@ -81,7 +81,7 @@ player.ai = function() {
   var pdy = 0;
   var pdz = 0;
 
-  var m = player.standing ? 1 : player.bouncing ? 0.7 : 0.4;
+  var m = player.standing ? 1 : (player.bouncing && !player.grasped) ? 0.7 : 0.4;
 
   // if (player.bouncing) console.log("bouncing");
 
@@ -90,7 +90,7 @@ player.ai = function() {
   if (events.impulse[83]) { pdx += m; pdy += m; } // S
   if (events.impulse[68]) { pdx -= m; pdy += m; } // D
   if (player.jumpStart) {
-    if (events.impulse[32] && (player.standing || player.bouncing)) {
+    if (events.impulse[32] && (player.standing || (player.bouncing && !player.grasped))) {
       // high jump
       pdz += 1.4;
     } else {
@@ -98,7 +98,7 @@ player.ai = function() {
       pdz += 1.2;
     }
     player.jumpStart = false;
-  } else if (events.impulse[32] && (player.standing || player.bouncing)) {
+  } else if (events.impulse[32] && (player.standing || (player.bouncing && ! player.grasped))) {
     player.jumpStart = true;
   }
   player.push(5*pdx,5*pdy,50*pdz);
