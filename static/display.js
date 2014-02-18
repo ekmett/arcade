@@ -1,30 +1,11 @@
 define(
-  ["jquery", "physics", "shim/raf", "shim/cc", "performance", "stats", "prim", "transformations","events","toggles" ],
-  function display($, physics, raf, cc, performance, stats, prim, transformations,events, toggles) {
+  ["jquery", "physics", "shim/raf", "shim/cc", "performance", "stats", "prim", "transformations","events","toggles", "animation" ],
+  function display($, physics, raf, cc, performance, stats, prim, transformations,events, toggles, animation) {
 
 var display = {
   cursor : new transformations.WorldPoint(),
   camera : null
 };
-
-var bias = function bias(a,b) {
-  return Math.pow(b,Math.log(a)/Math.log(0.5));
-};
-
-var gain = function gain(a,b) {
-  if (b < 0.5) return bias(1-a,2*b)/2;
-  else return 1 - bias(1-a,2-2*b)/2;
-};
-
-var smoothstep = function smoothstep(a,b,t) {
-   var p;
-   if (t < a) return 0;
-   if (t >= b) return 1;
-   if (a == b) return -1;
-   p = (t - a) / (b - a);
-   return (p * p * (3 - 2 * p));
-}
-
 
 var updated = 0;
 var frame = 0;
@@ -37,8 +18,10 @@ var halfWidth  = 400;
 var halfHeight = 200;
 var width      = 800; // set during resize
 var height     = 400; // set during resize
-var minA = -14, minB = -5.7;
-var maxA = 5.7, maxB = 5.7;
+
+var bumper = 4.3; // number of meters to adjust for display
+var minA = -10 - bumper, minB = -10 + bumper;
+var maxA = 10 - bumper, maxB = 10 - bumper;
 
 // -14.1 0 top
 // -0.1 5.2 left
@@ -63,6 +46,7 @@ $('#glass').bind('mousewheel', function(e){
 var layer = function layer(name) {
   var result = $("#" + name);
   result.canvas = result[0].getContext("2d");
+  result.canvas.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
   return result;
 };
 
@@ -71,21 +55,6 @@ var shadows    = layer("shadows");
 var foreground = layer("foreground");
 
 var layers = [ background, shadows, foreground ];
-
-var resized = function resized() {
-  width  = Math.min($(window).width() - foreground.offset().left, 800);
-  height = Math.min($(window).height() - foreground.offset().top, 400);
-  halfWidth = width / 2;
-  halfHeight = height / 2;
-  $(".playarea").each(function(i,e) {
-    $(e).width(width);
-    $(e).height(height);
-  });
-  for (var i in layers) {
-    layers[i].canvas.setTransform(PIXELS_PER_METER,0,0,PIXELS_PER_METER,halfWidth,halfHeight);
-  }
-  console.log("play area resized to",width,height);
-};
 
 var draw_background = function() {
   var b = background.canvas;
@@ -104,14 +73,11 @@ var draw_background = function() {
   b.fill();
 };
 
-
-
 var render = function render() {
   var t = performance.now();
   var pt = physics.updated;
 
   requestAnimationFrame(render);
-
 
   // no physics yet
   if (!pt) return;
@@ -132,10 +98,6 @@ var render = function render() {
 
   var s = shadows.canvas;
   s.clear(true);
-/*
-  prim.floor(s,-physics.SCENE_WIDTH/2,-physics.SCENE_DEPTH/2,0,physics.SCENE_WIDTH,physics.SCENE_DEPTH,physics.SCENE_HEIGHT);
-  s.clip();
-*/
 
   var c = foreground.canvas;
   c.clear(true);
@@ -145,13 +107,12 @@ var render = function render() {
     b.interpolate(alpha);
   }
 
-  // clip roughly in screen coordinates
   if (display.camera) {
     var x = display.camera.rx;
     var y = display.camera.ry;
     var a = Math.max(minA, Math.min(maxA, (x + y)/Math.sqrt(2)));
     var b = Math.max(minB, Math.min(maxB, (x - y)/Math.sqrt(2)));
-    transformations.scrollX = (a+b)/Math.sqrt(2)
+    transformations.scrollX = (a+b)/Math.sqrt(2);
     transformations.scrollY = (a-b)/Math.sqrt(2);
   }
   draw_background();
@@ -168,13 +129,14 @@ var render = function render() {
 }
 
 
+/*
 $(window).bind("resize", resized);
+*/
+
 $(window).ready(function() {
-  resized();
   draw_background();
   render(performance.now());
 });
-
 
 // this may have been a bad idea
 Object.defineProperties(display, {

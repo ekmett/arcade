@@ -46,7 +46,10 @@ image, canvas {
   border-style:solid;
   border-width:1.5px;
   border-color:#071419;
-  background-image:url('images/graph-tile.png');
+
+  background: linear-gradient(45deg, #343702 0%, #184500 20%, #187546 30%, #006782 40%, #0b1284 50%, #760ea1 60%, #83096e 70%, #840b2a 80%, #b13e12 90%, #e27412 100%);
+  background-color: #840b2a;
+
   z-index: 0;
 }
 
@@ -77,7 +80,6 @@ image, canvas {
 
 #music {
   visibility: hidden;
-
 }
 
 #background {
