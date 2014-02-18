@@ -76,6 +76,8 @@ player.draw = function(s,c) {
 // you can't pick yourself for now.
 player.pick = function(x,y) { return null };
 
+player.selectedDZ = 0;
+
 player.ai = function() {
   var pdx = 0;
   var pdy = 0;
@@ -103,13 +105,20 @@ player.ai = function() {
   }
   player.push(5*pdx,5*pdy,50*pdz);
 
+  if (!this.selected) this.selectedDZ = 0;
+
   if (events.impulse[81] && this.selected) { // "Q" levitates target
-    this.selectedZ += 0.20;
+    this.selectedDZ += 0.1;
   }
 
   if (events.impulse[69] && this.selected) { // "E" lowers target
-    this.selectedZ -= 0.20;
+    this.selectedDZ -= 0.1;
   }
+
+
+  this.selectedZ += this.selectedDZ;
+  this.selectedDZ *= 0.7;
+
   if (events.impulse[90] && this.selected) {
     this.selected.lift = 0; // hover forever
     this.selected.priority = 0; // pinned
@@ -123,7 +132,13 @@ player.ai = function() {
       this.selected.x = this.selectedX + display.cursor.x;
       this.selected.y = this.selectedY + display.cursor.y;
       this.selected.z = this.selectedZ;
+      this.selected.az = physics.G;
       physics.scene.clip(this.selected);
+      if (this.selected.z != this.selectedZ) {
+        this.selectedDZ = 0;
+      }
+      // this.selectedDZ = this.selectedZ - this.selected.z;
+      // this.selectedZ = this.selected.z;
     } else {
       this.selected = select();
       if (this.selected) {

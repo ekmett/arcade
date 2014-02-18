@@ -7,6 +7,25 @@ var display = {
   camera : null
 };
 
+var bias = function bias(a,b) {
+  return Math.pow(b,Math.log(a)/Math.log(0.5));
+};
+
+var gain = function gain(a,b) {
+  if (b < 0.5) return bias(1-a,2*b)/2;
+  else return 1 - bias(1-a,2-2*b)/2;
+};
+
+var smoothstep = function smoothstep(a,b,t) {
+   var p;
+   if (t < a) return 0;
+   if (t >= b) return 1;
+   if (a == b) return -1;
+   p = (t - a) / (b - a);
+   return (p * p * (3 - 2 * p));
+}
+
+
 var updated = 0;
 var frame = 0;
 
@@ -18,6 +37,13 @@ var halfWidth  = 400;
 var halfHeight = 200;
 var width      = 800; // set during resize
 var height     = 400; // set during resize
+var minA = -14, minB = -5.7;
+var maxA = 5.7, maxB = 5.7;
+
+// -14.1 0 top
+// -0.1 5.2 left
+// 5.7 -025 bottom
+// 0.1 -5.448 right
 
 
 /*
@@ -119,9 +145,14 @@ var render = function render() {
     b.interpolate(alpha);
   }
 
+  // clip roughly in screen coordinates
   if (display.camera) {
-    transformations.scrollX = display.camera.rx;
-    transformations.scrollY = display.camera.ry;
+    var x = display.camera.rx;
+    var y = display.camera.ry;
+    var a = Math.max(minA, Math.min(maxA, (x + y)/Math.sqrt(2)));
+    var b = Math.max(minB, Math.min(maxB, (x - y)/Math.sqrt(2)));
+    transformations.scrollX = (a+b)/Math.sqrt(2)
+    transformations.scrollY = (a-b)/Math.sqrt(2);
   }
   draw_background();
 
