@@ -10,8 +10,8 @@ var SCENE_HEIGHT = physics.SCENE_HEIGHT;
 var SCENE_DEPTH  = physics.SCENE_DEPTH;
 
 
-var ball = function ball() {
-  var r = -Math.log(Math.random())/3+0.2;
+var ball = function ball(r) {
+  var r = r || -Math.log(Math.random())/3+0.2;
   var particle = new physics.Particle(
     Math.random()*(SCENE_WIDTH-r)-SCENE_WIDTH/2,
     Math.random()*(SCENE_DEPTH-r)-SCENE_DEPTH/2,
@@ -51,7 +51,7 @@ var ball = function ball() {
     c.strokeStyle = "#555";
 
     var g = c.createRadialGradient(scratch.sx,scratch.sy-this.h*Math.sqrt(2),0.1,scratch.sx,scratch.sy,this.w*Math.sqrt(3));
-    c.globalAlpha = 0.88;
+    c.globalAlpha = this.opacity || 0.88;
     g.addColorStop(0,"white");
     g.addColorStop(this.specular,this.color); // "black");
     c.fillStyle = g;
@@ -123,6 +123,8 @@ var Cable = function Cable(l) {
   }
   Array.prototype.push.apply(physics.constraints, constraints);
 
+  var snake = this;
+
   var oldDraw = ps[Math.floor(l/2)].draw;
   ps[Math.floor(l/2)].draw = function(s,c) {
     c.save();
@@ -142,13 +144,37 @@ var Cable = function Cable(l) {
       v.worldR(ps[i+1]);
       var x = (u.sx + v.sx) * 0.5;
       var y = (u.sy + v.sy) * 0.5;
+      var sy = y + ps[i].rz + (ps[i].h + ps[i+1].h)/4 + ps[i+1].rz;
       if (constraints[i-1].inactive == true) {
         c.moveTo(x, y);
-        s.moveTo(x, y + ps[i].rz + (ps[i].h + ps[i+1].h)/4 + ps[i+1].rz);
+        s.moveTo(x, sy)
       } else {
         c.quadraticCurveTo(u.sx, u.sy, x, y);
-        s.quadraticCurveTo(u.sx, u.sy + ps[i].rz*2 + ps[i].h/2,
-                         x   , y + ps[i].rz + (ps[i].h + ps[i+1].h)/4 + ps[i+1].rz);
+        s.quadraticCurveTo(u.sx, u.sy + ps[i].rz*2 + ps[i].h/2, x, sy)
+
+        if (snake.legs) {
+/*	
+          c.lineTo(x-snake.legs,y+0.5*snake.legs);
+          s.lineTo(x-snake.legs,sy);
+          c.moveTo(x, y);
+          s.moveTo(x, sy);
+
+          c.lineTo(x+snake.legs,y+0.5*snake.legs);
+          s.lineTo(x+snake.legs,sy);
+          c.moveTo(x, y);
+          s.moveTo(x, sy);
+*/
+
+          c.lineTo(x-snake.legs,y-0.5*snake.legs);
+          s.lineTo(x-snake.legs,sy);
+          c.moveTo(x, y);
+          s.moveTo(x, sy);
+
+          c.lineTo(x+snake.legs,y-0.5*snake.legs);
+          s.lineTo(x+snake.legs,sy);
+          c.moveTo(x, y);
+          s.moveTo(x, sy);
+        }
       }
       var t = u; u = v; v = t;
     }
@@ -212,9 +238,10 @@ var snake_ai = function snake_ai() {
 
 
 var snake = function() {
-  var c = new Cable();
+  var c = new Cable(8);
+  c.legs = 0.1;
   var r = c.radius;
-  var ps = new Cable().parts;
+  var ps = c.parts;
 
   var lag = Math.random()*2;
   ps[0].ai = snake_ai;
@@ -225,6 +252,9 @@ var snake = function() {
   ps[0].intendedX = 0;
   ps[0].intendedY = 0;
   ps[0].intendedZ = 0;
+  ps[0].bump = grasp;
+  ps[0].grip = 2.4;
+  ps[0].releaseFrequency = 0.9;
 
   ps[3].ai = snake_ai;
   ps[3].bounce = r*r*2;
@@ -234,6 +264,8 @@ var snake = function() {
   ps[3].intendedX = 0;
   ps[3].intendedY = 0;
   ps[3].intendedZ = 0;
+
+  ps[ps.length-1].bump = plug;
 };
 
 var dog_ai = function dog_ai() {
@@ -281,7 +313,8 @@ var plug = function plug(that) {
     this.plugged = true;
     that.outlets--;
     var l = Math.min(that.w,that.d,that.h)/2;
-    physics.constraints.push(constraints.stick(this,that,l)); // ,20));
+    var c = constraints.stick(this,that,l);
+    physics.constraints.push(c);
   }
 }
 
@@ -321,16 +354,18 @@ var spawnKeys = {
     b.vigor = 1;
   },
   52: function() { /* 4: cyan balloon */
-    var b = ball();
+    var b = ball(1); // +Math.random()*0.4);
     physics.particles.push(b);
     b.color = "#0ff";
     var speed1 = Math.random()*0.1-0.05;
     var speed2 = Math.random()*0.1-0.05;
+    b.opacity = 0.8;
     b.start = Math.random()*40;
+    b.graspable = true;
     b.ai = function() {
       var dx = Math.sin((b.start+physics.frame)*3.14/20)*speed1;
       var dy = Math.cos((b.start+physics.frame)*3.14/20)*speed2;
-      this.push(dx*2,dy*2,10*this.w*this.d*10); // lift proportional to surface area.
+      this.push(0,0,9); // dx*2,dy*2,10*this.w*this.d); // lift proportional to surface area.
       this.outlets = 1;
     }
   },
@@ -359,11 +394,8 @@ var spawnKeys = {
     }
     b.grip = 2.5;
   },
-  54: function() {
-    return ragdoll.spawn() /* 6 ragdoll */
-  },
-  55: function() {
-    var r = ragdoll.spawn(); /* 7 zombie */
+  54: function() { /* 6 zombie */
+    var r = ragdoll.spawn();
     var loc = ["shoulder","waist","leftElbow","rightElbow"];
     for (var i in loc) {
       if (Math.random() < 0.2) {
@@ -371,7 +403,7 @@ var spawnKeys = {
         r[loc[i]].ai = dog_ai;
         r[loc[i]].vigor = 0.05;
         r[loc[i]].bounce = 2.4;
-	r[loc[i]].vscale = 0.2;
+        r[loc[i]].vscale = 0.2;
       }
     }
     r.head.bump = grasp;
@@ -398,8 +430,9 @@ var spawnKeys = {
     r.rightWrist.bump = grasp;
     r.rightWrist.grip = 2.3;
   },
-  56: function() {
-    var r = ragdoll.spawn(); /* 8 wounded */
+/*
+  55: function() {
+    var r = ragdoll.spawn();
     var ai = claw_ai;
     var loc = ["head","rightWrist","shoulder","leftElbow","rightElbow"];
     for (var i in loc) {
@@ -415,12 +448,14 @@ var spawnKeys = {
     r.leftWrist.vigor = 0.2;
     r.leftWrist.sign = -1;
   },
-  // 57: snake,/* 9 snake */
-  57: function() { /* 9 cable */
+*/
+  55: snake,/* 9 snake */
+  56: function() { /* 9 cable */
     var cable = new Cable();
     //  for (var i in cable.parts) cable.parts[i].graspable = true;
     cable.parts[0].bump = plug;
     cable.parts[cable.parts.length-1].bump = plug;
+    cable.legs = 0.1;
   }
 };
 
