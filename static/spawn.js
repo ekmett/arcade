@@ -4,6 +4,7 @@ define(
 
 var scratch = new transformations.ScreenPoint();
 var scratch2 = new transformations.ScreenPoint();
+var scratch3 = new transformations.ScreenPoint();
 
 var SCENE_WIDTH  = physics.SCENE_WIDTH;
 var SCENE_HEIGHT = physics.SCENE_HEIGHT;
@@ -89,17 +90,6 @@ var ball = function ball(r) {
     c.globalAlpha = 1;
     c.restore(); // restore translation
 
-    // draw motion vector
-    /*
-    c.beginPath();
-    c.moveTo(x1,y1);
-    c.lineTo(x2,y2);
-    c.lineWidth = 0.3;
-    c.lineCap = 'round';
-    c.strokeStyle = "#000";
-    c.stroke();
-    */
-
     if (toggles.bounding) {
       prim.cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
       c.lineWidth = 0.01;
@@ -120,7 +110,7 @@ var ball = function ball(r) {
     c.restore();
   };
   // particle.graspable = true;
-  // particle.outlets = Math.floor(particle.w/0.3);
+  particle.outlets = Math.floor(particle.w/0.3);
   return particle;
 };
 
@@ -395,7 +385,7 @@ var spawnKeys = {
     b.vigor = 1;
   },
   52: function() { /* 4: cyan balloon */
-    var b = ball(1); // +Math.random()*0.4);
+    var b = ball(2); // +Math.random()*0.4);
     physics.particles.push(b);
     b.color = "#0ff";
     var speed1 = Math.random()*0.1-0.05;
@@ -471,32 +461,118 @@ var spawnKeys = {
     r.rightWrist.bump = grasp;
     r.rightWrist.grip = 2.3;
   },
-/*
-  55: function() {
-    var r = ragdoll.spawn();
-    var ai = claw_ai;
-    var loc = ["head","rightWrist","shoulder","leftElbow","rightElbow"];
-    for (var i in loc) {
-      if (Math.random() < 0.6) {
-        r[loc[i]].lag = Math.random()*5-3;
-        r[loc[i]].ai = claw_ai;
-        r[loc[i]].vigor = 0.1;
-        r[loc[i]].sign = -1;
-      }
-    }
-    r.leftWrist.lag = Math.random()*5-3;
-    r.leftWrist.ai = claw_ai;
-    r.leftWrist.vigor = 0.2;
-    r.leftWrist.sign = -1;
-  },
-*/
-  55: snake,/* 9 snake */
-  56: function() { /* 9 cable */
+  55: snake,/* 7 snake */
+  56: function() { /* 8 cable */
     var cable = new Cable();
     //  for (var i in cable.parts) cable.parts[i].graspable = true;
     cable.parts[0].bump = plug;
     cable.parts[cable.parts.length-1].bump = plug;
     cable.legs = 0.1;
+  },
+  57: function() { /* 9 spider */
+    var r = 0.3;
+    var b = new physics.Particle(
+      Math.random()*(SCENE_WIDTH-r)-SCENE_WIDTH/2,
+      Math.random()*(SCENE_DEPTH-r)-SCENE_DEPTH/2,
+      Math.random()*(SCENE_HEIGHT-r),
+      r,r,r,10
+    );
+    b.color = "#356";
+    b.bump = grasp;
+    physics.particles.push(b);
+
+    var pick = function(x,y) {
+      scratch.world(this.rx,this.ry,this.rz);
+      var dx = scratch.sx-x;
+      var dy = scratch.sy-y;
+      var near = dx*dx + dy*dy < this.w * this.w * 3;
+      return near ? this.key : null;
+    };
+
+    b.pick = pick;
+
+    var box = function(s,c) {
+      if (toggles.bounding) {
+        prim.cube(c,this.rx,this.ry,this.rz,this.w,this.d,this.h);
+        c.lineWidth = 0.01;
+        c.strokeStyle = "#000";
+        c.stroke();
+      }
+    };
+
+    var Leg = function(dx,dy,nom) {
+      this.knee = new physics.Particle(b.x+dx,b.y+dy,b.z,0.1,0.1,0.1,4);
+      this.knee.draw = box;
+      this.knee.pick = pick;
+      this.ankle = new physics.Particle(b.x+dx,b.y+dy,b.z-0.2,0.1,0.1,0.1,1);
+      this.ankle.draw = box;
+      this.ankle.pick = pick;
+      this.toe = new physics.Particle(b.x+dx,b.y+dy,b.z-0.4,0.1,0.1,0.1,2);
+      this.toe.draw = box;
+      this.toe.pick = pick;
+      this.toe.bump = grasp;
+      this.toe.graspFrequency = 0.3;
+      this.thigh = ragdoll.auto(b,this.knee);
+      this.shin = ragdoll.auto(this.knee,this.ankle);
+      this.foot = ragdoll.auto(this.ankle,this.toe);
+      physics.particles.push(this.knee);
+      physics.particles.push(this.ankle);
+      physics.particles.push(this.toe);
+      physics.constraints.push(this.shin);
+      physics.constraints.push(this.thigh);
+      physics.constraints.push(this.foot);
+      if (nom) {
+        this.knee.ai = dog_ai;
+        this.knee.lag = 2;
+        this.knee.bounce = 2;
+        this.ankle.sign = 1;
+        this.ankle.ai = claw_ai;
+        this.ankle.lag = 2;
+        this.ankle.bounce = 2;
+        this.ankle.sign = 1;
+ /*
+        this.toe.ai = dog_ai;
+        this.toe.lag = 2;
+        this.toe.bounce = 2;
+        this.toe.sign = 1;
+ */
+      }
+    };
+
+    var legs = [new Leg(0.4,0,true), new Leg(0,0.4,true), new Leg(-0.4,0,true), new Leg(0,-0.4,true)];
+
+    b.draw = function(s,c,alpha) {
+      c.save();
+      s.save();
+
+      c.beginPath();
+      scratch.worldR(this);
+      var x = scratch.sx;
+      var y = scratch.sy;
+      for (var i in legs) {
+        c.moveTo(x,y);
+        scratch.worldR(legs[i].knee);
+        scratch2.worldR(legs[i].ankle);
+        scratch3.worldR(legs[i].toe);
+        c.quadraticCurveTo(scratch.sx,scratch.sy,scratch2.sx,scratch2.sy, scratch3.sx, scratch3.sy);
+      }
+      c.lineCap = 'round';
+      c.lineWidth = 0.2;
+      c.strokeStyle = "#000";
+      c.stroke();
+      c.lineWidth = 0.1;
+      c.strokeStyle = this.color;
+      c.stroke();
+
+      c.beginPath();
+      c.arc(x,y,r*Math.sqrt(3),0,2*Math.PI,false);
+      c.fillStyle = this.color;
+      c.fill();
+      c.strokeStyle = 'black';
+      c.stroke();
+      c.restore();
+      s.restore();
+    };
   }
 };
 
