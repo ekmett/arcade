@@ -109,8 +109,13 @@ var ball = function ball(r) {
     s.restore();
     c.restore();
   };
+ /*
+  particle.outlets = r < 0.4 ? 1 : 0;
+  particle.acceptsPlug = function(that) {
+    return that.tag === "ankle";
+  }
+ */
   // particle.graspable = true;
-  // particle.outlets = Math.floor(particle.w/0.3);
   return particle;
 };
 
@@ -162,44 +167,48 @@ var Cable = function Cable(l) {
 
     c.beginPath();
     s.beginPath();
-    scratch.world(ps[0].rx,ps[0].ry,ps[0].rz);
-    c.moveTo(scratch.sx,scratch.sy);
-    s.moveTo(scratch.sx,scratch.sy+ps[0].rz*2);
+    if (ps[0].plugged) {
+      // stretch to include the target
+      scratch.worldR(ps[0].plugged);
+      c.moveTo(scratch.sx,scratch.sy);
+      s.moveTo(scratch.sx,scratch.sy+ps[0].plugged.rz*2);
+    } else {
+      scratch.worldR(ps[0]);
+      c.moveTo(scratch.sx,scratch.sy);
+      s.moveTo(scratch.sx,scratch.sy+ps[0].rz*2);
+    }
 
-    var n = ps.length - 2;
+    var L = ps.length-1;
+    var last = ps[L];
+    var n = last.plugged ? L : L - 1
+    last = last.plugged ? last.plugged : last;
+
     var u = scratch, v = scratch2;
     u.worldR(ps[1]);
-    for (var i=1;i<n;i++) {
+    for (var i=ps[0].plugged ? 0 : 1;i<n;i++) {
       v.worldR(ps[i+1]);
       var x = (u.sx + v.sx) * 0.5;
       var y = (u.sy + v.sy) * 0.5;
       var sy = y + ps[i].rz + (ps[i].h + ps[i+1].h)/4 + ps[i+1].rz;
-      if (constraints[i-1].inactive == true) {
+      c.quadraticCurveTo(u.sx, u.sy, x, y);
+      s.quadraticCurveTo(u.sx, u.sy + ps[i].rz*2 + ps[i].h/2, x, sy)
+
+      if (snake.legs) {
+        c.lineTo(x-snake.legs,y-0.5*snake.legs);
+        s.lineTo(x-snake.legs,sy);
         c.moveTo(x, y);
-        s.moveTo(x, sy)
-      } else {
-        c.quadraticCurveTo(u.sx, u.sy, x, y);
-        s.quadraticCurveTo(u.sx, u.sy + ps[i].rz*2 + ps[i].h/2, x, sy)
+        s.moveTo(x, sy);
 
-        if (snake.legs) {
-          c.lineTo(x-snake.legs,y-0.5*snake.legs);
-          s.lineTo(x-snake.legs,sy);
-          c.moveTo(x, y);
-          s.moveTo(x, sy);
-
-          c.lineTo(x+snake.legs,y-0.5*snake.legs);
-          s.lineTo(x+snake.legs,sy);
-          c.moveTo(x, y);
-          s.moveTo(x, sy);
-        }
+        c.lineTo(x+snake.legs,y-0.5*snake.legs);
+        s.lineTo(x+snake.legs,sy);
+        c.moveTo(x, y);
+        s.moveTo(x, sy);
       }
       var t = u; u = v; v = t;
     }
-    if (!constraints[n].inactive) {
-      v.worldR(ps[n+1]);
-      c.quadraticCurveTo(u.sx, u.sy, v.sx, v.sy);
-      s.quadraticCurveTo(u.sx, u.sy + (ps[n].rz*2 + ps[n].h/2), v.sx, v.sy + ps[n+1].rz*2 + ps[n+1].h/2);
-    }
+    v.worldR(last);
+    c.quadraticCurveTo(u.sx, u.sy, v.sx, v.sy);
+    s.quadraticCurveTo(u.sx, u.sy + (ps[n].rz*2 + ps[n].h/2), v.sx, v.sy + last.rz*2 + last.h/2);
 
     c.lineCap = 'round';
     c.lineJoin = 'round';
@@ -327,7 +336,7 @@ var claw_ai = function claw_ai() {
 
 var plug = function plug(that) {
   if (!this.plugged && that.outlets > 0 && that.acceptsPlug(this)) {
-    this.plugged = true;
+    this.plugged = that;
     that.outlets--;
     var l = Math.min(that.w,that.d,that.h)/2;
     var c = constraints.stick(this,that,l);
@@ -590,9 +599,8 @@ var spawnKeys = {
         s.moveTo(x,y+z*2);
         s.lineTo(scratch.sx,scratch.sy+legs[i].toe.rz*2);
 
-
-        // unless we're a hand
-        if (b.outlets) {
+        // unless we're a hand or gripping or have infinite mass
+        if (b.outlets && !legs[i].grasping && legs[i].inverseMass) {
           c.moveTo(x,y);
           s.moveTo(x,y+z*2);
           var xl = x + x - scratch.sx
