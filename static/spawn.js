@@ -475,7 +475,7 @@ var spawnKeys = {
       Math.random()*(SCENE_WIDTH-r)-SCENE_WIDTH/2,
       Math.random()*(SCENE_DEPTH-r)-SCENE_DEPTH/2,
       Math.random()*(SCENE_HEIGHT-r),
-      r,r,r,10
+      r,r,r,1
     );
     b.color = "#356";
     b.bump = grasp;
@@ -500,18 +500,19 @@ var spawnKeys = {
       }
     };
 
+
     var Leg = function(dx,dy,nom) {
-      this.knee = new physics.Particle(b.x+dx,b.y+dy,b.z,0.1,0.1,0.1,4);
+      this.knee = new physics.Particle(b.x+dx,b.y+dy,b.z,0.1,0.1,0.1,0.4);
       this.knee.draw = box;
       this.knee.pick = pick;
-      this.ankle = new physics.Particle(b.x+dx,b.y+dy,b.z-0.2,0.1,0.1,0.1,1);
+      this.ankle = new physics.Particle(b.x+dx,b.y+dy,b.z-0.1,0.1,0.1,0.1,0.1);
       this.ankle.draw = box;
       this.ankle.pick = pick;
-      this.toe = new physics.Particle(b.x+dx,b.y+dy,b.z-0.4,0.1,0.1,0.1,2);
+      this.toe = new physics.Particle(b.x+dx,b.y+dy,b.z-0.2,0.1,0.1,0.1,0.2);
       this.toe.draw = box;
       this.toe.pick = pick;
       this.toe.bump = grasp;
-      this.toe.graspFrequency = 0.3;
+      this.toe.graspFrequency = 0.9;
       this.thigh = ragdoll.auto(b,this.knee);
       this.shin = ragdoll.auto(this.knee,this.ankle);
       this.foot = ragdoll.auto(this.ankle,this.toe);
@@ -522,14 +523,17 @@ var spawnKeys = {
       physics.constraints.push(this.thigh);
       physics.constraints.push(this.foot);
       if (nom) {
+/*
         this.knee.ai = dog_ai;
         this.knee.lag = 2;
         this.knee.bounce = 2;
         this.ankle.sign = 1;
         this.ankle.ai = claw_ai;
-        this.ankle.lag = 2;
-        this.ankle.bounce = 2;
+        this.ankle.lag = -2;
+        this.ankle.bounce = 1;
         this.ankle.sign = 1;
+        this.ankle.vscale = 0.5;
+*/
  /*
         this.toe.ai = dog_ai;
         this.toe.lag = 2;
@@ -539,7 +543,29 @@ var spawnKeys = {
       }
     };
 
-    var legs = [new Leg(0.4,0,true), new Leg(0,0.4,true), new Leg(-0.4,0,true), new Leg(0,-0.4,true)];
+    var legs = [
+      new Leg(0.4,0,true),    new Leg(0,0.4,true),
+      new Leg(-0.4,0,true),   new Leg(0,-0.4,true),
+      new Leg(0.4,0.4,true),  new Leg(0.4,-0.4,true),
+      new Leg(-0.4,0.4,true), new Leg(-0.4,0.4,true)
+    ];
+
+    b.ai = function() {
+      if ((this.standing || this.bouncing) && !this.grasping && Math.random() < 0.9) {
+        var dx = player.x - b.x;
+        var dy = player.y - b.y;
+        var d = Math.sqrt(dx*dx+dy*dy);
+        dx /= d * 14;
+        dy /= d * 14;
+        for (var i in legs) {
+          if (Math.random() < 0.5) {
+            legs[i].knee.push(0,0,0.1*Math.random());
+            legs[i].ankle.push(dx*2,dy*2,0);
+          }
+        }
+       b.push(0,0,Math.random());
+      }
+    };
 
     b.draw = function(s,c,alpha) {
       c.save();
