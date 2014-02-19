@@ -66,7 +66,7 @@ var scene = {
     p.drag_v = 0.01;
     p.ground_elasticity = 0;
 
-    var standing = p.standing = p.oz < 0.3; // w/in 1ft of the ground
+    var standing = p.standing = p.z < 0.3; // w/in 1ft of the ground
 
     if (standing) {
       p.mu_h = 0.35; // standard ground friction is quite high

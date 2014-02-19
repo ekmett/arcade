@@ -48,6 +48,8 @@ var ball = function ball(r) {
     // calculate motion vector
 
     var amp = 0.2;
+
+    // quadratic spline interpolation of velocity
     var dx1 = (this.x - this.ox)*amp;
     var dy1 = (this.y - this.oy)*amp;
     var dz1 = (this.z - this.oz)*amp;
@@ -73,6 +75,7 @@ var ball = function ball(r) {
     scratch.world(this.rx,this.ry,this.rz);
     c.translate(scratch.sx,scratch.sy);
     c.rotate(angle);
+    if (this.standing) dw = Math.max(dw, this.w * 0.08); // bulge a bit on the ground
     c.scale((this.w+dw)/this.w,(this.w-dw)/this.w);
     c.arc(0,0,this.w*Math.sqrt(3),0,2*Math.PI,false);
     c.fillStyle = this.color;
@@ -570,7 +573,7 @@ var spawnKeys = {
             if (dot > 0) {
               legs[i].toe.push(dx,dy,Math.random());
             } else {
-              impulse += Math.random()*4;
+              impulse += Math.random()*2;
               legs[i].toe.push(dx-0.1*dy,dy+0.1*dx,Math.random());
             }
           }
@@ -600,7 +603,7 @@ var spawnKeys = {
         s.lineTo(scratch.sx,scratch.sy+legs[i].toe.rz*2);
 
         // unless we're a hand or gripping or have infinite mass
-        if (b.outlets && !legs[i].grasping && legs[i].inverseMass) {
+        if (b.outlets && !legs[i].toe.grasping && legs[i].toe.inverseMass) {
           c.moveTo(x,y);
           s.moveTo(x,y+z*2);
           var xl = x + x - scratch.sx
