@@ -166,7 +166,6 @@ var Cable = function Cable(l) {
     c.moveTo(scratch.sx,scratch.sy);
     s.moveTo(scratch.sx,scratch.sy+ps[0].rz*2);
 
-
     var n = ps.length - 2;
     var u = scratch, v = scratch2;
     u.worldR(ps[1]);
@@ -183,18 +182,6 @@ var Cable = function Cable(l) {
         s.quadraticCurveTo(u.sx, u.sy + ps[i].rz*2 + ps[i].h/2, x, sy)
 
         if (snake.legs) {
-/*	
-          c.lineTo(x-snake.legs,y+0.5*snake.legs);
-          s.lineTo(x-snake.legs,sy);
-          c.moveTo(x, y);
-          s.moveTo(x, sy);
-
-          c.lineTo(x+snake.legs,y+0.5*snake.legs);
-          s.lineTo(x+snake.legs,sy);
-          c.moveTo(x, y);
-          s.moveTo(x, sy);
-*/
-
           c.lineTo(x-snake.legs,y-0.5*snake.legs);
           s.lineTo(x-snake.legs,sy);
           c.moveTo(x, y);
@@ -499,6 +486,7 @@ var spawnKeys = {
     b.bump = grasp;
     b.graspRange = 0.9;
     b.graspTop = 0.1;
+    b.grip = 1.83;
     physics.particles.push(b);
 
     var pick = function(x,y) {
@@ -521,10 +509,12 @@ var spawnKeys = {
     };
 
 
-    var Leg = function(dx,dy) {
+    var Leg = function(dx,dy,bump) {
       this.toe = new physics.Particle(b.x+dx,b.y+dy,b.z-0.1,0.05,0.05,0.05,2);
       this.toe.draw = box;
+      this.toe.elasicity = 0.01;
       this.toe.pick = pick;
+      // if (bump) this.toe.bump = bump;
       this.toe.bump = grasp;
       this.toe.graspFrequency = 0.1;
       this.toe.graspRange = 0.9;
@@ -534,12 +524,12 @@ var spawnKeys = {
       physics.constraints.push(this.leg);
     };
 
-    var s = Math.sqrt(2);
+    // var s = Math.sqrt(2);
     var legs = [
-      new Leg(0.3,0),    new Leg(0,0.3),
-      new Leg(-0.3,0),   new Leg(0,-0.3),
+      new Leg(0.3,0,grasp),    new Leg(0,0.3,grasp),
+      new Leg(-0.3,0,null),   new Leg(0,-0.3,null)
       // new Leg(0.2*s,0.2*s,true),  new Leg(0.2*s,-0.2*s,true),
-      new Leg(-0.3/s,0.3/s) // , new Leg(-0.3/s,0.3/s)
+      // new Leg(-0.3/s,0.3/s, null)
     ];
 
     b.elasticity = 0.01;
@@ -567,7 +557,7 @@ var spawnKeys = {
 
           var dot = Math.sqrt(dx*lx+dy*ly);
 
-          if (Math.random() < 0.6) {
+          if (Math.random() < 0.72) {
             if (dot > 0) {
               legs[i].toe.push(dx,dy,Math.random());
             } else {
@@ -587,15 +577,30 @@ var spawnKeys = {
       scratch.worldR(this);
       var x = scratch.sx;
       var y = scratch.sy;
+      var z = this.rz;
 
       c.beginPath();
+      s.beginPath();
+      s.lineWidth = 0.1;
       for (var i in legs) {
         c.moveTo(x,y);
-        scratch.world(legs[i].toe.rx,legs[i].toe.ry,legs[i].toe.rz+0.2);
-        scratch2.worldR(legs[i].toe);
-        c.quadraticCurveTo(scratch.sx,scratch.sy,scratch2.sx,scratch2.sy);
-        c.lineTo(scratch2.sx,scratch2.sy+0.01);
-        // c.quadraticCurveTo(scratch.sx,scratch.sy,x,y);
+        scratch.worldR(legs[i].toe);
+        c.quadraticCurveTo(scratch.sx,scratch.sy-0.4,scratch.sx,scratch.sy);
+        c.lineTo(scratch.sx,scratch.sy);
+        s.moveTo(x,y+z*2);
+        s.lineTo(scratch.sx,scratch.sy+legs[i].toe.rz*2);
+
+
+        // unless we're a hand
+        if (b.outlets) {
+          c.moveTo(x,y);
+          s.moveTo(x,y+z*2);
+          var xl = x + x - scratch.sx
+          var yl = scratch.sy;
+          c.quadraticCurveTo(xl,yl-0.4,xl,yl);
+          s.lineTo(x + x - scratch.sx,scratch.sy+legs[i].toe.rz*2);
+          c.lineTo(xl,yl);
+        }
       }
       c.lineCap = 'round';
       c.lineBevel = 'round';
@@ -605,19 +610,23 @@ var spawnKeys = {
       c.lineWidth = 0.1;
       c.strokeStyle = this.color;
       c.stroke();
+      s.lineWidth = 0.1;
+      s.strokeStyle = 'rgba(0,0,0,0.1)';
+      s.stroke();
 
+      s.scale(1,0.5);
+      s.beginPath();
       c.beginPath();
       c.arc(x,y,r*Math.sqrt(3),0,2*Math.PI,false);
+      s.arc(x,y*2+z*4,r*Math.sqrt(3),0,2*Math.PI,false);
       c.fillStyle = this.color;
       c.lineWidth = 0.1;
       c.strokeStyle = '#000';
       c.stroke();
       c.fill();
+      s.fillStyle = 'rgba(0,0,0,0.2)'
+      s.fill();
 
-      c.globalCompositeOperation = 'source-over';
-
-      // c.strokeStyle = 'black';
-      // c.stroke();
       c.restore();
       s.restore();
     };

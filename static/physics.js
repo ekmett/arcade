@@ -138,7 +138,8 @@ Particle.prototype = {
     this.rx = this.ox * (1 - alpha) + this.x * alpha;
     this.ry = this.oy * (1 - alpha) + this.y * alpha;
     this.rz = this.oz * (1 - alpha) + this.z * alpha;
-    this.key = 2*this.rx + 2*this.ry + this.rz + this.w + this.d + this.h*0.51;
+    // minor attempt at thrash reduction
+    this.key = this.key*0.001 + (2*this.rx + 2*this.ry + this.rz + this.w + this.d + this.h*0.51) * 0.999;
   },
   plan: function plan() {
     this.ai && this.ai();

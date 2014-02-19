@@ -57,8 +57,9 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
     auto(this.rightElbow,this.rightWrist),
     auto(this.shoulder,this.waist,false), // disable body
     auto(this.waist,this.pelvis,false), // disable body
-    auto(this.shoulder,this.pelvis,false),
-    auto(this.pelvis,this.head,false),
+    //auto(this.head,this.shoulder,false), // stronger neck
+    //auto(this.shoulder,this.pelvis,false),
+    //auto(this.pelvis,this.head,false),
     auto(this.leftKnee,this.leftAnkle),
     auto(this.rightKnee,this.rightAnkle),
     auto(this.pelvis,this.leftKnee),
