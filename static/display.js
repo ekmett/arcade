@@ -82,7 +82,7 @@ var render = function render() {
   // no physics yet
   if (!pt) return;
 
-  var alpha = (t - pt) / physics.MILLISECONDS_PER_FRAME;
+  var alpha = Math.max(0, Math.min((t - pt) / physics.MILLISECONDS_PER_FRAME, 1));
 
   stats.display.begin();
 

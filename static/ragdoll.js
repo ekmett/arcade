@@ -70,6 +70,9 @@ var Ragdoll = function Ragdoll (x,y,z,w,d,h,m) {
 
   // parts[Math.floor(Math.random()*parts.length)].outlets = 1;
   this.shoulder.outlets = 1;
+  this.shoulder.acceptsPlug = function(that) {
+    return that.tag === "cable";
+  };
 
   for (var i in this.parts) {
     physics.particles.push(this.parts[i]);

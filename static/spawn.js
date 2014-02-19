@@ -110,7 +110,7 @@ var ball = function ball(r) {
     c.restore();
   };
   // particle.graspable = true;
-  particle.outlets = Math.floor(particle.w/0.3);
+  // particle.outlets = Math.floor(particle.w/0.3);
   return particle;
 };
 
@@ -339,7 +339,7 @@ var claw_ai = function claw_ai() {
 };
 
 var plug = function plug(that) {
-  if (!this.plugged && that.outlets > 0) {
+  if (!this.plugged && that.outlets > 0 && that.acceptsPlug(this)) {
     this.plugged = true;
     that.outlets--;
     var l = Math.min(that.w,that.d,that.h)/2;
@@ -392,12 +392,15 @@ var spawnKeys = {
     var speed2 = Math.random()*0.1-0.05;
     b.opacity = 0.8;
     b.start = Math.random()*40;
-    b.graspable = true;
+    // b.graspable = true;
+    b.outlets = 6; // Math.floor(particle.w/0.3);
+    b.acceptsPlug = function(that) {
+      return that.tag === "cable";
+    };
     b.ai = function() {
       var dx = Math.sin((b.start+physics.frame)*3.14/20)*speed1;
       var dy = Math.cos((b.start+physics.frame)*3.14/20)*speed2;
       this.push(0,0,100); // dx*2,dy*2,10*this.w*this.d); // lift proportional to surface area.
-      this.outlets = 1;
     }
   },
   53: function() { /* 5: tar baby */
@@ -449,38 +452,53 @@ var spawnKeys = {
     r.leftWrist.ai = claw_ai; // Math.random()<0.4?claw_ai: dog_ai;
     r.leftWrist.vigor = 0.05;
     r.leftWrist.sign = 1;
-    r.leftWrist.bump = grasp;
+    r.leftWrist.bump = function(that) {
+      grasp.call(this,that);
+      plug.call(this,that);
+    };
     r.leftWrist.vscale = 2;
     r.leftWrist.grip = 2.3;
+    r.leftWrist.tag = "wrist";
     r.rightWrist.lag = Math.random()*5-3;
     r.rightWrist.ai = dog_ai; // Math.random()<0.4?claw_ai: dog_ai;
     r.rightWrist.vscale = 1.2;
     r.rightWrist.vigor = 0.05;
     r.rightWrist.sign = 1;
     r.rightWrist.bounce = 2;
-    r.rightWrist.bump = grasp;
+    r.rightWrist.bump = function(that) {
+      grasp.call(this,that);
+      plug.call(this,that);
+    };
     r.rightWrist.grip = 2.3;
+    r.rightWrist.tag = "wrist";
+    r.leftAnkle.tag = "ankle";
+    r.leftAnkle.bump = plug;
+    r.rightAnkle.tag = "ankle";
+    r.rightAnkle.bump = plug;
   },
-  55: snake,/* 7 snake */
+  // 55: snake,/* 7 snake */
   56: function() { /* 8 cable */
     var cable = new Cable();
     //  for (var i in cable.parts) cable.parts[i].graspable = true;
     cable.parts[0].bump = plug;
+    cable.parts[0].tag = "cable";
     cable.parts[cable.parts.length-1].bump = plug;
+    cable.parts[cable.parts.length-1].tag = "cable";
     cable.legs = 0.1;
   },
   57: function() { /* 9 spider */
-    var r = 0.2;
+    var r = 0.16;
     var b = new physics.Particle(
       Math.random()*(SCENE_WIDTH-r)-SCENE_WIDTH/2,
       Math.random()*(SCENE_DEPTH-r)-SCENE_DEPTH/2,
       Math.random()*(SCENE_HEIGHT-r),
       r,r,r,10
     );
-    b.color = "#356";
+    //b.color = "#356";
+    b.color = '#' + (0x1000000 + Math.random() * 0xFFFFFF).toString(16).substr(1,6);
     b.bump = grasp;
-    b.graspRange = 1;
-    b.graspTop = 0;
+    b.graspRange = 0.9;
+    b.graspTop = 0.1;
     physics.particles.push(b);
 
     var pick = function(x,y) {
@@ -504,22 +522,16 @@ var spawnKeys = {
 
 
     var Leg = function(dx,dy) {
-      this.knee = new physics.Particle(b.x+dx,b.y+dy,b.z,0.05,0.05,0.05,4);
-      this.knee.draw = box;
-      this.knee.pick = pick;
       this.toe = new physics.Particle(b.x+dx,b.y+dy,b.z-0.1,0.05,0.05,0.05,2);
       this.toe.draw = box;
       this.toe.pick = pick;
       this.toe.bump = grasp;
-      this.toe.graspFrequency = 0.9;
-      this.toe.graspRange = 1;
-      this.toe.graspTop = 0;
-      this.thigh = ragdoll.auto(b,this.knee);
-      this.shin = ragdoll.auto(this.knee,this.toe);
-      physics.particles.push(this.knee);
+      this.toe.graspFrequency = 0.1;
+      this.toe.graspRange = 0.9;
+      this.toe.graspTop = 0.1;
+      this.leg = ragdoll.auto(b,this.toe);
       physics.particles.push(this.toe);
-      physics.constraints.push(this.shin);
-      physics.constraints.push(this.thigh);
+      physics.constraints.push(this.leg);
     };
 
     var s = Math.sqrt(2);
@@ -527,10 +539,15 @@ var spawnKeys = {
       new Leg(0.3,0),    new Leg(0,0.3),
       new Leg(-0.3,0),   new Leg(0,-0.3),
       // new Leg(0.2*s,0.2*s,true),  new Leg(0.2*s,-0.2*s,true),
-      new Leg(-0.3/s,0.3/s), new Leg(-0.3/s,0.3/s)
+      new Leg(-0.3/s,0.3/s) // , new Leg(-0.3/s,0.3/s)
     ];
 
+    b.elasticity = 0.01;
     b.outlets = 1;
+    b.acceptsPlug = function(that) {
+      return that.tag === "wrist" || that.tag === "cable" || that.tag === "ankle";
+    };
+    b.handy = true;
     b.ai = function() {
       if (this.grasping && this.grasping.inactive) this.grasping = null;
 
@@ -542,8 +559,8 @@ var spawnKeys = {
         dy /= d;
         var impulse = 0;
         for (var i in legs) {
-          var lx = legs[i].knee.x - b.x;
-          var ly = legs[i].knee.y - b.y;
+          var lx = legs[i].toe.x - b.x;
+          var ly = legs[i].toe.y - b.y;
           var l = Math.sqrt(lx*lx+ly*ly);
           lx /= l;
           ly /= l;
@@ -552,16 +569,14 @@ var spawnKeys = {
 
           if (Math.random() < 0.6) {
             if (dot > 0) {
-              legs[i].knee.push(0,0,Math.random());
-              legs[i].toe.push(dx,dy,0);
+              legs[i].toe.push(dx,dy,Math.random());
             } else {
               impulse += Math.random()*4;
-              legs[i].knee.push(dx,dy,Math.random());
-              legs[i].toe.push(-dy,dx,0);
+              legs[i].toe.push(dx-0.1*dy,dy+0.1*dx,Math.random());
             }
           }
         }
-       b.push(impulse*dx,impulse*dy,Math.random()*15);
+       b.push(impulse*dx,impulse*dy,Math.random()*5);
       }
     };
 
@@ -569,19 +584,23 @@ var spawnKeys = {
       c.save();
       s.save();
 
-      c.beginPath();
       scratch.worldR(this);
       var x = scratch.sx;
       var y = scratch.sy;
+
+      c.beginPath();
       for (var i in legs) {
         c.moveTo(x,y);
-        scratch.worldR(legs[i].knee);
+        scratch.world(legs[i].toe.rx,legs[i].toe.ry,legs[i].toe.rz+0.2);
         scratch2.worldR(legs[i].toe);
         c.quadraticCurveTo(scratch.sx,scratch.sy,scratch2.sx,scratch2.sy);
+        c.lineTo(scratch2.sx,scratch2.sy+0.01);
+        // c.quadraticCurveTo(scratch.sx,scratch.sy,x,y);
       }
       c.lineCap = 'round';
+      c.lineBevel = 'round';
       c.lineWidth = 0.2;
-      c.strokeStyle = "#000";
+      c.strokeStyle = '#000';
       c.stroke();
       c.lineWidth = 0.1;
       c.strokeStyle = this.color;
@@ -590,9 +609,15 @@ var spawnKeys = {
       c.beginPath();
       c.arc(x,y,r*Math.sqrt(3),0,2*Math.PI,false);
       c.fillStyle = this.color;
-      c.fill();
-      c.strokeStyle = 'black';
+      c.lineWidth = 0.1;
+      c.strokeStyle = '#000';
       c.stroke();
+      c.fill();
+
+      c.globalCompositeOperation = 'source-over';
+
+      // c.strokeStyle = 'black';
+      // c.stroke();
       c.restore();
       s.restore();
     };
