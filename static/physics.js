@@ -368,8 +368,10 @@ var step = function step(t) {
     for (var i in cs) cs[i](str);
   }
 
+/*
   for (var i in cs)
     if (cs[i].hard) cs[i](str);
+*/
 
   for (var i in ps)
     scene.clip(ps[i]);

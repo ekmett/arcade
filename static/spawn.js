@@ -353,7 +353,7 @@ var grasp = function grasp(that) {
   if (!this.grasping && that.graspable == true && Math.random() < (this.graspFrequency || 0.6)) {
     var l = Math.min(that.w,that.d,that.h);
     this.grasping = constraints.stick(this,that,l*0.3,4*(this.grip || 2));
-    this.grasping.oz = -Math.random()*that.h/3-that.h/3;
+    this.grasping.oz = -Math.random()*(that.graspRange || (that.h/3))-(that.graspTop || (that.h/3));
     this.grasping.onto = that;
     this.grasping.hard = true;
     that.grasped = (that.grasped || 0) + 1;
@@ -470,15 +470,17 @@ var spawnKeys = {
     cable.legs = 0.1;
   },
   57: function() { /* 9 spider */
-    var r = 0.3;
+    var r = 0.2;
     var b = new physics.Particle(
       Math.random()*(SCENE_WIDTH-r)-SCENE_WIDTH/2,
       Math.random()*(SCENE_DEPTH-r)-SCENE_DEPTH/2,
       Math.random()*(SCENE_HEIGHT-r),
-      r,r,r,1
+      r,r,r,10
     );
     b.color = "#356";
     b.bump = grasp;
+    b.graspRange = 1;
+    b.graspTop = 0;
     physics.particles.push(b);
 
     var pick = function(x,y) {
@@ -501,69 +503,65 @@ var spawnKeys = {
     };
 
 
-    var Leg = function(dx,dy,nom) {
-      this.knee = new physics.Particle(b.x+dx,b.y+dy,b.z,0.1,0.1,0.1,0.4);
+    var Leg = function(dx,dy) {
+      this.knee = new physics.Particle(b.x+dx,b.y+dy,b.z,0.05,0.05,0.05,4);
       this.knee.draw = box;
       this.knee.pick = pick;
-      this.ankle = new physics.Particle(b.x+dx,b.y+dy,b.z-0.1,0.1,0.1,0.1,0.1);
-      this.ankle.draw = box;
-      this.ankle.pick = pick;
-      this.toe = new physics.Particle(b.x+dx,b.y+dy,b.z-0.2,0.1,0.1,0.1,0.2);
+      this.toe = new physics.Particle(b.x+dx,b.y+dy,b.z-0.1,0.05,0.05,0.05,2);
       this.toe.draw = box;
       this.toe.pick = pick;
       this.toe.bump = grasp;
       this.toe.graspFrequency = 0.9;
+      this.toe.graspRange = 1;
+      this.toe.graspTop = 0;
       this.thigh = ragdoll.auto(b,this.knee);
-      this.shin = ragdoll.auto(this.knee,this.ankle);
-      this.foot = ragdoll.auto(this.ankle,this.toe);
+      this.shin = ragdoll.auto(this.knee,this.toe);
       physics.particles.push(this.knee);
-      physics.particles.push(this.ankle);
       physics.particles.push(this.toe);
       physics.constraints.push(this.shin);
       physics.constraints.push(this.thigh);
-      physics.constraints.push(this.foot);
-      if (nom) {
-/*
-        this.knee.ai = dog_ai;
-        this.knee.lag = 2;
-        this.knee.bounce = 2;
-        this.ankle.sign = 1;
-        this.ankle.ai = claw_ai;
-        this.ankle.lag = -2;
-        this.ankle.bounce = 1;
-        this.ankle.sign = 1;
-        this.ankle.vscale = 0.5;
-*/
- /*
-        this.toe.ai = dog_ai;
-        this.toe.lag = 2;
-        this.toe.bounce = 2;
-        this.toe.sign = 1;
- */
-      }
     };
 
+    var s = Math.sqrt(2);
     var legs = [
-      new Leg(0.4,0,true),    new Leg(0,0.4,true),
-      new Leg(-0.4,0,true),   new Leg(0,-0.4,true),
-      new Leg(0.4,0.4,true),  new Leg(0.4,-0.4,true),
-      new Leg(-0.4,0.4,true), new Leg(-0.4,0.4,true)
+      new Leg(0.3,0),    new Leg(0,0.3),
+      new Leg(-0.3,0),   new Leg(0,-0.3),
+      // new Leg(0.2*s,0.2*s,true),  new Leg(0.2*s,-0.2*s,true),
+      new Leg(-0.3/s,0.3/s), new Leg(-0.3/s,0.3/s)
     ];
 
+    b.outlets = 1;
     b.ai = function() {
-      if ((this.standing || this.bouncing) && !this.grasping && Math.random() < 0.9) {
+      if (this.grasping && this.grasping.inactive) this.grasping = null;
+
+      if ((this.standing || this.bouncing) && !this.grasping && Math.random() < 0.6) {
         var dx = player.x - b.x;
         var dy = player.y - b.y;
         var d = Math.sqrt(dx*dx+dy*dy);
-        dx /= d * 14;
-        dy /= d * 14;
+        dx /= d;
+        dy /= d;
+        var impulse = 0;
         for (var i in legs) {
-          if (Math.random() < 0.5) {
-            legs[i].knee.push(0,0,0.1*Math.random());
-            legs[i].ankle.push(dx*2,dy*2,0);
+          var lx = legs[i].knee.x - b.x;
+          var ly = legs[i].knee.y - b.y;
+          var l = Math.sqrt(lx*lx+ly*ly);
+          lx /= l;
+          ly /= l;
+
+          var dot = Math.sqrt(dx*lx+dy*ly);
+
+          if (Math.random() < 0.6) {
+            if (dot > 0) {
+              legs[i].knee.push(0,0,Math.random());
+              legs[i].toe.push(dx,dy,0);
+            } else {
+              impulse += Math.random()*4;
+              legs[i].knee.push(dx,dy,Math.random());
+              legs[i].toe.push(-dy,dx,0);
+            }
           }
         }
-       b.push(0,0,Math.random());
+       b.push(impulse*dx,impulse*dy,Math.random()*15);
       }
     };
 
@@ -578,9 +576,8 @@ var spawnKeys = {
       for (var i in legs) {
         c.moveTo(x,y);
         scratch.worldR(legs[i].knee);
-        scratch2.worldR(legs[i].ankle);
-        scratch3.worldR(legs[i].toe);
-        c.quadraticCurveTo(scratch.sx,scratch.sy,scratch2.sx,scratch2.sy, scratch3.sx, scratch3.sy);
+        scratch2.worldR(legs[i].toe);
+        c.quadraticCurveTo(scratch.sx,scratch.sy,scratch2.sx,scratch2.sy);
       }
       c.lineCap = 'round';
       c.lineWidth = 0.2;
