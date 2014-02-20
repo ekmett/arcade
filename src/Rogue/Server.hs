@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -16,7 +17,9 @@ import Control.Exception as E
 import Control.Exception.Lens
 import Control.Concurrent
 import Control.Lens
+#ifdef EMBED
 import Data.FileEmbed
+#endif
 import Data.Text as T
 import qualified Data.Text.IO as TIO
 import Data.Typeable
@@ -25,6 +28,7 @@ import Network.WebSockets as WS
 import qualified Network.Wai.Handler.WebSockets as WaiWS
 import qualified Network.Wai.Handler.Warp as Warp
 import System.Process
+import Filesystem.Path.CurrentOS as Path
 
 import Rogue.Connection as Rogue
 import Rogue.Monitor
@@ -48,7 +52,13 @@ serverMain opts mon = do
     { Warp.settingsPort = opts^.serverPort
     , Warp.settingsTimeout = opts^.serverTimeout
     , Warp.settingsIntercept = WaiWS.intercept (app mon)
-    } $ staticApp $ embeddedSettings $(embedDir "static")
+    } $ staticApp $ case opts^.serverStaticPath of
+#ifdef EMBED
+      Nothing -> embeddedSettings $(embedDir "static")
+#else
+      Nothing -> defaultFileServerSettings $ Path.decodeString "static"
+#endif
+      Just xs -> defaultFileServerSettings $ Path.decodeString xs
 
 data Hangup = Hangup deriving (Show,Typeable)
 instance Exception Hangup

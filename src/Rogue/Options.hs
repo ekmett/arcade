@@ -19,6 +19,7 @@ data Options = Options
   , _serverOpen           :: Bool
   , _serverFile           :: Bool
   , _serverTimeout        :: Int
+  , _serverStaticPath     :: Maybe String
   } deriving (Eq,Ord,Show,Read,Data,Typeable)
 
 makeClassy ''Options
@@ -37,6 +38,7 @@ parseOptions = Options
   <*> switch (long "open" <> short 'o' <> help "open on launch")
   <*> switch (long "file" <> short 'f' <> help "load static content via file:// on -o")
   <*> option (long "timeout" <> short 't' <> help "server timeout" <> metavar "SECONDS" <> value 30)
+  <*> optional (strOption (long "static" <> short 's' <> metavar "DIR" <> help "serve content dynamically from static directory instead of from the embedded copy"))
 
 instance HasMonitorOptions Options where
   monitorOptions = serverMonitorOptions

@@ -35,6 +35,10 @@ flag test-hlint
   default: True
   manual: True
 
+flag embed
+  default: False
+  manual: True
+
 library
   build-depends:
     aeson                  >= 0.7     && < 0.8,
@@ -48,6 +52,7 @@ library
     ekg,
     exceptions,
     file-embed,
+    filepath               >= 1.3     && < 1.4,
     hashable               >= 1.2     && < 1.3,
     hscurses,
     lens                   >= 4       && < 5,
@@ -71,7 +76,8 @@ library
     wai-websockets,
     warp,
     websockets,
-    split                  >= 0.2     && < 0.3
+    split                  >= 0.2     && < 0.3,
+    system-filepath
 
   hs-source-dirs: src
 
@@ -88,6 +94,9 @@ library
 
   other-modules:
     Paths_roguekcd
+
+  if flag(embed)
+    ghc-options: -DEMBED=1
 
   ghc-options: -Wall
   default-language: Haskell2010

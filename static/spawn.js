@@ -475,6 +475,45 @@ var spawnKeys = {
     r.rightAnkle.tag = "ankle";
     r.rightAnkle.bump = plug;
   },
+  55: function() { /* 7 wall */
+    var w = 1, d = 1;
+    if (Math.random() < 0.5) {
+      w = Math.floor(Math.random() * 15) + 2;
+    } else {
+      d = Math.floor(Math.random() * 15) + 2;
+    }
+      
+    var wall = new physics.Particle(
+      Math.random()*(SCENE_WIDTH-w)-SCENE_WIDTH/2,
+      Math.random()*(SCENE_DEPTH-d)-SCENE_DEPTH/2,
+      0,w,d,physics.SCENE_HEIGHT,1);
+    wall.inverseMass = 0;
+    wall.draw = function(s,c,alpha) {
+      c.save();
+      s.save();
+      c.lineCap = 'round';
+      c.lineBevel = 'round';
+      c.lineWidth = 0.05;
+      prim.tack(c,wall.rx,wall.ry,wall.rz,wall.w,wall.d,wall.h);
+      c.stroke();
+
+      prim.floor(s,wall.rx,wall.ry,wall.rz,wall.w,wall.d,wall.h);
+      s.fillStyle = "rgba(0,0,0,0.2)";
+      s.fill();
+
+      prim.cube(c,wall.rx,wall.ry,wall.rz,wall.w,wall.d,wall.h);
+      c.stroke();
+      c.fillStyle = "rgba(0,0,0,0.2)";
+      c.fill('nonzero');
+
+
+
+
+      c.restore();
+    };
+    wall.pick = function(){ return null; };
+    physics.particles.push(wall);
+  },
   // 55: snake,/* 7 snake */
   56: function() { /* 8 cable */
     var cable = new Cable();
@@ -486,6 +525,7 @@ var spawnKeys = {
     cable.legs = 0.1;
   },
   57: function() { /* 9 spider */
+    // var r = Math.random()*0.4 + 0.05;
     var r = 0.16;
     var b = new physics.Particle(
       Math.random()*(SCENE_WIDTH-r)-SCENE_WIDTH/2,
@@ -538,8 +578,8 @@ var spawnKeys = {
 
     // var s = Math.sqrt(2);
     var legs = [
-      new Leg(0.3,0,grasp),    new Leg(0,0.3,grasp),
-      new Leg(-0.3,0,null),   new Leg(0,-0.3,null)
+      new Leg(r+0.14,0,grasp),    new Leg(0,r+0.14,grasp),
+      new Leg(-r-0.14,0,null),   new Leg(0,-r-0.14,null)
       // new Leg(0.2*s,0.2*s,true),  new Leg(0.2*s,-0.2*s,true),
       // new Leg(-0.3/s,0.3/s, null)
     ];

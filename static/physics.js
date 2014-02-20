@@ -47,12 +47,33 @@ function bucket(x,y) {
          ((Math.floor(y / BUCKET_DEPTH) + BUCKET_ROWS) % BUCKET_ROWS);
 }
 
+var Wall = function Wall(x,y,z,w,d,h) {
+  this.x = x;
+  this.y = y;
+  this.z = z;
+  this.w = w;
+  this.d = d;
+  this.h = h;
+};
+
+Wall.prototype = {
+  clip: function(particle) {
+
+  }
+
+};
+
 // basic scene we can replace later with the bsp
 var scene = {
+  walls : [],
   clip : function clip(particle) {
     var nx = Math.max(-SCENE_WIDTH/2,Math.min(particle.x, SCENE_WIDTH/2-particle.w));
     var ny = Math.max(-SCENE_DEPTH/2,Math.min(particle.y, SCENE_DEPTH/2-particle.d));
     var nz = Math.max(0,Math.min(particle.z, SCENE_HEIGHT-particle.h));
+
+    for (var i in this.walls) {
+      this.walls[i].clip(particle);
+    }
 
     particle.x = nx;
     particle.y = ny;
@@ -222,7 +243,7 @@ Particle.prototype = {
 
   clip2d: clip.clip2d, // these only clip v
 
-  clip3d: clip.clip3d, // these only clip v
+  lip3d: clip.clip3d, // these only clip v
 
   clip_entity : function clip_entity(that) {
     var x1min = this.x;

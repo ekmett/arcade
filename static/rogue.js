@@ -23,6 +23,11 @@ define(
       $('body').append(stats.domElement);
       $('.genocide-link').click(genocide);
       $(document.body).keydown(function(e) { if (e.which == 48) genocide(); });
+      var echo = new Worker("echo.js");
+      echo.onmessage = function(e) {
+        console.log(e);
+      };
+      echo.postMessage("HELLO");
       // music.play();
       // connection.onmessage = function(event) { eval(event.data); }; connection.start();
     });
