@@ -136,6 +136,7 @@ var ParticleSystem = Pool.extend(function (base) { return {
 return {
   BadAlloc       : BadAlloc,
   Pool           : Pool,
+  Handler        : Handler,
   V3             : V3,
   ParticleSystem : ParticleSystem
 };
