@@ -1,7 +1,8 @@
 requirejs.config({
   paths: {
-    'bootstrap'            : 'http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min',
-    'jquery'               : 'http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min',
+    'bootstrap' : 'http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min',
+    'fiber'     : 'fiber.min',
+    'jquery'    : 'http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min'
   },
   shim: {
     'bootstrap': {
