@@ -124,7 +124,7 @@ var ParticleSystem = Pool.extend(function (base) { return {
     for (var i=0,l=this.length*3;i<l;++i) {
       var x = pos[i];
       // update new position and set acceleration
-      oldpos[i] = x + (x - oldpos[i]) + accel[i];
+      oldpos[i] = x + 0.99*(x - oldpos[i]) + accel[i];
       accel[i] = 0;
     }
     // swap position vectors
