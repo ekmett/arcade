@@ -1,4 +1,4 @@
-module Rogue.Utils
+module Arcade.Utils
   ( isqrt
   , concatMapM
   ) where

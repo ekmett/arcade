@@ -2,7 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-module Rogue.Monitor
+module Arcade.Monitor
   ( MonitorOptions(..)
   , HasMonitorOptions(..)
   , parseMonitorOptions
@@ -26,7 +26,9 @@ module Rogue.Monitor
   , dec
   , sub
   -- * Compatibilty with EKG
+  , Server
   , withServer
+  , forkServer
   ) where
 
 import Control.Exception
@@ -44,6 +46,7 @@ import qualified System.Remote.Counter as C
 import qualified System.Remote.Label as L
 
 -- | Enable/disable EKG
+
 data MonitorOptions = MonitorOptions
   { _monitorHost    :: String
   , _monitorPort    :: Int
@@ -75,18 +78,23 @@ data Monitor = Monitor
 
 makeClassy ''Monitor
 
+instance HasMonitorOptions Monitor where
+  monitorOptions = _monitorOptions
+
 withServer :: HasMonitor t => t -> (Server -> IO ()) -> IO ()
 withServer t k = case t^.monitorServer of
   Nothing -> return ()
   Just s  -> k s
 
+class Setting t a | t -> a where
+  assign :: MonadIO m => t -> a -> m ()        -- set
+  assign _ _ = return ()
+  update :: MonadIO m => t -> (a -> a) -> m () -- modify
+  update _ _ = return ()
+
 newtype Gauge = Gauge { runGauge :: Maybe G.Gauge }
 newtype Label = Label { runLabel :: Maybe L.Label }
 newtype Counter = Counter { runCounter :: Maybe C.Counter }
-
-class Setting t a | t -> a where
-  assign :: MonadIO m => t -> a -> m ()        -- set
-  update :: MonadIO m => t -> (a -> a) -> m () -- modify
 
 instance Setting Label Text where
   assign (Label t) a = liftIO $ maybe (return ()) (L.set ?? a) t
@@ -104,7 +112,10 @@ sub t n = update t (subtract n)
 
 class Incremental t where
   inc :: MonadIO m => t -> m ()
+  inc _ = return ()
+
   add :: MonadIO m => t -> Int -> m ()
+  add _ _ = return ()
 
 instance Incremental Gauge where
   inc (Gauge t)   = liftIO $ maybe (return ()) G.inc t
@@ -117,27 +128,23 @@ instance Incremental Counter where
 gauge :: (MonadIO m, HasMonitor t) => Text -> t -> m Gauge
 gauge = runReaderT . gaugeM
 
+counter :: (MonadIO m, HasMonitor t) => Text -> t -> m Counter
+counter = runReaderT . counterM
+
+label :: (MonadIO m, HasMonitor t) => Text -> t -> m Label
+label = runReaderT . labelM
+
 -- | create a gauge
 gaugeM :: (MonadIO m, MonadReader t m, HasMonitor t) => Text -> m Gauge
 gaugeM l = view monitorServer >>= maybe (return $ Gauge Nothing) (liftIO . fmap (Gauge . Just) . getGauge l)
-
-counter :: (MonadIO m, HasMonitor t) => Text -> t -> m Counter
-counter = runReaderT . counterM
 
 -- | create a counter
 counterM :: (MonadIO m, MonadReader t m, HasMonitor t) => Text -> m Counter
 counterM l = view monitorServer >>= maybe (return $ Counter Nothing) (liftIO . fmap (Counter . Just) . getCounter l)
 
-
-label :: (MonadIO m, HasMonitor t) => Text -> t -> m Label
-label = runReaderT . labelM
-
 -- | create a label
 labelM :: (MonadIO m, MonadReader t m, HasMonitor t) => Text -> m Label
 labelM t = view monitorServer >>= maybe (return $ Label Nothing) (liftIO . fmap (Label . Just) . getLabel t)
-
-instance HasMonitorOptions Monitor where
-  monitorOptions = _monitorOptions
 
 withMonitor :: HasMonitorOptions t => t -> (Monitor -> IO a) -> IO a
 withMonitor t k

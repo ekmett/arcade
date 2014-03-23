@@ -475,14 +475,16 @@ var spawnKeys = {
     r.rightAnkle.tag = "ankle";
     r.rightAnkle.bump = plug;
   },
-  55: function() { /* 7 wall */
+
+/*
+  55: function() { // 7 wall
     var w = 1, d = 1;
     if (Math.random() < 0.5) {
       w = Math.floor(Math.random() * 15) + 2;
     } else {
       d = Math.floor(Math.random() * 15) + 2;
     }
-      
+
     var wall = new physics.Particle(
       Math.random()*(SCENE_WIDTH-w)-SCENE_WIDTH/2,
       Math.random()*(SCENE_DEPTH-d)-SCENE_DEPTH/2,
@@ -506,25 +508,13 @@ var spawnKeys = {
       c.fillStyle = "rgba(0,0,0,0.2)";
       c.fill('nonzero');
 
-
-
-
       c.restore();
     };
     wall.pick = function(){ return null; };
     physics.particles.push(wall);
   },
-  // 55: snake,/* 7 snake */
-  56: function() { /* 8 cable */
-    var cable = new Cable();
-    //  for (var i in cable.parts) cable.parts[i].graspable = true;
-    cable.parts[0].bump = plug;
-    cable.parts[0].tag = "cable";
-    cable.parts[cable.parts.length-1].bump = plug;
-    cable.parts[cable.parts.length-1].tag = "cable";
-    cable.legs = 0.1;
-  },
-  57: function() { /* 9 spider */
+*/
+  55: function() { /* 7 spider */
     // var r = Math.random()*0.4 + 0.05;
     var r = 0.16;
     var b = new physics.Particle(
@@ -681,6 +671,16 @@ var spawnKeys = {
       c.restore();
       s.restore();
     };
+  },
+  // 55: snake,/* 7 snake */
+  56: function() { /* 8 cable */
+    var cable = new Cable();
+    //  for (var i in cable.parts) cable.parts[i].graspable = true;
+    cable.parts[0].bump = plug;
+    cable.parts[0].tag = "cable";
+    cable.parts[cable.parts.length-1].bump = plug;
+    cable.parts[cable.parts.length-1].tag = "cable";
+    cable.legs = 0.1;
   }
 };
 

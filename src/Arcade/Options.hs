@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-module Rogue.Options
+module Arcade.Options
   ( Options(..)
   , HasOptions(..)
   , parseOptions
@@ -10,7 +10,7 @@ module Rogue.Options
 import Control.Lens hiding (Setting)
 import Data.Data
 import Options.Applicative
-import Rogue.Monitor
+import Arcade.Monitor
 
 data Options = Options
   { _serverMonitorOptions :: MonitorOptions

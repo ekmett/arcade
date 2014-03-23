@@ -5,7 +5,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TemplateHaskell #-}
-module Rogue.Game
+module Arcade.Game
   ( Game(..)
   , (<?>)
   -- * Environment
@@ -34,8 +34,8 @@ import Control.Monad.Reader.Class
 import Control.Monad.State.Class
 import Data.Foldable
 import Data.Typeable
-import Rogue.Connection
-import Rogue.Request
+import Arcade.Connection
+import Arcade.Request
 
 
 newtype Env = Env { _envRequestChan :: Chan Request }

@@ -1,4 +1,4 @@
-module Rogue.Time
+module Arcade.Time
   ( delayTime
   , delayTill
   , frameDuration

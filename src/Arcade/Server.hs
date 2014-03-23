@@ -8,7 +8,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-module Rogue.Server
+module Arcade.Server
   ( serverMain
   ) where
 
@@ -30,12 +30,12 @@ import qualified Network.Wai.Handler.Warp as Warp
 import System.Process
 import Filesystem.Path.CurrentOS as Path
 
-import Rogue.Connection as Rogue
-import Rogue.Monitor
-import Rogue.Options
+import Arcade.Connection as Arcade
+import Arcade.Monitor
+import Arcade.Options
 
-registerConnection :: Rogue.Connection -> IO ()
-registerConnection r = do
+registerConnection :: Arcade.Connection -> IO ()
+registerConnection _r = do
   return ()
 
 threadCountG :: Text
@@ -48,11 +48,11 @@ serverMain opts mon = do
   when (opts^.serverOpen) $ do
     _ <- system $ "/usr/bin/open " ++ uri
     return ()
-  Warp.runSettings Warp.defaultSettings
-    { Warp.settingsPort = opts^.serverPort
-    , Warp.settingsTimeout = opts^.serverTimeout
-    , Warp.settingsIntercept = WaiWS.intercept (app mon)
-    } $ staticApp $ case opts^.serverStaticPath of
+  Warp.runSettings
+     (Warp.setPort (opts^.serverPort) $ Warp.setTimeout (opts^.serverTimeout) $ Warp.defaultSettings)
+    $ WaiWS.websocketsOr WS.defaultConnectionOptions (app mon)
+    $ staticApp $ case opts^.serverStaticPath of
+
 #ifdef EMBED
       Nothing -> embeddedSettings $(embedDir "static")
 #else
@@ -90,9 +90,9 @@ app mon pending = countThread mon "websocket" $ do
   senderId <- myThreadId
 
   registerConnection $ Connection
-    { Rogue.send  = writeChan output
-    , Rogue.recv  = readChan input
-    , Rogue.close = throwTo senderId Hangup
+    { Arcade.send  = writeChan output
+    , Arcade.recv  = readChan input
+    , Arcade.close = throwTo senderId Hangup
     }
 
   whereException "websocket.write" $

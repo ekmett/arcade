@@ -1,12 +1,12 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-module Rogue.Engine
+module Arcade.Engine
   ( Engine(..)
   , startEngine
   ) where
 
 import Control.Concurrent
 import Data.Typeable
-import Rogue.Connection
+import Arcade.Connection
 
 data Engine = Engine
   { engineThreadId :: ThreadId

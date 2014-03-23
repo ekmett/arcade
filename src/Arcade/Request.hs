@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-module Rogue.Request
+module Arcade.Request
   ( Request(..)
   , AcceptsRequests(..)
   , accept
@@ -7,7 +7,7 @@ module Rogue.Request
   ) where
 
 import Data.Typeable
-import Rogue.Connection
+import Arcade.Connection
 
 data Request
   = Shutdown

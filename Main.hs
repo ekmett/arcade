@@ -3,15 +3,15 @@ module Main
   ) where
 
 import Options.Applicative
-import Rogue.Monitor
-import Rogue.Server
-import Rogue.Options
+import Arcade.Monitor
+import Arcade.Server
+import Arcade.Options
 
 main :: IO ()
 main = do
   opts <- execParser $ info (helper <*> parseOptions)
      $ fullDesc
-    <> progDesc "roguekcd"
-    <> header "A game of hats and stacks and style"
+    <> progDesc "arcade"
+    <> header "A physics playground"
 
   withMonitor opts $ serverMain opts

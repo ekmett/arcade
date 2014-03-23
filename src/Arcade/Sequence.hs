@@ -1,4 +1,4 @@
-module Rogue.Sequence
+module Arcade.Sequence
   ( Sequence(..)
   ) where
 

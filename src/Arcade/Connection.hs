@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-module Rogue.Connection
+module Arcade.Connection
   ( Connection(..)
   , socketConnection
   ) where
