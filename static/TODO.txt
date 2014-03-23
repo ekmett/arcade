@@ -1,0 +1,18 @@
+* try swapping out parts to use legal asm.js for faster firefox rendering
+
+* make better use of temporaries
+
+* move client/server communication out to a web worker
+
+* more radically we could move all physics out to a web worker, but then we're communicating a lot per frame
+* and will need to collect those communications
+
+* Separate bodies and sortables, so we can display line segments between linked objects more correctly.
+
+* contemplate a switch to pixi.js or something like it. an optional z-buffer would be amazing!
+
+* switch from direct class use to Fiber.js for everything
+
+* Use Object.defineProperty to make more things look like properties for constants, frame #'s etc.
+
+* Add an appCache before we go to production

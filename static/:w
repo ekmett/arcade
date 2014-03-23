@@ -1,0 +1,70 @@
+define(["pool"], function (pool) {
+
+var V3Handler = new pool.Handler(3,Float32Array);
+
+var Verlet = pool.Pool.extend(function (base) { return {
+  init: function(N) {
+    base.init.call(this,N);
+    this.has("pos",V3Handler)
+        .has("oldpos",V3Handler)
+        .has("accel",V3Handler);
+  },
+  // Perform a Verlet integration timestep for all particles
+  step: function() {
+    var pos    = this.pos;
+    var oldpos = this.oldpos;
+    var accel  = this.accel;
+    // handles all 3 dimensions
+    for (var i=0,l=this.length*3;i<l;++i) {
+      var x = pos[i];
+      // update new position and set acceleration
+      oldpos[i] = x + 0.99*(x - oldpos[i]) + accel[i];
+      accel[i] = 0;
+    }
+    // swap position vectors
+    this.oldpos = pos;
+    this.pos = oldpos;
+  }
+}});
+
+
+var BucketHandler = new pool.Handler(1,Int32Array);
+
+var BUCKETS = 256;
+
+// we need to enforce a speed limit
+
+var Bodies = Verlet.extend(function (base) { return {
+  init : function(N) {
+    base.init.call(this,N);
+    this.has("next_in_bucket",BucketHandler);
+    this.buckets = new Int32Array(BUCKETS);
+  },
+  step: function() {
+    base.step.call(this);
+    var buckets = this.buckets;
+    for (var i in buckets) buckets[i] = -1;
+    var pos = this.pos
+    var nib = this.next_in_bucket;
+    for (var i=0,l=this.length;i<l;++i) {
+      var i3 = i*3;
+      var b = bucket(pos[i3],pos[i3+1]);
+      next_in_bucket[i] = buckets[b]
+      buckets[b] = i;
+      
+
+
+    }
+
+  }
+
+
+}});
+
+
+return {
+  V3: V3
+  Verlet: Verlet
+}
+
+}); // define

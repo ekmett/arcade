@@ -1,0 +1,237 @@
+@font-face {
+  font-family: 'xkcd-Regular';
+  src: url('fonts/xkcd.eot') format('eot'), url('fonts/xkcd.otf') format('opentype');
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+.navbar {
+  margin-bottom: 5px; /* tighten this so we don't lose chat space to background */
+}
+ 
+body {
+  background-color: #ffffff;
+}
+
+.comic {
+  font-family: xkcd-Regular;
+  font-variant: normal;
+}
+
+image, canvas {
+ user-select: none;
+ -ms-user-select: none;
+ -webkit-user-select: none;
+ -khtml-user-select: none;
+ -moz-user-select: none;
+ -webkit-touch-callout: none;
+ -webkit-user-drag: none;
+}
+
+.box {
+  background: #fff;
+  -moz-border-radius: 12px;
+  border-radius: 12px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-top: 10px;
+  height: 600px;
+  z-index: -20;
+}
+
+#main {
+  border-style:solid;
+  border-width:1.5px;
+  border-color:#071419;
+
+  background: linear-gradient(45deg, #343702 0%, #184500 20%, #187546 30%, #006782 40%, #0b1284 50%, #760ea1 60%, #83096e 70%, #840b2a 80%, #b13e12 90%, #e27412 100%);
+  background-color: #840b2a;
+
+  z-index: 0;
+}
+
+#glass {
+  cursor: crosshair; /* all-scroll? */
+  width: 800px;
+  height: 400px;
+  border-radius: 12px;
+  -moz-border-radius: 12px;
+  z-index: 20;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+}
+
+.map {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  display: block;
+  background: transparent;
+  -webkit-transform: translate3d(0,0,0);
+  -moz-transform: translate3d(0,0,0);
+  -ms-transform: translate3d(0,0,0);
+  -o-transform: translate3d(0,0,0);
+  transform: translate3d(0,0,0); /* gpu layer in isolation */
+}
+
+#music {
+  visibility: hidden;
+}
+
+#background {
+  z-index: 1;
+}
+
+#shadows {
+  z-index: 2;
+}
+
+#foreground {
+  z-index: 3;
+}
+
+#stats {
+  position: fixed;
+  top:60px;
+  right:0;
+  z-index: 100;
+}
+
+#overview {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  z-index: 100;
+  background-color: black;
+  font-color: #ccc;
+}
+
+.chat {
+  margin-left: auto;
+  margin-right: auto;
+  overflow-y: scroll;
+  overflow-h: hidden;
+  max-height: 200px;
+  /* border-bottom: 1px solid #000; */
+  padding: 5px 20px 0px 20px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  font-size: .7em;
+  font-color: #ccc;
+  z-index: 4;
+}
+
+.chat-spacer {
+  height: 5px;
+}
+
+.chat-content {
+  display: table;
+  z-index: 5;
+}
+
+.line {
+  display: table-row;
+}
+
+.byline {
+  font-weight: 700;
+  padding-right: 0.5em;
+  display: table-cell;
+  text-align: right;
+  vertical-align: top;
+}
+
+.message {
+  display: table-cell;
+  top: -5px;
+  left: 12px;
+  background-color: #F2F2F2;
+  border-radius: 5px;
+  box-shadow: 0 0 6px #B2B2B2;
+  font-family: xkcd-Regular;
+  font-variant: normal;
+  /* display: inline-block; */
+  padding: 3px 10px 3px 10px;
+  position: relative;
+  vertical-align: top;
+  float: left;
+  margin: 1px 25px 1px 2px;
+  z-index: 8;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.message::before {
+  background-color: #F2F2F2;
+  content: "\00a0";
+  display: block;
+  height: 16px;
+  position: absolute;
+  top: 2px;
+  transform:           rotate( 29deg ) skew( -35deg );
+    -moz-transform:    rotate( 29deg ) skew( -35deg );
+    -ms-transform:     rotate( 29deg ) skew( -35deg );
+    -o-transform:      rotate( 29deg ) skew( -35deg );
+    -webkit-transform: rotate( 29deg ) skew( -35deg );
+  width:  20px;
+  box-shadow: -2px 2px 2px 0 rgba( 178, 178, 178, .4 );
+  left: -9px;
+  z-index: -1;
+}
+
+#main {
+  position: relative;
+  margin-right: auto;
+  margin-left: auto;
+  height: 400px;
+  overflow: hidden;
+}
+
+@media (min-width: 940px) {
+  #main, #chat {
+    width: 800px;
+  }
+  .box {
+    width: 900px;
+  }
+}
+
+@media (max-height: 600px) {
+  #stats {
+    visibility: hidden;
+  }
+}
+
+@media (max-width: 940px) { /* or (max-height: 600px) { */
+  #main {
+    width: 800px;
+  }
+  /* time to kill the blue gutter */
+  body {
+    background-color: #ffffff;
+  }
+  .container-fluid {
+    padding-left: 0px;
+    padding-right: 0px;
+  }
+  .navbar {
+    margin-bottom:2px;
+  }
+}
+
+a.site:link {
+  color: #005994;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+a.site:visited {
+  color: #000;
+}
+
+
