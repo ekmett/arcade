@@ -1,7 +1,7 @@
 arcade
 ------
 
-[![Hackage](https://img.shields.io/hackage/v/arcade.svg)](https://hackage.haskell.org/package/arcade) [![Build Status](https://secure.travis-ci.org/ekmett/arcade.png?branch=master)](http://travis-ci.org/ekmett/arcade
+[![Hackage](https://img.shields.io/hackage/v/arcade.svg)](https://hackage.haskell.org/package/arcade) [![Build Status](https://secure.travis-ci.org/ekmett/arcade.png?branch=master)](http://travis-ci.org/ekmett/arcade)
 
 This is a web-based game physics playground.
 
